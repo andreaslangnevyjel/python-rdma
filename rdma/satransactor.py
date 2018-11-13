@@ -76,7 +76,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         req = IBA.ComponentMask(IBA.SALinkRecord())
         for I in path.drPath[1:]:
             req.fromLID = start_lid
-            req.fromPort = ord(I)
+            req.fromPort = I
             rep = yield self._parent.SubnAdmGet(req)
             start_lid = rep.toLID
         path._cached_resolved_dlid = start_lid

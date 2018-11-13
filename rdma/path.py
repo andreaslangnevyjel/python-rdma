@@ -3,6 +3,7 @@
 
 import os
 import sys
+import codecs
 
 import rdma
 import rdma.IBA as IBA
@@ -406,7 +407,7 @@ class IBDRPath(IBPath):
 
     @classmethod
     def _format_drPath(cls, v):
-        return ":".join("%u" % (ord(I)) for I in v) + ":"
+        return ":".join("%d" % (entry) for entry in v) + ":"
 
     def __str__(self):
         # No LID components
@@ -581,9 +582,9 @@ def fill_path(qp, path, max_rd_atomic=255):
     # Maximum number of RD atomics responder resources the HCA can allocate
     path.drdatomic = min(path.drdatomic, devinfo.max_qp_rd_atom, max_rd_atomic)
     if path.sqpsn == 0:
-        path.sqpsn = int(os.urandom(3).encode("hex"), 16)
+        path.sqpsn = int(codecs.encode(os.urandom(3), "hex"), 16)
     if path.dqpsn == 0:
-        path.dqpsn = int(os.urandom(3).encode("hex"), 16)
+        path.dqpsn = int(codecs.encode(os.urandom(3), "hex"), 16)
 
 
 def from_spec_string(s):
@@ -636,7 +637,7 @@ def from_spec_string(s):
                     raise ValueError("Invalid DR path specification %r" % (s,))
                 if dr[0] != 0:
                     raise ValueError("Invalid DR path specification %r" % (s,))
-            kwargs[k] = bytes("").join("%c" % (I) for I in dr)
+            kwargs[k] = b"".join(chr(entry).encode("ascii") for entry in dr)
         elif k == "end_port":
             if v[0] == '"' or v[0] == "'":
                 v = v[1:-1]
@@ -718,7 +719,7 @@ def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
             raise ValueError("Invalid DR path specification %r" % (s,))
         if dr[0] != 0:
             raise ValueError("Invalid DR path specification %r" % (s,))
-        drPath = bytes("").join("%c" % (I) for I in dr)
+        drPath = b"".join(chr(entry).encode("ascii") for entry in dr)
         return IBDRPath(default_end_port, drPath=drPath)
 
     a = s.split('%')

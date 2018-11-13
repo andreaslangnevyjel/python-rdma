@@ -313,7 +313,7 @@ class GID(bytes):
         :raises ValueError: If the string can not be parsed."""
         pass
 
-    def __new__(self, s=None, raw=False, prefix=None, guid=None):
+    def __new__(cls, s=None, raw=False, prefix=None, guid=None):
         if s is None:
             if prefix is None:
                 return ZERO_GID
@@ -323,15 +323,15 @@ class GID(bytes):
                 prefix = bytes.__str__(prefix)
             elif isinstance(prefix, int) or isinstance(prefix, int):
                 prefix = codecs.decode(("%016x" % (prefix)), "hex")
-            return bytes.__new__(self, prefix + bytes.__str__(guid).encode("ascii"))
+            return bytes.__new__(cls, prefix + guid)  # bytes.__str__(guid).encode("ascii"))
 
         if isinstance(s, GID):
             return s
         if raw:
             assert (len(s) == 16)
-            return bytes.__new__(self, s.encode("ascii"))
+            return bytes.__new__(cls, s.encode("ascii"))
         try:
-            return bytes.__new__(self, socket.inet_pton(socket.AF_INET6, s.strip()))
+            return bytes.__new__(cls, socket.inet_pton(socket.AF_INET6, s.strip()))
         except:
             raise ValueError("%r is not a valid GID" % (s))
 
@@ -355,7 +355,7 @@ class GID(bytes):
         return GUID(bytes.__getitem__(self, slice(0, 8)), raw=True)
 
     def __int__(self):
-        return int(bytes.__str__(self).encode("hex"), 16)
+        return int(codecs.encode(self, "hex"), 16)
 
     def __reduce__(self):
         return (GID, (bytes.__str__(self), True))

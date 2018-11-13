@@ -78,7 +78,7 @@ class madschedule_test(unittest.TestCase):
 
         if follow and pinf.portState != IBA.PORT_STATE_DOWN:
             npath = rdma.path.IBDRPath(self.end_port)
-            npath.drPath = path.drPath + chr(port)
+            npath.drPath = path.drPath + chr(port).encode("ascii")
             print("Probe port", port, repr(npath.drPath))
             yield self.get_node_info(sched, npath)
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import collections
+import codecs
 import os
 
 import rdma
@@ -28,7 +29,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
         """*path* is used to set the PKey and QKey for all MADs sent through
         this interface."""
         rdma.madtransactor.MADTransactor.__init__(self)
-        self._tid = int(os.urandom(8).encode("hex"), 16)
+        self._tid = int(codecs.encode(os.urandom(8), "hex"), 16)
 
         if isinstance(parent, rdma.devices.EndPort):
             self._ctx = rdma.get_verbs(parent)

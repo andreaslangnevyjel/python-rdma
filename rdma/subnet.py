@@ -420,7 +420,7 @@ class Subnet(object):
                 # localPortNum, but since we are going in and out of the
                 # same port we can just record what it should have been
                 # here.
-                ret._cached_subnet_localPortNum = ord(drPath[-2])
+                ret._cached_subnet_localPortNum = drPath[-2]
 
             return ret
 

@@ -33,8 +33,8 @@ class path_test(unittest.TestCase):
         self.check_path_str(None, "0:0:0:1", DGID=IBA.GID("fe80::1"))
         self.check_path_str(None, "1", DLID=1)
         self.check_path_str(None, "0xff", DLID=0xff)
-        self.check_path_str(None, "0,1", cls=rdma.path.IBDRPath, drPath="\0\1")
-        self.check_path_str(None, "0,", cls=rdma.path.IBDRPath, drPath="\0")
+        self.check_path_str(None, "0,1", cls=rdma.path.IBDRPath, drPath=b"\0\1")
+        self.check_path_str(None, "0,", cls=rdma.path.IBDRPath, drPath=b"\0")
 
         for I in rdma.get_devices():
             for J in I.end_ports:
