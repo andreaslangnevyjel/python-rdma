@@ -4,6 +4,7 @@
 import copy
 import errno
 import fcntl
+import codecs
 import os
 import select
 import struct
@@ -124,7 +125,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         self._agent_cache = {}
         self._agent_id_dqpn = {}
 
-        self._tid = int(os.urandom(4).encode("hex"), 16)
+        self._tid = int(codecs.encode(os.urandom(4), "hex"), 16)
         self.end_port = parent
 
     def _get_new_TID(self):

@@ -37,8 +37,12 @@ def _conv_int_desc(s):
     return int(t[0])
 
 
-def _conv_unicode(s):
-    "A unicode string"
+def _conv_unicode(s: str) -> str:
+    """ A unicode string """
+    if s[-1] == "\n":
+        return s[:-1]
+    else:
+        return s
     # The kernel puts a single \n on the description..
     if s[-1] == '\n':
         return s[:-1].decode("utf-8")
