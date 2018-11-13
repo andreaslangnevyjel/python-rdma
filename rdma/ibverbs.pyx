@@ -1,4 +1,4 @@
-# -*- Python -*-
+# -*- Python3 -*-
 # cython: language_level=3
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 import select
@@ -12,7 +12,7 @@ import rdma.devices
 import rdma.IBA as IBA
 import rdma.path
 
-from cpython.string cimport PyString_AsString
+from cpython.unicode cimport PyUnicode_AsEncodedString
 from libc.stdint cimport uint8_t
 
 cimport rdma.libibverbs as c
@@ -102,6 +102,8 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
     forward path parameters."""
     # ord() is broken in cython 0.20/0.21
     cdef uint8_t *tmp
+    cdef char tmp2[16]
+
     if isinstance(attr, ah_attr):
         cattr.is_global = attr.is_global
         if cattr.is_global:
@@ -109,9 +111,9 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
                 raise TypeError("attr.grh must be a global_route")
             if not isinstance(attr.grh.dgid, IBA.GID):
                 raise TypeError("attr.grh.dgid must be an IBA.GID")
-            tmp = <uint8_t *>PyString_AsString(attr.DGID)
+            tmp2 = PyUnicode_AsEncodedString(attr.DGID, "utf-8", "ignore")
             for 0 <= i < 16:
-                cattr.grh.dgid.raw[i] = tmp[i]
+                cattr.grh.dgid.raw[i] = tmp2[i]
             cattr.grh.flow_label = attr.grh.flow_label
             cattr.grh.sgid_index = attr.grh.sgid_index
             cattr.grh.hop_limit = attr.grh.hop_limit
@@ -125,9 +127,9 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
     elif isinstance(attr, rdma.path.IBPath):
         cattr.is_global = attr.has_grh
         if attr.DGID is not None:
-            tmp = <uint8_t *>PyString_AsString(attr.DGID)
+            tmp2 = PyUnicode_AsEncodedString(attr.DGID, "utf-8", "ignore")
             for 0 <= i < 16:
-                cattr.grh.dgid.raw[i] = tmp[i]
+                cattr.grh.dgid.raw[i] = tmp2[i]
         if cattr.is_global:
             cattr.grh.sgid_index = attr.SGID_index
 
