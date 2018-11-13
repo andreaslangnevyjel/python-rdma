@@ -28,21 +28,21 @@ def simple_tracer(mt,kind,fmt=None,path=None,ret=None):
     if kind == TRACE_COMPLETE:
         desc = fmt.describe();
         if ret is None:
-            print "D: RPC %s TIMED OUT to '%s'."%(desc,path);
+            print("D: RPC %s TIMED OUT to '%s'."%(desc,path));
             return;
         else:
-            print "D: RPC %s completed to '%s' len %u."%(desc,path,len(ret[0]));
+            print("D: RPC %s completed to '%s' len %u."%(desc,path,len(ret[0])));
     if kind == TRACE_RECEIVE:
         desc = fmt.describe();
         if ret is None:
-            print "D: RPC %s retry to '%s'."%(desc,path);
+            print("D: RPC %s retry to '%s'."%(desc,path));
             return;
-        print "D: RPC %s received from '%s' len %u."%(desc,
-                                                      path,len(ret[0]));
+        print("D: RPC %s received from '%s' len %u."%(desc,
+                                                      path,len(ret[0])));
     if kind == TRACE_REPLY:
-        print "D: RPC %s reply to '%s'"%(fmt.describe(),path);
+        print("D: RPC %s reply to '%s'"%(fmt.describe(),path));
     if kind == TRACE_UNEXPECTED:
-        print "D: Got unexpected MAD from '%s'."%(ret[1]);
+        print("D: Got unexpected MAD from '%s'."%(ret[1]));
 
 def dumper_tracer(mt,kind,fmt=None,path=None,ret=None):
     """Logs full decoded packet dumps of what is happening to
@@ -50,11 +50,11 @@ def dumper_tracer(mt,kind,fmt=None,path=None,ret=None):
     :attr:`rdma.madtransactor.MADTransactor.trace_func`."""
     if kind == TRACE_COMPLETE:
         simple_tracer(mt,kind,fmt=fmt,path=path,ret=ret);
-        print "D: Request",fmt.describe();
+        print("D: Request",fmt.describe());
         fmt.printer(sys.stdout,header=False);
         if ret is not None:
             res = fmt.__class__(bytes(ret[0]));
-            print "D: Reply",res.describe()
+            print("D: Reply",res.describe())
             res.printer(sys.stdout,header=False);
     if kind == TRACE_UNEXPECTED:
         simple_tracer(mt,kind,fmt=fmt,path=path,ret=ret);
@@ -62,12 +62,12 @@ def dumper_tracer(mt,kind,fmt=None,path=None,ret=None):
     if kind == TRACE_RECEIVE:
         simple_tracer(mt,kind,fmt=fmt,path=path,ret=ret);
         if fmt is not None:
-            print "D: Incoming request",fmt.describe();
+            print("D: Incoming request",fmt.describe());
             fmt.printer(sys.stdout,header=False);
     if kind == TRACE_REPLY:
         simple_tracer(mt,kind,fmt=fmt,path=path,ret=ret);
         if fmt is not None:
-            print "D: Outgoing reply",fmt.describe();
+            print("D: Outgoing reply",fmt.describe());
             fmt.printer(sys.stdout,header=False);
 
 class MADTransactor(object):
@@ -202,7 +202,7 @@ class MADTransactor(object):
         except:
             e = rdma.MADError(req=fmt,rep_buf=rbuf,path=path,
                                 exc_info=sys.exc_info());
-            raise rdma.MADError,e,e.exc_info[2]
+            raise rdma.MADError(e).with_traceback(e.exc_info[2])
 
         # Note that everything in get_reply_match_key has already been
         # checked
@@ -265,7 +265,7 @@ class MADTransactor(object):
         except:
             e = rdma.MADError(req=fmt,rep_buf=rbuf,path=path,
                                 exc_info=sys.exc_info());
-            raise rdma.MADError,e,e.exc_info[2]
+            raise rdma.MADError(e).with_traceback(e.exc_info[2])
 
         if completer:
             self.req_fmt = fmt;
@@ -363,7 +363,7 @@ class MADTransactor(object):
                                 msg="Invalid base version, got key %r"%(match));
         kind = IBA.get_fmt_payload(*match);
         if kind[0] is None:
-            for clsid,ver in IBA.CLASS_TO_STRUCT.iterkeys():
+            for clsid,ver in IBA.CLASS_TO_STRUCT.keys():
                 if clsid == kind[0]:
                     raise rdma.MADError(req_buf=rbuf,path=path,
                                         reply_status=IBA.MAD_STATUS_BAD_VERSION,
@@ -395,7 +395,7 @@ class MADTransactor(object):
             e = rdma.MADError(req_buf=rbuf,path=path,
                               reply_status=IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER,
                               exc_info=sys.exc_info());
-            raise rdma.MADError,e,e.exc_info[2]
+            raise rdma.MADError(e).with_traceback(e.exc_info[2])
 
     def send_error_exc(self,exc):
         """Call :meth:`send_error_reply` with the arguments derived from
@@ -508,7 +508,7 @@ class MADTransactor(object):
         while True:
             try:
                 if result is None:
-                    result = op.next();
+                    result = next(op);
                 else:
                     result = op.send(result);
                     if result is None:

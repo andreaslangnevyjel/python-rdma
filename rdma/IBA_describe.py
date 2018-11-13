@@ -194,7 +194,7 @@ def dstr(value,quotes = False):
     if value is None:
         return "None";
     r = repr(value);
-    if isinstance(value,unicode):
+    if isinstance(value,str):
         r = r[1:];
     if quotes:
         return r;
@@ -221,10 +221,10 @@ def _array_dump(F,a,buf,mbits,name,offset=0):
                 mb.append("%u:%r"%(idx,a[idx]));
             idx = idx + 1;
 
-        print >> F, "%3u %02X%02X%02X%02X %s"%\
+        print("%3u %02X%02X%02X%02X %s"%\
               (offset + cur_dword,ord(buf[cur_dword]),ord(buf[cur_dword+1]),
                ord(buf[cur_dword+2]),ord(buf[cur_dword+3]),
-               ", ".join(mb));
+               ", ".join(mb)), file=F);
         cur_dword = cur_dword + 4;
 
 def struct_dump(F,s,offset=0,name_prefix=''):
@@ -267,14 +267,14 @@ def struct_dump(F,s,offset=0,name_prefix=''):
 
                 # Recurse into children structs
                 if isinstance(attr,rdma.binstruct.BinStruct):
-                    print >> F,"   + %s%s %s"%(name_prefix,name,
-                                               attr.__class__.__name__)
+                    print("   + %s%s %s"%(name_prefix,name,
+                                               attr.__class__.__name__), file=F)
                     struct_dump(F,attr,cur_dword+offset,
                                 name_prefix="%s%s."%(name_prefix,name));
                     cur_dword = cur_dword + bits//8;
                     if cur_dword >= max_dword:
                         return
-                    print >> F,"   - %s%s"%(name_prefix,name)
+                    print("   - %s%s"%(name_prefix,name), file=F)
                     continue;
 
             # Handle aligned arrays by pretty printing the array
@@ -282,15 +282,15 @@ def struct_dump(F,s,offset=0,name_prefix=''):
                 # Handle arrays of structures
                 if isinstance(attr[0],rdma.binstruct.BinStruct):
                     for I,v in enumerate(attr):
-                        print >> F,"   + %s%s[%u] %s"%(
-                            name_prefix,name,I,v.__class__.__name__);
+                        print("   + %s%s[%u] %s"%(
+                            name_prefix,name,I,v.__class__.__name__), file=F);
                         struct_dump(F,v,cur_dword,
                                     name_prefix="%s%s[%u]."%(
                                         name_prefix,name,I));
                         cur_dword = cur_dword + bits//8;
                     if cur_dword >= max_dword:
                         return
-                    print >> F,"   - %s%s"%(name_prefix,name)
+                    print("   - %s%s"%(name_prefix,name), file=F)
                     continue;
 
                 _array_dump(F,attr,buf[cur_dword:cur_dword + bits//8],
@@ -309,10 +309,10 @@ def struct_dump(F,s,offset=0,name_prefix=''):
             return
 
         while off > cur_dword*8:
-            print >> F, "%3u %02X%02X%02X%02X %s"%\
+            print("%3u %02X%02X%02X%02X %s"%\
                 (offset + cur_dword,ord(buf[cur_dword]),ord(buf[cur_dword+1]),
                  ord(buf[cur_dword+2]),ord(buf[cur_dword+3]),
-                 ",".join(mb));
+                 ",".join(mb)), file=F);
             del mb[:]
             cur_dword = cur_dword + 4;
 
@@ -384,7 +384,7 @@ def struct_dotted(F,s,name_prefix='',dump_list=False,skip_reserved=True,
                         n = n + ":";
                     if conv:
                         v = conv(v);
-                    print >> F, ("%s%s"+fmt)%(n,"."*(column-len(n)),v);
+                    print(("%s%s"+fmt)%(n,"."*(column-len(n)),v), file=F);
                 continue;
             else:
                 attr = "[%s]"%(", ".join(("%u:"+fmt)%(I,v) for I,v in enumerate(attr)));
@@ -395,4 +395,4 @@ def struct_dotted(F,s,name_prefix='',dump_list=False,skip_reserved=True,
             n = n + ":";
         if conv:
             attr = conv(attr);
-        print >> F, ("%s%s"+fmt)%(n,"."*(column-len(n)),attr);
+        print(("%s%s"+fmt)%(n,"."*(column-len(n)),attr), file=F);

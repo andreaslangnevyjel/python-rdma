@@ -212,7 +212,7 @@ def lid_lmc_range(lid,lmc):
     """Return all the LIDs described by *lid* and *lmc*. Similar to `range`"""
     lmc = 1 << lmc;
     lid = lid & (~(lmc-1))
-    return range(lid,lid + lmc);
+    return list(range(lid,lid + lmc));
 
 def to_timer(sec):
     """Take a timeout value in float seconds and convert it into the IBA format
@@ -240,7 +240,7 @@ class GUID(bytes):
             return ZERO_GUID;
         if isinstance(s,GUID):
             return s;
-        if isinstance(s,int) or isinstance(s,long):
+        if isinstance(s,int) or isinstance(s,int):
             s = ("%016x"%(s)).decode("hex");
             raw = True;
         if raw:
@@ -299,7 +299,7 @@ class GID(bytes):
                 prefix = bytes.__str__(prefix)[:8];
             elif isinstance(prefix,GUID):
                 prefix = bytes.__str__(prefix);
-            elif isinstance(prefix,int) or isinstance(prefix,long):
+            elif isinstance(prefix,int) or isinstance(prefix,int):
                 prefix = ("%016x"%(prefix)).decode("hex");
             return bytes.__new__(self,prefix + bytes.__str__(guid))
 
@@ -345,7 +345,7 @@ def conv_ep_addr(s):
 
     :raises ValueError: If the string can not be parsed."""
     # Called on our own output.
-    if isinstance(s,GID) or isinstance(s,int) or isinstance(s,long):
+    if isinstance(s,GID) or isinstance(s,int) or isinstance(s,int):
         return s;
 
     try:
@@ -444,7 +444,7 @@ class ComponentMask(object):
 def const_str(prefix,value,with_int=False,me=sys.modules[__name__]):
     """Generalized constant integer to string that uses introspection
     to figure it out."""
-    for k,v in me.__dict__.iteritems():
+    for k,v in me.__dict__.items():
         if k.startswith(prefix):
             try:
                 if value == v:

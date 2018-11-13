@@ -96,12 +96,12 @@ def struct(name, fields):
     tracking feature."""
     def init(self, **args):
         for k in args:
-            if k not in self._finfo.keys():
+            if k not in list(self._finfo.keys()):
                 raise TypeError("%s() got an unexpected keyword argument '%s'" %
                                 (name, k))
         mask = 0
         self.MASK = 0
-        for k, f in self._finfo.items():
+        for k, f in list(self._finfo.items()):
             if k in args:
                 v = args[k]
                 mask |= f.mask
@@ -114,7 +114,7 @@ def struct(name, fields):
         self.MASK = mask
 
     def sattr(self, k, v):
-        if k != 'MASK' and k not in self._finfo.keys():
+        if k != 'MASK' and k not in list(self._finfo.keys()):
             raise AttributeError("'%s' object has no attribute '%s'" % (name, k))
 
         object.__setattr__(self, k, v)
@@ -124,7 +124,7 @@ def struct(name, fields):
 
     def pretty(self):
         L = []
-        for k, f in self._finfo.items():
+        for k, f in list(self._finfo.items()):
             s = "%s=%s" % (k, getattr(self, k))
             if self.MASK & f.mask:
                 s += '*'

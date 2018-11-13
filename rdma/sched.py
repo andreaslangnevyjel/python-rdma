@@ -104,7 +104,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                     work = ctx._op.throw(*exc);
                 elif ctx._first:
                     ctx._first = False;
-                    work = ctx._op.next();
+                    work = next(ctx._op);
                 else:
                     work = ctx._op.send(result);
             except StopIteration:

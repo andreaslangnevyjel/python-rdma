@@ -1,6 +1,6 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 '''This module provides a list of IB devices pulled from from sysfs'''
-from __future__ import with_statement;
+;
 
 import rdma;
 import rdma.IBA as IBA;
@@ -46,7 +46,7 @@ class SysFSCache(object):
 
     def _cached_sysfs(self,name,convert = None):
         '''Read, cache and return the value from sysfs'''
-        if self._cache.has_key(name):
+        if name in self._cache:
             return self._cache[name];
         with open(self._dir + name) as F:
             s = F.read();
@@ -106,7 +106,7 @@ class DemandList(collections.Iterable):
 
     def index(self,value):
         """Return the index idx such that ``obj[idx] == value``."""
-        for k,v in self._data.iteritems():
+        for k,v in self._data.items():
             if v == value:
                 return k;
 

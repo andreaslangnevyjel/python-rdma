@@ -268,7 +268,7 @@ class _SubnetTopo(object):
                 if bucket.todo_ports:
                     node,path,portIdx,depth = bucket.todo_ports.pop();
                     r = ((portIdx,) if portIdx is not None else
-                         range(0,node.ninf.numPorts+1));
+                         list(range(0,node.ninf.numPorts+1)));
                     for portIdx in r:
                         aport = node.get_port(portIdx);
                         if aport.pinf is not None:

@@ -32,12 +32,12 @@ def unpack_array8(buf,offset,mlen,count,inp):
         inp[I] = (val >> ((count - 1 - I)*mlen)) & ((1 << mlen) - 1);
     return
 
-class BinStruct(object):
+class BinStruct(object, metaclass=abc.ABCMeta):
     '''Base class for all binary structure objects (MADs, etc). When pickled
     this class re-packs the structure and stores it as a `bytes` value. This
     reduces the storage overhead from pickling and allows the library to
     upgrade to different internal storage methods in future.'''
-    __metaclass__ = abc.ABCMeta;
+    
     __slots__ = ();
 
     def __init__(self,buf = None,offset = 0):
@@ -61,7 +61,7 @@ class BinStruct(object):
         added to all printed offsets and *header* causes the display of the
         class type on the first line. *format* may be `dump` or `dotted`."""
         if header:
-            print >> F, "%s"%(self.__class__.__name__);
+            print("%s"%(self.__class__.__name__), file=F);
         import rdma.IBA_describe;
         if format == "dotted":
             return rdma.IBA_describe.struct_dotted(F,self,**kwargs);
@@ -85,7 +85,7 @@ class BinStruct(object):
     def compare(self,lhs,mask):
         """Compare *self* and *lhs* using the rules for component mask
         matching."""
-        for k,v in self.COMPONENT_MASK.iteritems():
+        for k,v in self.COMPONENT_MASK.items():
             if not (mask & (1<<v)):
                 continue;
 

@@ -736,7 +736,7 @@ class Subnet(object):
             prior = self._priors.get(target);
             if prior is None:
                 try:
-                    while target != self._iter.next():
+                    while target != next(self._iter):
                         continue;
                 except StopIteration:
                     raise ValueError("Cannot reach %r via DR"%(target));

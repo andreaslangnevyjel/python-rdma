@@ -23,10 +23,10 @@ class Path(object):
         """*end_port* is the :class:`rdma.devices.EndPort` this path is
         associated with. *kwargs* is applied to set attributes of the
         instance during initialization."""
-        if isinstance(end_port,str) or isinstance(end_port,unicode):
+        if isinstance(end_port,str) or isinstance(end_port,str):
             end_port = rdma.get_end_port(end_port);
         self.end_port = end_port;
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             setattr(self,k,v);
 
     def copy(self,**kwargs):
@@ -42,14 +42,14 @@ class Path(object):
 
     def drop_cache(self):
         """Release any cached information."""
-        for I in self.__dict__.keys():
+        for I in list(self.__dict__.keys()):
             if I.startswith("_cached"):
                 self.__delattr__(I);
 
     def __repr__(self):
         cls = self.__class__;
         keys = ("%s=%s"%(k,getattr(cls,"_format_%s"%(k),lambda x:repr(x))(v))
-                for k,v in sorted(self.__dict__.iteritems())
+                for k,v in sorted(self.__dict__.items())
                 if k[0] != "_" and k != "end_port" and getattr(cls,k,None) != v);
         if self.end_port is None:
             ep = None;
@@ -61,7 +61,7 @@ class Path(object):
         """When we pickle :class:`~rdma.path.IBPath` objects the *end_port*
         attribute is thrown away and not restored."""
         cls = self.__class__;
-        d = dict((k,v) for k,v in self.__dict__.iteritems()
+        d = dict((k,v) for k,v in self.__dict__.items()
                  if k[0] != "_" and k != "end_port" and getattr(cls,k,None) != v);
         if getattr(self,"_forward_path"):
             d["_forward_path"] = self._forward_path.__reduce__();
@@ -89,7 +89,7 @@ class IBPath(Path):
     communication)"""
 
     def __setstate__(self,d):
-        for k,v in d.iteritems():
+        for k,v in d.items():
             setattr(self,k,v);
 
         # Restore the internal paths when unpickleing
@@ -457,9 +457,9 @@ def get_mad_path(mad,ep_addr,**kwargs):
     :raises rdma.path.SAPathNotFoundError: If *ep_addr* was not found at the SA.
     :raises rdma.MADError: If the RPC failed in some way."""
     ty = type(ep_addr);
-    if ty == str or ty == unicode:
+    if ty == str or ty == str:
         path = from_string(ep_addr,require_ep=mad.end_port);
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             setattr(path,k,v);
     else:
         ep_addr = IBA.conv_ep_addr(ep_addr);
@@ -510,7 +510,7 @@ def _resolve_path_async(mad,path,reversible=False,properties=None):
         q.DLID = path.DLID;
 
     if properties:
-        for k,v in properties.iteritems():
+        for k,v in properties.items():
             setattr(q,k,v);
 
     try:
@@ -583,7 +583,7 @@ def from_spec_string(s):
 
     if len(kwargs) < 1:
         raise ValueError("Invalid path specification %r"%(s,));
-    for k,v in kwargs.iteritems():
+    for k,v in kwargs.items():
         if v == '':
             raise ValueError("Invalid path specification %r"%(s,));
         if not hasattr(cls,k):
@@ -621,7 +621,7 @@ def from_spec_string(s):
                     kwargs[k] = None;
                 else:
                     kwargs[k] = rdma.get_end_port(v);
-            except rdma.RDMAError, e:
+            except rdma.RDMAError as e:
                 raise ValueError("Could not find %r: %s"%(v,e));
         else:
             try:
@@ -701,7 +701,7 @@ def from_string(s,default_end_port=None,require_dev=None,require_ep=None):
         try:
             end_port = rdma.get_end_port(a[1]);
             _check_ep(end_port,require_dev,require_ep);
-        except rdma.RDMAError, e:
+        except rdma.RDMAError as e:
             raise ValueError("Could not find %r: %s"%(a[1],e));
         return IBPath(end_port,DGID=DGID);
 
@@ -720,6 +720,6 @@ def from_string(s,default_end_port=None,require_dev=None,require_ep=None):
                             _check_ep(J,require_dev,require_ep);
                             return IBPath(J,DGID=res);
         return IBPath(default_end_port,DGID=res);
-    if isinstance(res,int) or isinstance(res,long):
+    if isinstance(res,int) or isinstance(res,int):
         return IBPath(default_end_port,DLID=res);
     raise ValueError("Invalid destination %r"%(s,))

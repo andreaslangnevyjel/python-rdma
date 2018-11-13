@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 
 import collections;
 import mmap;
@@ -38,7 +38,7 @@ class BufferPool(object):
         self._mem = mmap.mmap(-1,count*size);
         self._mr = pd.mr(self._mem,ibv.IBV_ACCESS_LOCAL_WRITE |
                          ibv.IBV_ACCESS_LOCAL_WRITE);
-        self._buffers = collections.deque(xrange(count),count);
+        self._buffers = collections.deque(range(count),count);
         self.RECV_FLAG = 1 << (int(math.log(count,2))+1)
         self.BUF_ID_MASK = self.RECV_FLAG-1
 

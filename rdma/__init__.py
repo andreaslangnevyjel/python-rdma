@@ -42,7 +42,7 @@ class MADError(RDMAError):
         :param exc_info: Result of :func:`sys.exc_info` if MAD processing failed due to an unexpected exception.
         """
         RDMAError.__init__(self);
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             if k == "msg":
                 self.message(v);
             else:
@@ -63,7 +63,7 @@ class MADError(RDMAError):
         `__init__` on the base class."""
         RDMAError.__init__(self);
         if err is not None:
-            for k,v in err.__dict__.iteritems():
+            for k,v in err.__dict__.items():
                 if k[0] != "_":
                     setattr(self,k,v);
 
@@ -88,28 +88,28 @@ class MADError(RDMAError):
         if F is None:
             F = sys.stderr;
         if level == 0 and self.exc_info is not None:
-            print >> F,prefix,self.__str__();
+            print(prefix,self.__str__(), file=F);
             return;
         if self.messages:
             first = True;
             for I in reversed(self.messages):
                 if first:
-                    print >> F, prefix,I;
+                    print(prefix,I, file=F);
                     first = False;
                 else:
-                    print >> F, prefix,"+%s"%(I);
+                    print(prefix,"+%s"%(I), file=F);
         else:
-            print >> F, prefix,self.__str__();
+            print(prefix,self.__str__(), file=F);
         if level >= 1 and self.path is not None:
-            print >> F, prefix,"+MAD path was %r"%(self.path);
+            print(prefix,"+MAD path was %r"%(self.path), file=F);
         if level >= 2 and self.req is not None:
-            print >> F, prefix,"+Request Packet %s"%(self.req.__class__.__name__)
+            print(prefix,"+Request Packet %s"%(self.req.__class__.__name__), file=F)
             self.req.printer(F,header=False);
             if self.rep:
-                print >> F, prefix,"+Reply Packet %s"%(self.rep.__class__.__name__)
+                print(prefix,"+Reply Packet %s"%(self.rep.__class__.__name__), file=F)
                 self.rep.printer(F,header=False);
         if self.exc_info is not None:
-            raise self.exc_info[0],self.exc_info[1],self.exc_info[2];
+            raise self.exc_info[0](self.exc_info[1]).with_traceback(self.exc_info[2]);
 
     def __str__(self):
         if self.messages is not None:
