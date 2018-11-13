@@ -50,8 +50,8 @@ class ibtool_cmds_test(unittest.TestCase):
 
             self.peer_dr = "0,%u" % (self.end_port.port_id)
             with rdma.get_umad(self.end_port) as umad:
-                dr = rdma.path.IBDRPath(self.end_port, drPath="\0" +
-                                                              chr(self.end_port.port_id))
+                dr = rdma.path.IBDRPath(self.end_port, drPath=b"\0" +
+                                                              chr(self.end_port.port_id).encode("ascii"))
                 self.peer_pinf = umad.SubnGet(IBA.SMPPortInfo, dr)
                 self.peer_ninf = umad.SubnGet(IBA.SMPNodeInfo, dr)
 

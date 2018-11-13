@@ -261,7 +261,7 @@ def struct_dump(f_obj, s, offset=0, name_prefix=''):
     cur_dword = 0
     while cur_dword < max_dword:
         del mb[:]
-        if (idx >= max_idx and cur_dword > nz_dword):
+        if idx >= max_idx and cur_dword > nz_dword:
             break
         while off < cur_dword * 8 + 32 and idx < max_idx:
             name, mbits, count = s.MEMBERS[idx]

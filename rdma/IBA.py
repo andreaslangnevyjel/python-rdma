@@ -323,7 +323,7 @@ class GID(bytes):
                 prefix = bytes.__str__(prefix)
             elif isinstance(prefix, int) or isinstance(prefix, int):
                 prefix = codecs.decode(("%016x" % (prefix)), "hex")
-            return bytes.__new__(self, prefix + bytes.__str__(guid))
+            return bytes.__new__(self, prefix + bytes.__str__(guid).encode("ascii"))
 
         if isinstance(s, GID):
             return s

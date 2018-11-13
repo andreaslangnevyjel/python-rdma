@@ -385,7 +385,7 @@ class IBDRPath(IBPath):
         By default this class construct a DR path to the local port."""
         self.DLID = IBA.LID_PERMISSIVE
         self.SLID = IBA.LID_PERMISSIVE
-        self.drPath = bytes(chr(0))
+        self.drPath = (chr(0)).encode("ascii")
         self.dqpn = 0
         self.sqpn = 0
         self.qkey = IBA.IB_DEFAULT_QP0_QKEY
