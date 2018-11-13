@@ -6,6 +6,7 @@
 
 import socket
 import sys
+import codecs
 
 import rdma.binstruct
 
@@ -250,7 +251,7 @@ class GUID(bytes):
         if isinstance(s, GUID):
             return s
         if isinstance(s, int) or isinstance(s, int):
-            s = ("%016x" % (s)).decode("hex")
+            s = codecs.decode(("%016x" % (s)), "hex")
             raw = True
         if raw:
             assert (len(s) == 8)
@@ -261,7 +262,7 @@ class GUID(bytes):
         if len(v) != 16:
             raise ValueError("%r is not a valid GUID" % (s))
         try:
-            return bytes.__new__(cls, v.decode("hex"))
+            return bytes.__new__(cls, codecs.decode(v, "hex"))
         except TypeError:
             raise ValueError("%r is not a valid GUID" % (s))
 
@@ -316,7 +317,7 @@ class GID(bytes):
             elif isinstance(prefix, GUID):
                 prefix = bytes.__str__(prefix)
             elif isinstance(prefix, int) or isinstance(prefix, int):
-                prefix = ("%016x" % (prefix)).decode("hex")
+                prefix = codecs.decode(("%016x" % (prefix)), "hex")
             return bytes.__new__(self, prefix + bytes.__str__(guid))
 
         if isinstance(s, GID):
