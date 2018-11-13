@@ -21,7 +21,7 @@ class structs_test(unittest.TestCase):
 
     def test_odd_size(self):
         fmt = IBA.SMPFormatDirected()
-        drPath = bytes("0" * 65)
+        drPath = bytes(b"0" * 65)
         fmt.initialPath[:len(drPath)] = drPath
         test = bytearray(fmt.MAD_LENGTH)
         fmt.pack_into(test)

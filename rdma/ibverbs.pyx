@@ -1,10 +1,9 @@
 # -*- Python3 -*-
 # cython: language_level=3
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+
 import select
-import collections
 import errno as mod_errno
-import rdma.tools as tools
 import struct
 import weakref
 import sys
@@ -96,10 +95,12 @@ def wc_status_str(int status):
     return c.ibv_wc_status_str(status)
 
 cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
-    """Fill in an ibv_ah_attr from *attr*. *attr* can be a
+    """
+    Fill in an ibv_ah_attr from *attr*. *attr* can be a
     :class:`rdma.ibverbs.ah_attr` which is copied directly (discouraged) or it
     can be a :class:`rdma.path.IBPath` which will setup the AH using the
-    forward path parameters."""
+    forward path parameters.
+    """
     # ord() is broken in cython 0.20/0.21
     cdef uint8_t *tmp
     cdef char tmp2[16]
@@ -187,7 +188,7 @@ cdef _post_check(object arg, object wrtype, int max_sge, int *numsge):
             sgec = sgec + n
             if n > max_sge:
                 raise ValueError("Too many scatter/gather entries in work request")
-            for 0 <= i < n:
+            for i in range(0, n): #  0 <= i < n:
                 if not isinstance(sglist[i], sge):
                     raise TypeError("sg_list entries must be of type ibv_sge")
         elif wr.sg_list is not None:
@@ -309,9 +310,11 @@ cdef class Context:
     cdef object _children_cq
     cdef object _children_cc
 
-    def __cinit__(self,parent):
-        '''Create a :class:`rdma.uverbs.UVerbs` instance for the associated
-        :class:`rdma.devices.RDMADevice`/:class:`rdma.devices.EndPort`.'''
+    def __cinit__(self, parent):
+        """
+        Create a :class:`rdma.uverbs.UVerbs` instance for the associated
+        :class:`rdma.devices.RDMADevice`/:class:`rdma.devices.EndPort`.
+        """
         cdef c.ibv_device **dev_list
         cdef int i
         cdef int count
@@ -329,8 +332,8 @@ cdef class Context:
                                 "Failed to get device list")
 
         try:
-            for 0 <= i < count:
-                if dev_list[i].name == self.node.name:
+            for i in range(0, count + 1):  #  0 <= i < count:
+                if dev_list[i].name.decode("ascii") == self.node.name:
                     break
             else:
                 raise rdma.RDMAError("RDMA verbs device %r not found."%(self.node))
@@ -1087,7 +1090,7 @@ cdef class SRQ:
         try:
             cwr = <c.ibv_recv_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for 0 <= i < n:
+            for i in range(0, n): #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
@@ -1099,7 +1102,7 @@ cdef class SRQ:
                 cwr.sg_list = csge
                 if isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
                     cwr.num_sge = len(wr.sg_list)
-                    for 0 <= j < cwr.num_sge:
+                    for j in range(0, cwr.num_sge): #  0 <= j < cwr.num_sge:
                         sge = wr.sg_list[j]
                         csge.addr = sge.addr
                         csge.length = sge.length
@@ -1118,7 +1121,7 @@ cdef class SRQ:
             rc = c.ibv_post_srq_recv(self._srq, <c.ibv_recv_wr *>mem, &cbad_wr)
             if rc != 0:
                 cwr = <c.ibv_recv_wr *>(mem)
-                for 0 <= i < n:
+                for i in range(0, n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
                 raise WRError(rc,"ibv_post_srq_recv","Failed to post work request",n)
@@ -1435,7 +1438,7 @@ cdef class QP:
         try:
             cwr = <c.ibv_send_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for 0 <= i < n:
+            for i in range(0, n): #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
@@ -1447,7 +1450,7 @@ cdef class QP:
                 cwr.sg_list = csge
                 if isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
                     cwr.num_sge = len(wr.sg_list)
-                    for 0 <= j < cwr.num_sge:
+                    for j in range(0, cwr.num_sge): #  0 <= j < cwr.num_sge:
                         sge = wr.sg_list[j]
                         csge.addr = sge.addr
                         csge.length = sge.length
@@ -1487,7 +1490,7 @@ cdef class QP:
             rc = c.ibv_post_send(self._qp, <c.ibv_send_wr *>mem, &cbad_wr)
             if rc != 0:
                 cwr = <c.ibv_send_wr *>(mem)
-                for 0 <= i < n:
+                for i in range(0, n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
                 raise WRError(rc,"ibv_post_send","Failed to post work request",n)
@@ -1518,7 +1521,7 @@ cdef class QP:
         try:
             cwr = <c.ibv_recv_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for 0 <= i < n:
+            for i in range(0, n): #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
@@ -1530,7 +1533,7 @@ cdef class QP:
                 cwr.sg_list = csge
                 if isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
                     cwr.num_sge = len(wr.sg_list)
-                    for 0 <= j < cwr.num_sge:
+                    for j in range(0, cwr.num_sge): #  0 <= j < cwr.num_sge:
                         sge = wr.sg_list[j]
                         csge.addr = sge.addr
                         csge.length = sge.length
@@ -1548,7 +1551,7 @@ cdef class QP:
             rc = c.ibv_post_recv(self._qp, <c.ibv_recv_wr *>mem, &cbad_wr)
             if rc != 0:
                 cwr = <c.ibv_recv_wr *>(mem)
-                for 0 <= i < n:
+                for i in range(0, n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
                 raise WRError(rc,"ibv_post_recv","Failed to post work request",n)

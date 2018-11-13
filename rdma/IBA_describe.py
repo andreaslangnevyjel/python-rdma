@@ -214,7 +214,7 @@ def dstr(value, quotes=False):
     return r[1:-1]
 
 
-def _array_dump(F, a, buf, mbits, name, offset=0):
+def _array_dump(f_obj, a, buf, mbits, name, offset=0):
     """Dump an array beside the hex values. Each array member is printed
     beside the hex dword that it starts on."""
     cur_dword = 0
@@ -236,13 +236,13 @@ def _array_dump(F, a, buf, mbits, name, offset=0):
             idx = idx + 1
 
         print("%3u %02X%02X%02X%02X %s" % \
-              (offset + cur_dword, ord(buf[cur_dword]), ord(buf[cur_dword + 1]),
-               ord(buf[cur_dword + 2]), ord(buf[cur_dword + 3]),
-               ", ".join(mb)), file=F)
+              (offset + cur_dword, buf[cur_dword], buf[cur_dword + 1],
+               buf[cur_dword + 2],buf[cur_dword + 3],
+               ", ".join(mb)), file=f_obj)
         cur_dword = cur_dword + 4
 
 
-def struct_dump(F, s, offset=0, name_prefix=''):
+def struct_dump(f_obj, s, offset=0, name_prefix=''):
     """Pretty print the structure *s*. *F* is the output file, *offset* is
     added to all printed offsets and name_prefix is used to prefix names
     when descending."""
@@ -283,13 +283,13 @@ def struct_dump(F, s, offset=0, name_prefix=''):
                 # Recurse into children structs
                 if isinstance(attr, rdma.binstruct.BinStruct):
                     print("   + %s%s %s" % (name_prefix, name,
-                                            attr.__class__.__name__), file=F)
-                    struct_dump(F, attr, cur_dword + offset,
+                                            attr.__class__.__name__), file=f_obj)
+                    struct_dump(f_obj, attr, cur_dword + offset,
                                 name_prefix="%s%s." % (name_prefix, name))
                     cur_dword = cur_dword + bits // 8
                     if cur_dword >= max_dword:
                         return
-                    print("   - %s%s" % (name_prefix, name), file=F)
+                    print("   - %s%s" % (name_prefix, name), file=f_obj)
                     continue
 
             # Handle aligned arrays by pretty printing the array
@@ -298,17 +298,17 @@ def struct_dump(F, s, offset=0, name_prefix=''):
                 if isinstance(attr[0], rdma.binstruct.BinStruct):
                     for I, v in enumerate(attr):
                         print("   + %s%s[%u] %s" % (
-                            name_prefix, name, I, v.__class__.__name__), file=F)
-                        struct_dump(F, v, cur_dword,
+                            name_prefix, name, I, v.__class__.__name__), file=f_obj)
+                        struct_dump(f_obj, v, cur_dword,
                                     name_prefix="%s%s[%u]." % (
                                         name_prefix, name, I))
                         cur_dword = cur_dword + bits // 8
                     if cur_dword >= max_dword:
                         return
-                    print("   - %s%s" % (name_prefix, name), file=F)
+                    print("   - %s%s" % (name_prefix, name), file=f_obj)
                     continue
 
-                _array_dump(F, attr, buf[cur_dword:cur_dword + bits // 8],
+                _array_dump(f_obj, attr, buf[cur_dword:cur_dword + bits // 8],
                             mbits, name, offset=cur_dword + offset)
                 cur_dword = cur_dword + bits // 8
                 continue
@@ -325,14 +325,14 @@ def struct_dump(F, s, offset=0, name_prefix=''):
 
         while off > cur_dword * 8:
             print("%3u %02X%02X%02X%02X %s" % \
-                  (offset + cur_dword, ord(buf[cur_dword]), ord(buf[cur_dword + 1]),
-                   ord(buf[cur_dword + 2]), ord(buf[cur_dword + 3]),
-                   ",".join(mb)), file=F)
+                  (offset + cur_dword, buf[cur_dword], buf[cur_dword + 1],
+                   buf[cur_dword + 2], buf[cur_dword + 3],
+                   ",".join(mb)), file=f_obj)
             del mb[:]
             cur_dword = cur_dword + 4
 
 
-def struct_dotted(F, s, name_prefix='', dump_list=False, skip_reserved=True,
+def struct_dotted(f_obj, s, name_prefix='', dump_list=False, skip_reserved=True,
                   column=33, colon=False, name_map=None):
     """This tries to emulate the libib structure print format. Members are
     printed one per line with values aligned on column 32."""
@@ -355,7 +355,7 @@ def struct_dotted(F, s, name_prefix='', dump_list=False, skip_reserved=True,
                     attr = nattr(attr)
 
         if isinstance(attr, rdma.binstruct.BinStruct):
-            struct_dotted(F, attr, "%s%s." % (name_prefix, name),
+            struct_dotted(f_obj, attr, "%s%s." % (name_prefix, name),
                           dump_list=dump_list,
                           skip_reserved=skip_reserved,
                           column=column,
@@ -385,7 +385,7 @@ def struct_dotted(F, s, name_prefix='', dump_list=False, skip_reserved=True,
         if count != 1 and len(attr) == count and conv == None:
             if isinstance(attr[0], rdma.binstruct.BinStruct):
                 for I, v in enumerate(attr):
-                    struct_dotted(F, v, "%s%s[%u]." % (name_prefix, name, I),
+                    struct_dotted(f_obj, v, "%s%s[%u]." % (name_prefix, name, I),
                                   dump_list=dump_list,
                                   skip_reserved=skip_reserved,
                                   column=column,
@@ -400,7 +400,7 @@ def struct_dotted(F, s, name_prefix='', dump_list=False, skip_reserved=True,
                         n = n + ":"
                     if conv:
                         v = conv(v)
-                    print(("%s%s" + fmt) % (n, "." * (column - len(n)), v), file=F)
+                    print(("%s%s" + fmt) % (n, "." * (column - len(n)), v), file=f_obj)
                 continue
             else:
                 attr = "[%s]" % (", ".join(("%u:" + fmt) % (I, v) for I, v in enumerate(attr)))
@@ -411,4 +411,4 @@ def struct_dotted(F, s, name_prefix='', dump_list=False, skip_reserved=True,
             n = n + ":"
         if conv:
             attr = conv(attr)
-        print(("%s%s" + fmt) % (n, "." * (column - len(n)), attr), file=F)
+        print(("%s%s" + fmt) % (n, "." * (column - len(n)), attr), file=f_obj)

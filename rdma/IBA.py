@@ -271,8 +271,9 @@ class GUID(bytes):
                 raise ValueError("%r is not a valid GUID" % (s))
 
     def pack_into(self, buf, offset=0):
-        """Pack the value into a byte array."""
-        buf[offset:offset + 8] = bytes.__str__(self)
+        """ Pack the value into a byte array. """
+        
+        buf[offset:offset + 8] = bytes.__str__(self).encode("ascii")
 
     def __str__(self):
         """Return a printable string of the GUID."""
@@ -336,7 +337,7 @@ class GID(bytes):
 
     def pack_into(self, buf, offset=0):
         """Pack the value into a byte array."""
-        buf[offset:offset + 16] = bytes.__str__(self)
+        buf[offset:offset + 16] = bytes.__str__(self).encode("ascii")
 
     def __str__(self):
         """Return a printable string of the GID."""
