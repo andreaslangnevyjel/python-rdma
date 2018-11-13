@@ -1,4 +1,6 @@
 # -*- Python -*-
+# -*- coding: utf-8 -*-
+
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 
 include 'libibverbs_enums.pxd'

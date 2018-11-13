@@ -254,7 +254,8 @@ class GUID(bytes):
             raw = True
         if raw:
             assert (len(s) == 8)
-            return bytes.__new__(cls, s)
+            # print(cls, s, type(s), len(s), "*", s, "*", [ord(x) for x in s])
+            return bytes.__new__(cls, s.encode("ascii"))
 
         v = ''.join(I.zfill(4) for I in s.strip().split(':'))
         if len(v) != 16:
@@ -322,7 +323,7 @@ class GID(bytes):
             return s
         if raw:
             assert (len(s) == 16)
-            return bytes.__new__(self, s)
+            return bytes.__new__(self, s.encode("ascii"))
         try:
             return bytes.__new__(self, socket.inet_pton(socket.AF_INET6, s.strip()))
         except:

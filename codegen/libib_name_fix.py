@@ -9,10 +9,10 @@ MATCH_SA = "\W+([^.]+)\.+(.*)$"
 
 
 def matchify(ref, me, match):
-    gr = [_f for _f in [re.match(match, I) for I in ref] if _f]
-    gm = [_f for _f in [re.match(match, I) for I in me] if _f]
-    gr = [(I.groups()[0], I.groups()[1]) for I in gr]
-    gm = [(I.groups()[0], I.groups()[1]) for I in gm]
+    gr = [_f for _f in [re.match(match, obj) for obj in ref] if _f]
+    gm = [_f for _f in [re.match(match, obj) for obj in me] if _f]
+    gr = [(obj.groups()[0], obj.groups()[1]) for obj in gr]
+    gm = [(obj.groups()[0], obj.groups()[1]) for obj in gm]
 
     idxm = 0
     idxr = 0
@@ -43,6 +43,7 @@ def matchify(ref, me, match):
 def pull_file(file_obj):
     res = {}
     coll = []
+    thing = None
     for line in file_obj.readlines():
         if line.startswith("------------- "):
             if coll:
@@ -54,16 +55,16 @@ def pull_file(file_obj):
     return res
 
 
-with open(sys.argv[1]) as F:
-    reference = pull_file(F)
-with open(sys.argv[2]) as F:
-    me = pull_file(F)
+with open(sys.argv[1]) as f_obj:
+    reference = pull_file(f_obj)
+with open(sys.argv[2]) as f_obj:
+    me = pull_file(f_obj)
 
 translate = {}
-for thing, coll in me.items():
-    if thing.find("saquery', 'NR") != -1:
+for _thing, _coll in me.items():
+    if _thing.find("saquery', 'NR") != -1:
         try:
-            matchify(reference[thing], coll, MATCH_SA)
+            matchify(reference[_thing], _coll, MATCH_SA)
         except KeyError:
             pass
 for I in translate.items():

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # ./mkstructs.py -x iba_transport.xml -x iba_12.xml -x iba_13_4.xml -x iba_13_6.xml -x iba_14.xml -x iba_15.xml -x iba_16_1.xml -x iba_16_3.xml -x iba_16_4.xml -x iba_16_5.xml  -o ../rdma/IBA_struct.py -r ../doc/iba_struct.inc
 
@@ -27,19 +29,35 @@ MAD_METHOD_DELETE = 0x15
 MAD_METHOD_RESPONSE = 0x80
 
 methodMap = {}
-prefix = ("Subn", "CommMgt", "Performance", "BM", "DevMgt", "SubnAdm", "SNMP",
-          "Vend")
-for I in prefix:
-    for J in ("Get", "Set", "Send", "Trap", "Delete"):
-        methodMap[I + J] = "MAD_METHOD_%s" % (J.upper())
-    methodMap[I + "TrapRepress"] = "MAD_METHOD_TRAP_REPRESS"
-    methodMap[I + "GetTable"] = "MAD_METHOD_GET_TABLE"
-    methodMap[I + "GetTraceTable"] = "MAD_METHOD_GET_TRACE_TABLE"
-    methodMap[I + "GetMulti"] = "MAD_METHOD_GET_MULTI"
+prefix = (
+    "Subn",
+    "CommMgt",
+    "Performance",
+    "BM",
+    "DevMgt",
+    "SubnAdm",
+    "SNMP",
+    "Vend",
+)
+
+
+for cur_p in prefix:
+    for cur_name in (
+        "Get",
+        "Set",
+        "Send",
+        "Trap",
+        "Delete",
+    ):
+        methodMap[cur_p + cur_name] = "MAD_METHOD_{}".format(cur_name.upper())
+    methodMap[cur_p + "TrapRepress"] = "MAD_METHOD_TRAP_REPRESS"
+    methodMap[cur_p + "GetTable"] = "MAD_METHOD_GET_TABLE"
+    methodMap[cur_p + "GetTraceTable"] = "MAD_METHOD_GET_TRACE_TABLE"
+    methodMap[cur_p + "GetMulti"] = "MAD_METHOD_GET_MULTI"
 
 
 @contextmanager
-def safeUpdateCtx(path):
+def safe_update_ctx(path: str):
     """Open a temporary file path.tmp, return it, then close it and rename it
     to path using safeUpdate as a context manager"""
     tmp = path + ".tmp"
@@ -503,75 +521,75 @@ parser.add_option('-r', '--rst-out', dest='rst_out')
 (options, args) = parser.parse_args()
 
 structs = []
-for I in options.xml:
-    with open(I, 'r') as F:
-        doc = ElementTree.parse(F)
+for cur_p in options.xml:
+    with open(cur_p, 'r') as f_obj:
+        doc = ElementTree.parse(f_obj)
         for xml in doc.findall("struct"):
             if not xml.get("containerName"):
-                structs.append(Struct(xml, I))
+                structs.append(Struct(xml, cur_p))
 structMap = dict((I.name, I) for I in structs)
-for I in structs:
-    for J in I.mb:
-        obj = structMap.get(J[1].getStruct())
+for cur_p in structs:
+    for cur_name in cur_p.mb:
+        obj = structMap.get(cur_name[1].getStruct())
         if obj is not None:
-            assert obj.size * 8 == J[1].bits
-for I in structs:
-    I.make_inherit()
-for I in structs:
-    I.set_reserved()
+            assert obj.size * 8 == cur_name[1].bits
+for cur_p in structs:
+    cur_p.make_inherit()
+for cur_p in structs:
+    cur_p.set_reserved()
 
 # Match up formats and attributes. We infer the matching based on grouping in a file.
-for I in structs:
-    if I.is_format:
-        I.attributes = set()
-        for J in structs:
-            if J.format is not None and J.format != I.name:
+for cur_p in structs:
+    if cur_p.is_format:
+        cur_p.attributes = set()
+        for cur_name in structs:
+            if cur_name.format is not None and cur_name.format != cur_p.name:
                 continue
-            if J.filename == I.filename and J.attributeID is not None:
-                I.attributes.add(J)
-        for J in I.attributes:
-            if J.methods:
-                I.methods.update(J.methods)
+            if cur_name.filename == cur_p.filename and cur_name.attributeID is not None:
+                cur_p.attributes.add(cur_name)
+        for cur_name in cur_p.attributes:
+            if cur_name.methods:
+                cur_p.methods.update(cur_name.methods)
 
-with safeUpdateCtx(options.struct_out) as F:
-    to_import = set(("struct", "rdma.binstruct"))
-    for I in structs:
-        if I.format is not None:
-            p = I.format.rpartition('.')
+with safe_update_ctx(options.struct_out) as f_obj:
+    to_import = {"struct", "rdma.binstruct"}
+    for cur_p in structs:
+        if cur_p.format is not None:
+            p = cur_p.format.rpartition('.')
             if p[0]:
                 to_import.add(p[0])
-    print("import %s" % (",".join(sorted(to_import))), file=F)
-    for I in structs:
-        I.asPython(F)
+    print("import %s" % (",".join(sorted(to_import))), file=f_obj)
+    for cur_p in structs:
+        cur_p.asPython(f_obj)
 
     fmts = {}
-    for I in structs:
-        for J in I.mb:
-            if J[0].startswith("reserved"):
+    for cur_p in structs:
+        for cur_name in cur_p.mb:
+            if cur_name[0].startswith("reserved"):
                 continue
-            assert fmts.get(J[0], J[1].fmt) == J[1].fmt
-            if J[1].fmt != "%r":
-                fmts[J[0]] = J[1].fmt
-    print("MEMBER_FORMATS = %r;" % (fmts), file=F)
+            assert fmts.get(cur_name[0], cur_name[1].fmt) == cur_name[1].fmt
+            if cur_name[1].fmt != "%r":
+                fmts[cur_name[0]] = cur_name[1].fmt
+    print("MEMBER_FORMATS = %r;" % (fmts), file=f_obj)
 
     res = (I for I in structs if I.is_format)
     print("CLASS_TO_STRUCT = {%s};" % (",\n\t".join("(%u,%u):%s" % (
-        int(I.mgmtClass, 0), (1 << 8) | int(I.mgmtClassVersion, 0), I.name) for I in res)), file=F)
+        int(I.mgmtClass, 0), (1 << 8) | int(I.mgmtClassVersion, 0), I.name) for I in res)), file=f_obj)
 
     res = {}
-    for I in structs:
-        if I.is_format:
-            for J in structs:
-                if J.attributeID is not None and not I.methods.isdisjoint(J.methods):
-                    res[I.name, J.attributeID] = J
-    for I in structs:
-        if I.format is not None and I.attributeID is not None:
-            res[I.format, I.attributeID] = I
+    for cur_p in structs:
+        if cur_p.is_format:
+            for cur_name in structs:
+                if cur_name.attributeID is not None and not cur_p.methods.isdisjoint(cur_name.methods):
+                    res[cur_p.name, cur_name.attributeID] = cur_name
+    for cur_p in structs:
+        if cur_p.format is not None and cur_p.attributeID is not None:
+            res[cur_p.format, cur_p.attributeID] = cur_p
     print("ATTR_TO_STRUCT = {%s};" % (",\n\t".join("(%s,%u):%s" % (
-        k[0], k[1], v.name) for k, v in sorted(res.items()))), file=F)
+        k[0], k[1], v.name) for k, v in sorted(res.items()))), file=f_obj)
 
 if options.rst_out is not None:
-    with safeUpdateCtx(options.rst_out) as F:
+    with safe_update_ctx(options.rst_out) as f_obj:
         def is_sect_prefix(x, y):
             return x == y[:len(x)]
 
@@ -589,22 +607,22 @@ if options.rst_out is not None:
         lst = sorted(structs, key=lambda x: x.name)
         done = set()
         last = None
-        for I, name in sects:
+        for cur_p, name in sects:
             if name != last:
-                header = "%s (%s)" % (name, ".".join("%s" % (x) for x in I))
-                print(header, file=F)
-                print("^" * len(header), file=F)
-                print(file=F)
+                header = "%s (%s)" % (name, ".".join("%s" % (x) for x in cur_p))
+                print(header, file=f_obj)
+                print("^" * len(header), file=f_obj)
+                print(file=f_obj)
                 last = name
-            for J in lst:
-                if J not in done and is_sect_prefix(I, J.sect):
-                    J.asRST(F)
-                    done.add(J)
+            for cur_name in lst:
+                if cur_name not in done and is_sect_prefix(cur_p, cur_name.sect):
+                    cur_name.asRST(f_obj)
+                    done.add(cur_name)
 
         header = "Miscellaneous IBA Structures"
-        print(header, file=F)
-        print("^" * len(header), file=F)
-        print(file=F)
-        for J in lst:
-            if J not in done:
-                J.asRST(F)
+        print(header, file=f_obj)
+        print("^" * len(header), file=f_obj)
+        print(file=f_obj)
+        for cur_name in lst:
+            if cur_name not in done:
+                cur_name.asRST(f_obj)

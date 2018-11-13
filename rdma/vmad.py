@@ -12,8 +12,10 @@ import rdma.vtools
 
 
 class VMAD(rdma.madtransactor.MADTransactor):
-    '''Provide a UMAD style interface that runs on ibverbs. This can be
-    used with GMP (eg QPN=1) traffic.'''
+    """
+    Provide a UMAD style interface that runs on ibverbs. This can be
+    used with GMP (eg QPN=1) traffic.
+    """
     #: :class:`rdma.devices.EndPort` this is associated with.
     end_port = None
 
@@ -58,8 +60,8 @@ class VMAD(rdma.madtransactor.MADTransactor):
         self.pkey = path.pkey
 
     def sendto(self, buf, path):
-        '''Send a MAD packet. *buf* is the raw MAD to send, starting with the first
-        byte of :class:`rdma.IBA.MADHeader`. *path* is the destination.'''
+        """Send a MAD packet. *buf* is the raw MAD to send, starting with the first
+        byte of :class:`rdma.IBA.MADHeader`. *path* is the destination."""
         while not self._pool._buffers:
             self._cq_drain()
             if not self._pool._buffers:
@@ -73,8 +75,10 @@ class VMAD(rdma.madtransactor.MADTransactor):
         self._qp.post_send(self._pool.make_send_wr(buf_idx, len(buf), path))
 
     def _cq_drain(self):
-        """Empty the CQ and return and send buffers back to the pool. receive
-        buffers are queued onto :attr:`_recvs` for later retrieval."""
+        """
+        Empty the CQ and return and send buffers back to the pool. receive
+        buffers are queued onto :attr:`_recvs` for later retrieval.
+        """
         wcs = self._cq.poll()
         for I, wc in enumerate(wcs):
             if wc.opcode == ibv.IBV_WC_RECV and wc.status == ibv.IBV_WC_SUCCESS:
@@ -83,11 +87,13 @@ class VMAD(rdma.madtransactor.MADTransactor):
         self._pool.finish_wcs(self._qp, wcs)
 
     def recvfrom(self, wakeat):
-        '''Receive a MAD packet. If the value of
+        """
+        Receive a MAD packet. If the value of
         :func:`rdma.tools.clock_monotonic()` exceeds *wakeat* then :class:`None`
         is returned.
 
-        :returns: tuple(buf,path)'''
+        :returns: tuple(buf,path)
+        """
         pool = self._pool
         while True:
             if self._recvs:

@@ -1,20 +1,21 @@
 # -*- Python -*-
+# cython: language_level=3
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 import select
 import collections
 import errno as mod_errno
-import rdma.tools as tools;
-import struct;
-import weakref;
+import rdma.tools as tools
+import struct
+import weakref
 import sys
 import rdma.devices
-import rdma.IBA as IBA;
-import rdma.path;
+import rdma.IBA as IBA
+import rdma.path
 
 from cpython.string cimport PyString_AsString
 from libc.stdint cimport uint8_t
 
-cimport libibverbs as c
+cimport rdma.libibverbs as c
 
 cdef extern from 'types.h':
     ctypedef void **const_void_ptr_ptr
@@ -78,21 +79,21 @@ cdef QP get_qp(c.ibv_qp *v):
 
 class _my_weakset(weakref.WeakKeyDictionary):
     def add(self,v):
-        self[v] = None;
+        self[v] = None
     def pop(self):
-        return weakref.WeakKeyDictionary.popitem(self)[0];
+        return weakref.WeakKeyDictionary.popitem(self)[0]
 WeakSet = weakref.__dict__.get("WeakSet",_my_weakset)
 
 class WRError(rdma.SysError):
     """Raised when an error occurs posting work requests. :attr:`bad_index`
     is the index into the work request list what failed to post."""
     def __init__(self,int errno,char *func,char *msg,int bad_index):
-        rdma.SysError.__init__(self,errno,func,msg);
-        self.bad_index = bad_index;
+        rdma.SysError.__init__(self,errno,func,msg)
+        self.bad_index = bad_index
 
 def wc_status_str(int status):
     """Convert a :attr:`rdma.ibverbs.wc.status` value into a string."""
-    return c.ibv_wc_status_str(status);
+    return c.ibv_wc_status_str(status)
 
 cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
     """Fill in an ibv_ah_attr from *attr*. *attr* can be a
@@ -108,9 +109,9 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
                 raise TypeError("attr.grh must be a global_route")
             if not isinstance(attr.grh.dgid, IBA.GID):
                 raise TypeError("attr.grh.dgid must be an IBA.GID")
-            tmp = <uint8_t *>PyString_AsString(attr.DGID);
+            tmp = <uint8_t *>PyString_AsString(attr.DGID)
             for 0 <= i < 16:
-                cattr.grh.dgid.raw[i] = tmp[i];
+                cattr.grh.dgid.raw[i] = tmp[i]
             cattr.grh.flow_label = attr.grh.flow_label
             cattr.grh.sgid_index = attr.grh.sgid_index
             cattr.grh.hop_limit = attr.grh.hop_limit
@@ -124,11 +125,11 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
     elif isinstance(attr, rdma.path.IBPath):
         cattr.is_global = attr.has_grh
         if attr.DGID is not None:
-            tmp = <uint8_t *>PyString_AsString(attr.DGID);
+            tmp = <uint8_t *>PyString_AsString(attr.DGID)
             for 0 <= i < 16:
-                cattr.grh.dgid.raw[i] = tmp[i];
+                cattr.grh.dgid.raw[i] = tmp[i]
         if cattr.is_global:
-            cattr.grh.sgid_index = attr.SGID_index;
+            cattr.grh.sgid_index = attr.SGID_index
 
         cattr.grh.flow_label = attr.flow_label
         cattr.grh.hop_limit = attr.hop_limit
@@ -154,7 +155,7 @@ cdef object from_ah_attr(c.ibv_ah_attr *cattr):
                    src_path_bits=cattr.src_path_bits,
                    static_rate=cattr.static_rate,
                    is_global=cattr.is_global,
-                   port_num=cattr.port_num);
+                   port_num=cattr.port_num)
 
 cdef _post_check(object arg, object wrtype, int max_sge, int *numsge):
     """Validate wrs for posting. *arg* can be a single wr or a list. *wrtype*
@@ -177,11 +178,11 @@ cdef _post_check(object arg, object wrtype, int max_sge, int *numsge):
         if not isinstance(wr, wrtype):
             raise TypeError("Work request must be of type %s" % wrtype.__name__)
         if isinstance(wr.sg_list, sge):
-            sgec = sgec + 1;
+            sgec = sgec + 1
         elif isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
             sglist = wr.sg_list
             n = len(sglist)
-            sgec = sgec + n;
+            sgec = sgec + n
             if n > max_sge:
                 raise ValueError("Too many scatter/gather entries in work request")
             for 0 <= i < n:
@@ -224,30 +225,30 @@ class WCError(rdma.RDMAError):
 
         info = ["op=%s"%(IBA.const_str("IBV_WC_",wc.opcode,True,
                                        sys.modules["rdma.ibverbs"])),
-                "vend=0x%x"%(wc.vendor_err)];
+                "vend=0x%x"%(wc.vendor_err)]
 
         if cq is not None:
-            self.cq = cq;
-            info.append(str(cq));
+            self.cq = cq
+            info.append(str(cq))
         if qp is not None:
-            self.qp = qp;
-            info.append(str(qp));
+            self.qp = qp
+            info.append(str(qp))
             self.srq = qp._srq
         if is_rq is not None:
-            self.is_rq = is_rq;
+            self.is_rq = is_rq
             if is_rq:
-                info.append("RQ");
+                info.append("RQ")
             else:
-                info.append("SQ");
+                info.append("SQ")
         if obj is not None and isinstance(obj,SRQ):
-            self.srq = obj;
+            self.srq = obj
         if self.srq is not None:
-            info.append(str(self.srq));
+            info.append(str(self.srq))
 
         s = "%s - %d %s (%s)"%(msg,wc.status,c.ibv_wc_status_str(wc.status),
-                               " ".join(info));
-        rdma.RDMAError.__init__(self,s);
-        self.wc = wc;
+                               " ".join(info))
+        rdma.RDMAError.__init__(self,s)
+        self.wc = wc
 
 class AsyncError(rdma.RDMAError):
     """Raised when an asynchronous error event is received."""
@@ -255,8 +256,8 @@ class AsyncError(rdma.RDMAError):
         s = "%s - %s for %r"%(
             msg,IBA.const_str("IBV_EVENT_",event[0],True,
                              sys.modules["rdma.ibverbs"]),
-            event[1]);
-        rdma.RDMAError.__init__(self,s);
+            event[1])
+        rdma.RDMAError.__init__(self,s)
         self.event = event
 
 def WCPath(end_port,wc,buf=None,int off=0,**kwargs):
@@ -279,22 +280,22 @@ def WCPath(end_port,wc,buf=None,int off=0,**kwargs):
                             SLID=wc.slid,
                             SL=wc.sl,
                             DLID_bits=wc.dlid_path_bits,
-                            **kwargs);
+                            **kwargs)
     if wc.wc_flags & IBV_WC_GRH and buf is not None:
         path.has_grh = True
-        flow_class = off;
+        flow_class = off
         if PyObject_AsReadBuffer(buf, <const_void_ptr_ptr>&tmp, &length) != 0:
             raise TypeError("Expected buffer")
         if length - flow_class < 40:
             raise TypeError("buf must be at least 40 bytes long")
         grh = <c.ibv_grh *>(<char *>tmp + flow_class)
-        path.DGID = IBA.GID(PyBytes_FromStringAndSize(<char *>grh.dgid.raw,16),True);
-        path.SGID = IBA.GID(PyBytes_FromStringAndSize(<char *>grh.sgid.raw,16),True);
+        path.DGID = IBA.GID(PyBytes_FromStringAndSize(<char *>grh.dgid.raw,16),True)
+        path.SGID = IBA.GID(PyBytes_FromStringAndSize(<char *>grh.sgid.raw,16),True)
         path.hop_limit = grh.hop_limit
         flow_class = ntohl(grh.version_tclass_flow)
         path.traffic_class = (flow_class >> 20) & 0xFF
         path.flow_label = flow_class & 0xFFFFF
-    return path;
+    return path
 
 cdef class Context:
     """Verbs context handle, this is a context manager. Call :func:`rdma.get_verbs` to get
@@ -330,7 +331,7 @@ cdef class Context:
                 if dev_list[i].name == self.node.name:
                     break
             else:
-                raise rdma.RDMAError("RDMA verbs device %r not found."%(self.node));
+                raise rdma.RDMAError("RDMA verbs device %r not found."%(self.node))
 
             self._ctx = c.ibv_open_device(dev_list[i])
             if self._ctx == NULL:
@@ -339,35 +340,35 @@ cdef class Context:
         finally:
             c.ibv_free_device_list(dev_list)
 
-        self._children_pd = WeakSet();
-        self._children_cq = WeakSet();
-        self._children_cc = WeakSet();
+        self._children_pd = WeakSet()
+        self._children_cq = WeakSet()
+        self._children_cc = WeakSet()
 
         if self.end_port is not None:
             # Fetch the subnet_timeout from verbs
             self.query_port()
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
-        return self;
+        return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs context handle and all resources allocated by it."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int e
         while self._children_pd:
-            self._children_pd.pop().close();
+            self._children_pd.pop().close()
         while self._children_cq:
-            self._children_cq.pop().close();
+            self._children_cq.pop().close()
         while self._children_cc:
-            self._children_cc.pop().close();
+            self._children_cc.pop().close()
         if self._ctx != NULL:
             e = c.ibv_close_device(self._ctx)
             if e != 0:
@@ -425,7 +426,7 @@ cdef class Context:
                            max_srq_sge = dattr.max_srq_sge,
                            max_pkeys = dattr.max_pkeys,
                            local_ca_ack_delay = dattr.local_ca_ack_delay,
-                           phys_port_cnt = dattr.phys_port_cnt);
+                           phys_port_cnt = dattr.phys_port_cnt)
 
     def query_port(self,port_id=None):
         """Return a :class:`rdma.ibverbs.port_attr` for the *port_id*. If
@@ -436,7 +437,7 @@ cdef class Context:
         cdef c.ibv_port_attr cattr
         cdef int e
         if port_id is None:
-            port_id = self.end_port.port_id;
+            port_id = self.end_port.port_id
 
         e = c.ibv_query_port(self._ctx, port_id, &cattr)
         if e != 0:
@@ -444,7 +445,7 @@ cdef class Context:
                                 "Failed to query port %r"%(port_id))
 
         # Update the end_port's subnet timeout..
-        self.node.end_ports[port_id]._cached_subnet_timeout = cattr.subnet_timeout;
+        self.node.end_ports[port_id]._cached_subnet_timeout = cattr.subnet_timeout
 
         return port_attr(state = cattr.state,
                          max_mtu = cattr.max_mtu,
@@ -474,26 +475,26 @@ cdef class Context:
             pd = I
             ret = pd.from_qp_num(num)
             if ret is not None:
-                return ret;
-        return None;
+                return ret
+        return None
 
     def pd(self):
         """Create a new :class:`rdma.ibverbs.PD` for this context."""
-        ret = PD(self);
-        self._children_pd.add(ret);
-        return ret;
+        ret = PD(self)
+        self._children_pd.add(ret)
+        return ret
 
     def cq(self,int nelems=100,cc=None,int vec=0):
         """Create a new :class:`rdma.ibverbs.CQ` for this context."""
-        ret = CQ(self,nelems,cc,vec);
-        self._children_cq.add(ret);
-        return ret;
+        ret = CQ(self,nelems,cc,vec)
+        self._children_cq.add(ret)
+        return ret
 
     def comp_channel(self):
         """Create a new :class:`rdma.ibverbs.CompChannel` for this context."""
-        ret = CompChannel(self);
-        self._children_cc.add(ret);
-        return ret;
+        ret = CompChannel(self)
+        self._children_cc.add(ret)
+        return ret
 
     def get_async_event(self):
         """Get a single async event for this context. The return result is a
@@ -507,12 +508,12 @@ cdef class Context:
         rc = c.ibv_get_async_event(self._ctx,&event)
         if rc != 0:
             if rc == mod_errno.EAGAIN:
-                return None;
+                return None
             raise rdma.SysError(rc,"ibv_get_async_event",
-                                "Failed to get an asynchronous event");
+                                "Failed to get an asynchronous event")
 
         if event.event_type == c.IBV_EVENT_DEVICE_FATAL:
-            ret = async_event(event.event_type,self.node);
+            ret = async_event(event.event_type,self.node)
         elif (event.event_type == c.IBV_EVENT_PORT_ACTIVE or
               event.event_type == c.IBV_EVENT_PORT_ERR or
               event.event_type == c.IBV_EVENT_LID_CHANGE or
@@ -520,14 +521,14 @@ cdef class Context:
               event.event_type == c.IBV_EVENT_SM_CHANGE or
               event.event_type == c.IBV_EVENT_CLIENT_REREGISTER):
             ret = async_event(event.event_type,
-                              self.node.end_ports[event.element.port_num]);
+                              self.node.end_ports[event.element.port_num])
         elif (event.event_type == c.IBV_EVENT_SRQ_ERR or
               event.event_type == c.IBV_EVENT_SRQ_LIMIT_REACHED):
             ret = async_event(event.event_type,
-                              get_srq(event.element.srq));
+                              get_srq(event.element.srq))
         elif event.event_type == c.IBV_EVENT_CQ_ERR:
              ret = async_event(event.event_type,
-                               get_cq(event.element.cq));
+                               get_cq(event.element.cq))
         elif (event.event_type == c.IBV_EVENT_QP_FATAL or
               event.event_type == c.IBV_EVENT_QP_REQ_ERR or
               event.event_type == c.IBV_EVENT_QP_ACCESS_ERR or
@@ -537,11 +538,11 @@ cdef class Context:
               event.event_type == c.IBV_EVENT_PATH_MIG_ERR or
               event.event_type == c.IBV_EVENT_QP_LAST_WQE_REACHED):
             ret = async_event(event.event_type,
-                              get_qp(event.element.qp));
+                              get_qp(event.element.qp))
         else:
             # Hmm. We don't know what member of the enum to decode, so we can't
             # really do anything.
-            ret = async_event(event.event_type,None);
+            ret = async_event(event.event_type,None)
         c.ibv_ack_async_event(&event)
         return ret
 
@@ -554,40 +555,40 @@ cdef class Context:
         ty = event[0]
 
         if ty == c.IBV_EVENT_DEVICE_FATAL:
-            raise AsyncError(event);
+            raise AsyncError(event)
         if ty == c.IBV_EVENT_LID_CHANGE:
-            event[1].lid_change();
+            event[1].lid_change()
         if ty == c.IBV_EVENT_PKEY_CHANGE:
-            event[1].pkey_change();
+            event[1].pkey_change()
         if ty == c.IBV_EVENT_SM_CHANGE:
-            self.query_port(event[1].port_id);
-            event[1].sm_change();
+            self.query_port(event[1].port_id)
+            event[1].sm_change()
         if ty == c.IBV_EVENT_SRQ_ERR:
-            raise AsyncError(event);
+            raise AsyncError(event)
         if ty == c.IBV_EVENT_CQ_ERR:
-            raise AsyncError(event);
+            raise AsyncError(event)
         if ty == c.IBV_EVENT_QP_FATAL:
-            raise AsyncError(event);
+            raise AsyncError(event)
         if ty == c.IBV_EVENT_QP_REQ_ERR:
-            raise AsyncError(event);
+            raise AsyncError(event)
         if ty == c.IBV_EVENT_QP_ACCESS_ERR:
-            raise AsyncError(event);
+            raise AsyncError(event)
         if ty == c.IBV_EVENT_PATH_MIG_ERR:
-            raise AsyncError(event);
+            raise AsyncError(event)
 
     def register_poll(self,poll):
         """Add the async event FD associated with this object to
         :class:`select.poll` object *poll*."""
-        poll.register(self._ctx.async_fd,select.POLLIN);
+        poll.register(self._ctx.async_fd,select.POLLIN)
 
     def check_poll(self,pevent):
         """Return `True` if *pevent* indicates that :meth:`get_async_event`
         will return data."""
         if pevent[0] != self._ctx.async_fd:
-            return False;
+            return False
         if pevent[1] & select.POLLIN == 0:
-            return False;
-        return True;
+            return False
+        return True
 
     def __str__(self):
         return "context:%s"%(self.node)
@@ -607,7 +608,7 @@ cdef class PD:
 
     property ctx:
         def __get__(self):
-            return self._context;
+            return self._context
 
     def __cinit__(self, Context ctx not None):
         self._context = ctx
@@ -615,61 +616,61 @@ cdef class PD:
         if self._pd == NULL:
             raise rdma.SysError(errno,"ibv_alloc_pd",
                                 "Failed to allocate protection domain")
-        self._children_qp = WeakSet();
-        self._children_srq = WeakSet();
-        self._children_mr = WeakSet();
-        self._children_ah = WeakSet();
-        self._path_ah = "_cached_pd%x_ah"%(id(self));
+        self._children_qp = WeakSet()
+        self._children_srq = WeakSet()
+        self._children_mr = WeakSet()
+        self._children_ah = WeakSet()
+        self._path_ah = "_cached_pd%x_ah"%(id(self))
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
         return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs pd handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
         while self._children_qp:
-            self._children_qp.pop().close();
+            self._children_qp.pop().close()
         while self._children_ah:
-            self._children_ah.pop().close();
+            self._children_ah.pop().close()
         while self._children_srq:
-            self._children_srq.pop().close();
+            self._children_srq.pop().close()
         while self._children_mr:
-            self._children_mr.pop().close();
+            self._children_mr.pop().close()
         if self._pd != NULL:
             if self._context._ctx == NULL:
-                raise rdma.RDMAError("Context closed before owned object");
+                raise rdma.RDMAError("Context closed before owned object")
             rc = c.ibv_dealloc_pd(self._pd)
             if rc != 0:
                 raise rdma.SysError(rc,"ibv_dealloc_pd",
                                     "Failed to deallocate protection domain")
             self._pd = NULL
-            self._context = None;
+            self._context = None
 
     def from_qp_num(self,int num):
         """Return a :class:`rdma.ibverbs.QP` for the qp number *num* or `None`
         if one was not found."""
         cdef QP qp
         for I in self._children_qp:
-            qp = I;
+            qp = I
             if qp._qp.qp_num == num:
-                return qp;
-        return None;
+                return qp
+        return None
 
     def qp_raw(self,init):
         """Create a new :class:`rdma.ibverbs.QP` for this protection
         domain. *init* is a :class:`rdma.ibverbs.qp_init_attr`."""
-        ret = QP(self,init);
-        self._children_qp.add(ret);
-        return ret;
+        ret = QP(self,init)
+        self._children_qp.add(ret)
+        return ret
 
     def qp(self,
            int qp_type,
@@ -696,22 +697,22 @@ cdef class PD:
                             cap=cap,
                             qp_type=qp_type,
                             sq_sig_all=sq_sig_all)
-        ret = QP(self,init);
-        self._children_qp.add(ret);
-        return ret;
+        ret = QP(self,init)
+        self._children_qp.add(ret)
+        return ret
 
     def srq(self,int max_wr=100,int max_sge=1):
         """Create a new :class:`rdma.ibverbs.SRQ` for this protection
         domain. *init* is a :class:`rdma.ibverbs.srq_init_attr`."""
-        ret = SRQ(self,max_wr=max_wr,max_sge=max_sge);
-        self._children_srq.add(ret);
-        return ret;
+        ret = SRQ(self,max_wr=max_wr,max_sge=max_sge)
+        self._children_srq.add(ret)
+        return ret
 
     def mr(self,buf,int access=0):
         """Create a new :class:`rdma.ibverbs.MR` for this protection domain."""
-        ret = MR(self,buf,access);
-        self._children_mr.add(ret);
-        return ret;
+        ret = MR(self,buf,access)
+        self._children_mr.add(ret)
+        return ret
 
     def ah(self,attr):
         """Create a new :class:`rdma.ibverbs.AH` for this protection domain.
@@ -724,21 +725,21 @@ cdef class PD:
         if isinstance(attr,rdma.path.IBPath):
             # We cache the AH in the  onto the AH in the path
             # FIXME: should be getattr but the 3 argument version won't compile
-            ret = attr.__dict__.get(self._path_ah);
+            ret = attr.__dict__.get(self._path_ah)
             if ret is None or ret._ah == NULL:
-                ret = AH(self,attr);
-                setattr(attr,self._path_ah,ret);
-                self._children_ah.add(ret);
-            return ret;
+                ret = AH(self,attr)
+                setattr(attr,self._path_ah,ret)
+                self._children_ah.add(ret)
+            return ret
         else:
-            ret = AH(self,attr);
-            self._children_ah.add(ret);
-        return ret;
+            ret = AH(self,attr)
+            self._children_ah.add(ret)
+        return ret
 
     def __str__(self):
-        return "pd:%X:%s"%(self._pd.handle,self.ctx.node);
+        return "pd:%X:%s"%(self._pd.handle,self.ctx.node)
     def __repr__(self):
-        return "PD(%r,0x%x)"%(self._context,self._pd.handle);
+        return "PD(%r,0x%x)"%(self._context,self._pd.handle)
 
 cdef class AH:
     """Address handle, this is a context manager."""
@@ -748,7 +749,7 @@ cdef class AH:
     def __cinit__(self, PD pd not None, attr):
         cdef c.ibv_ah_attr cattr
 
-        memset(&cattr,0,sizeof(cattr));
+        memset(&cattr,0,sizeof(cattr))
         to_ah_attr(&cattr, attr)
         self._ah = c.ibv_create_ah(pd._pd, &cattr)
         if self._ah == NULL:
@@ -756,17 +757,17 @@ cdef class AH:
                                 "Failed to create address handle")
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
         return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs AH handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
@@ -780,7 +781,7 @@ cdef class AH:
     def __str__(self):
         return "ah:%X"%(self._ah.handle)
     def __repr__(self):
-        return "AH(0x%x)"%(self._ah.handle);
+        return "AH(0x%x)"%(self._ah.handle)
 
 cdef class CompChannel:
     """Completion channel, this is a context manager."""
@@ -790,7 +791,7 @@ cdef class CompChannel:
 
     property ctx:
         def __get__(self):
-            return self._context;
+            return self._context
 
     def __cinit__(self, Context ctx not None):
         self._context = ctx
@@ -800,38 +801,38 @@ cdef class CompChannel:
                                 "Failed to create completion channel")
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
         return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs completion channel handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
         if self._chan != NULL:
             if self._context._ctx == NULL:
-                raise rdma.RDMAError("Context closed before owned object");
+                raise rdma.RDMAError("Context closed before owned object")
             rc = c.ibv_destroy_comp_channel(self._chan)
             if rc != 0:
                 raise rdma.SysError(rc,"ibv_destroy_comp_channel",
                                     "Failed to destroy completion channel")
             self._chan = NULL
-            self._context = None;
+            self._context = None
 
     def fileno(self):
         """Return the FD associated with this completion channel."""
-        return self._chan.fd;
+        return self._chan.fd
 
     def register_poll(self,poll):
         """Add the FD associated with this object to :class:`select.poll`
         object *poll*."""
-        poll.register(self._chan.fd,select.POLLIN);
+        poll.register(self._chan.fd,select.POLLIN)
 
     def check_poll(self,pevent):
         """Returns a :class:`rdma.ibverbs.CQ` that got at least one completion
@@ -845,24 +846,24 @@ cdef class CompChannel:
         cdef int rc
 
         if pevent[0] != self._chan.fd:
-            return None;
+            return None
         if pevent[1] & select.POLLIN == 0:
-            return None;
+            return None
 
         if c.ibv_get_cq_event(self._chan,&_cq,&p_cq) != 0:
-            raise rdma.RDMAError("ibv_get_cq_event failed");
-        cq = <CQ>p_cq;
+            raise rdma.RDMAError("ibv_get_cq_event failed")
+        cq = <CQ>p_cq
 
-        cq.comp_events = cq.comp_events + 1;
+        cq.comp_events = cq.comp_events + 1
         if cq.comp_events >= (1<<30):
-            c.ibv_ack_cq_events(_cq,cq.comp_events);
-            cq.comp_events = 0;
-        return cq;
+            c.ibv_ack_cq_events(_cq,cq.comp_events)
+            cq.comp_events = 0
+        return cq
 
     def __str__(self):
-        return "comp_channel:%u:%s"%(self._chan.fd,self.ctx.node);
+        return "comp_channel:%u:%s"%(self._chan.fd,self.ctx.node)
     def __repr__(self):
-        return "CompChannel(%r,%u)"%(self._context,self._chan.fd);
+        return "CompChannel(%r,%u)"%(self._context,self._chan.fd)
 
 cdef class CQ:
     """Completion queue, this is a context manager."""
@@ -874,11 +875,11 @@ cdef class CQ:
 
     property ctx:
         def __get__(self):
-            return self._context;
+            return self._context
 
     property comp_chan:
         def __get__(self):
-            return self._chan;
+            return self._chan
 
     def __cinit__(self, Context ctx not None, int nelems=100,
                   CompChannel chan or None=None, int vec=0):
@@ -888,57 +889,57 @@ cdef class CQ:
         else:
             c_chan = chan._chan
         self._context = ctx
-        self._chan = chan;
-        self.comp_events = 0;
+        self._chan = chan
+        self.comp_events = 0
         self._cq = c.ibv_create_cq(ctx._ctx, nelems, <void*>self, c_chan, vec)
         if self._cq == NULL:
             raise rdma.SysError(errno,"ibv_create_cq",
                                 "Failed to create completion queue")
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
         return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs CQ handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
         if self._cq != NULL:
             if self._context._ctx == NULL:
-                raise rdma.RDMAError("Context closed before owned object");
+                raise rdma.RDMAError("Context closed before owned object")
             if self.comp_events != 0:
-                c.ibv_ack_cq_events(self._cq,self.comp_events);
-                self.comp_events = 0;
+                c.ibv_ack_cq_events(self._cq,self.comp_events)
+                self.comp_events = 0
             rc = c.ibv_destroy_cq(self._cq)
             if rc != 0:
                 raise rdma.SysError(rc,"ibv_destroy_cq",
                                     "Failed to destroy completion queue")
             self._cq = NULL
-            self._context = None;
-            self._chan = None;
+            self._context = None
+            self._chan = None
 
     def req_notify(self,int solicited_only=False):
         """Request event notification for CQEs added to the CQ."""
         cdef int rc
-        rc = c.ibv_req_notify_cq(self._cq,solicited_only);
+        rc = c.ibv_req_notify_cq(self._cq,solicited_only)
         if rc != 0:
             raise rdma.SysError(rc,"ibv_req_notify_cq",
-                                "Failed to request notification");
+                                "Failed to request notification")
 
     def resize(self,int cqes):
         """Resize the CQ to have at least *cqes* entries."""
         cdef int rc
-        rc = c.ibv_resize_cq(self._cq,cqes);
+        rc = c.ibv_resize_cq(self._cq,cqes)
         if rc != 0:
             raise rdma.SysError(rc,"ibv_resize_cq",
-                                "Failed to resize the CQ");
+                                "Failed to resize the CQ")
 
     def poll(self,int limit=-1):
         """Perform the poll_cq operation, return a list of work requests."""
@@ -951,7 +952,7 @@ cdef class CQ:
             if n == 0:
                 break
             elif n < 0:
-                raise rdma.SysError(errno,"ibv_poll_cq");
+                raise rdma.SysError(errno,"ibv_poll_cq")
             else:
                 L.append(wc(wr_id = lwc.wr_id,
                             status = lwc.status,
@@ -967,13 +968,13 @@ cdef class CQ:
                             sl = lwc.sl,
                             dlid_path_bits = lwc.dlid_path_bits))
                 if limit > 0:
-                    limit = limit - 1;
+                    limit = limit - 1
         return L
 
     def __str__(self):
-        return "cq:%X:%s"%(self._cq.handle,self.ctx.node);
+        return "cq:%X:%s"%(self._cq.handle,self.ctx.node)
     def __repr__(self):
-        return "CQ(%r,0x%x)"%(self._context,self._cq.handle);
+        return "CQ(%r,0x%x)"%(self._context,self._cq.handle)
 
 cdef class SRQ:
     """Shared Receive queue, this is a context manager."""
@@ -984,38 +985,38 @@ cdef class SRQ:
 
     property pd:
         def __get__(self):
-            return self._pd;
+            return self._pd
 
     property ctx:
         def __get__(self):
-            return self._pd._context;
+            return self._pd._context
 
     def __cinit__(self,PD pd not None,int max_wr,int max_sge):
         cdef c.ibv_srq_init_attr attr
 
-        memset(&attr,0,sizeof(attr));
+        memset(&attr,0,sizeof(attr))
         self._pd = pd
-        attr.srq_context = <void *>self;
-        attr.attr.max_wr = max_wr;
-        attr.attr.max_sge = max_sge;
+        attr.srq_context = <void *>self
+        attr.attr.max_wr = max_wr
+        attr.attr.max_sge = max_sge
         self._max_sge = max_sge
-        self._srq = c.ibv_create_srq(pd._pd,&attr);
+        self._srq = c.ibv_create_srq(pd._pd,&attr)
         if self._srq == NULL:
             raise rdma.SysError(errno,"ibv_create_srq",
                                 "Failed to create SRQ")
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
         return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs SRQ handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
@@ -1055,10 +1056,10 @@ cdef class SRQ:
             raise rdma.SysError(errno,"ibv_query_srq",
                                 "Failed to query a SRQ")
 
-        self._max_sge = cattr.max_sge;
+        self._max_sge = cattr.max_sge
         return srq_attr(max_wr=cattr.max_wr,
                         max_sge=cattr.max_sge,
-                        srq_limit=cattr.srq_limit);
+                        srq_limit=cattr.srq_limit)
 
     def post_recv(self, arg):
         """*wrlist* may be a single :class:`rdma.ibverbs.recv_wr` or
@@ -1078,15 +1079,15 @@ cdef class SRQ:
         wrlist = _post_check(arg, recv_wr, self._max_sge, &num_sge)
 
         n = len(wrlist)
-        mem = <unsigned char *>calloc(1,sizeof(dummy_wr)*n + sizeof(dummy_sge)*num_sge);
+        mem = <unsigned char *>calloc(1,sizeof(dummy_wr)*n + sizeof(dummy_sge)*num_sge)
         if mem == NULL:
             raise MemoryError()
         try:
-            cwr = <c.ibv_recv_wr *>(mem);
-            csge = <c.ibv_sge *>(cwr + n);
+            cwr = <c.ibv_recv_wr *>(mem)
+            csge = <c.ibv_sge *>(cwr + n)
             for 0 <= i < n:
                 wr = wrlist[i]
-                wr_id = wr.wr_id;
+                wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
                 if i == n - 1:
                     cwr.next = NULL
@@ -1104,28 +1105,28 @@ cdef class SRQ:
                         csge += 1
                 elif wr.sg_list is not None:
                     cwr.num_sge = 1
-                    sge = wr.sg_list;
+                    sge = wr.sg_list
                     csge.addr = sge.addr
                     csge.length = sge.length
                     csge.lkey = sge.lkey
                     csge += 1
-                cwr = cwr + 1;
+                cwr = cwr + 1
 
-            cwr = <c.ibv_recv_wr *>(mem);
+            cwr = <c.ibv_recv_wr *>(mem)
             rc = c.ibv_post_srq_recv(self._srq, <c.ibv_recv_wr *>mem, &cbad_wr)
             if rc != 0:
-                cwr = <c.ibv_recv_wr *>(mem);
+                cwr = <c.ibv_recv_wr *>(mem)
                 for 0 <= i < n:
                     if cwr+i == cbad_wr:
-                        break;
-                raise WRError(rc,"ibv_post_srq_recv","Failed to post work request",n);
+                        break
+                raise WRError(rc,"ibv_post_srq_recv","Failed to post work request",n)
         finally:
             free(mem)
 
     def __str__(self):
-        return "srq:%X:%s"%(self._srq.handle,self._pd);
+        return "srq:%X:%s"%(self._srq.handle,self._pd)
     def __repr__(self):
-        return "SRQ(%r,0x%x)"%(self._pd,self._srq.handle);
+        return "SRQ(%r,0x%x)"%(self._pd,self._srq.handle)
 
 cdef class MR:
     """Memory registration, this is a context manager."""
@@ -1136,11 +1137,11 @@ cdef class MR:
 
     property pd:
         def __get__(self):
-            return self._pd;
+            return self._pd
 
     property ctx:
         def __get__(self):
-            return self._pd._context;
+            return self._pd._context
 
     property addr:
         def __get__(self):
@@ -1180,17 +1181,17 @@ cdef class MR:
                                 "Failed to register memory region")
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
         return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs MR handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
@@ -1211,22 +1212,22 @@ cdef class MR:
         _length = length
         _off = off
         if _off < 0:
-            raise ValueError("off %r cannot be negative"%off);
+            raise ValueError("off %r cannot be negative"%off)
         if _length == -1:
-            _length = self._mr.length - _off;
+            _length = self._mr.length - _off
         if _length + _off > self._mr.length:
             raise ValueError("Length is too long %u > %u"%(_length + _off,
-                                                           self._mr.length));
+                                                           self._mr.length))
         return sge(addr=<uintptr_t>(self._mr.addr + _off),
                    lkey=self._mr.lkey,
-                   length=_length);
+                   length=_length)
 
     def __str__(self):
-        return "mr:%X:%s"%(self._mr.handle,self._pd);
+        return "mr:%X:%s"%(self._mr.handle,self._pd)
     def __repr__(self):
         return "MR(%r,0x%x,0x%x,%u,lkey=0x%x,rkey=0x%x)"%(
             self._pd,self._mr.handle,self.addr,self.length,
-            self.lkey,self.rkey);
+            self.lkey,self.rkey)
 
 cdef class QP:
     """Queue pair, this is a context manager."""
@@ -1242,11 +1243,11 @@ cdef class QP:
 
     property pd:
         def __get__(self):
-            return self._pd;
+            return self._pd
 
     property ctx:
         def __get__(self):
-            return self._pd._context;
+            return self._pd._context
 
     property qp_num:
         def __get__(self):
@@ -1259,16 +1260,16 @@ cdef class QP:
             return self._qp.state
     property max_send_wr:
         def __get__(self):
-            return self._cap.max_send_wr;
+            return self._cap.max_send_wr
     property max_send_sge:
         def __get__(self):
-            return self._cap.max_send_sge;
+            return self._cap.max_send_sge
     property max_recv_wr:
         def __get__(self):
-            return self._cap.max_recv_wr;
+            return self._cap.max_recv_wr
     property max_recv_sge:
         def __get__(self):
-            return self._cap.max_recv_sge;
+            return self._cap.max_recv_sge
 
     def __cinit__(self,
                   PD pd not None,
@@ -1276,7 +1277,7 @@ cdef class QP:
         cdef c.ibv_qp_init_attr cinit
         cdef CQ scq, rcq
 
-        memset(&cinit,0,sizeof(cinit));
+        memset(&cinit,0,sizeof(cinit))
 
         if not isinstance(init.send_cq, CQ):
             raise TypeError("send_cq must be a cq")
@@ -1313,33 +1314,36 @@ cdef class QP:
         self._cap = cinit.cap
 
     def __dealloc__(self):
-        self._close();
+        self._close()
 
     def __enter__(self):
-        return self;
+        return self
 
     def __exit__(self,*exc_info):
-        self._close();
+        self._close()
 
     def close(self):
         """Free the verbs QP handle."""
-        self._close();
+        self._close()
 
     cdef _close(self):
         cdef int rc
         if self._qp != NULL:
             while self._groups:
-                g = self._groups[0];
-                self.detach_mcast(rdma.path.IBPath(None,DGID=g[0],DLID=g[1]));
+                g = self._groups[0]
+                self.detach_mcast(rdma.path.IBPath(None,DGID=g[0],DLID=g[1]))
             rc = c.ibv_destroy_qp(self._qp)
             if rc != 0:
-                raise rdma.SysError(errno,"ibv_destroy_qp",
-                                    "Failed to destroy queue pair")
-            self._qp = NULL;
-            self._pd = None;
-            self._scq = None;
-            self._rcq = None;
-            self._srq = None;
+                raise rdma.SysError(
+                    errno,
+                    "ibv_destroy_qp",
+                    "Failed to destroy queue pair",
+                )
+            self._qp = NULL
+            self._pd = None
+            self._scq = None
+            self._rcq = None
+            self._srq = None
 
     def modify(self,attr,int mask):
         """When modifying a QP the value *attr.ah_attr* may be a
@@ -1348,11 +1352,11 @@ cdef class QP:
         cdef int rc
         cdef int cmask
 
-        memset(&cattr,0,sizeof(cattr));
+        memset(&cattr,0,sizeof(cattr))
 
         cmask = mask
         if debug:
-            print 'modify qp, attr = %s mask = 0x%x' % (str(attr), cmask)
+            print('modify qp, attr = %s mask = 0x%x' % (str(attr), cmask))
         if not isinstance(mask, int):
             raise TypeError("mask must be an int")
         if not isinstance(attr, qp_attr):
@@ -1423,15 +1427,15 @@ cdef class QP:
         wrlist = _post_check(arg, send_wr, self._cap.max_send_sge, &num_sge)
 
         n = len(wrlist)
-        mem = <unsigned char *>calloc(1,sizeof(dummy_wr)*n + sizeof(dummy_sge)*num_sge);
+        mem = <unsigned char *>calloc(1,sizeof(dummy_wr)*n + sizeof(dummy_sge)*num_sge)
         if mem == NULL:
             raise MemoryError()
         try:
-            cwr = <c.ibv_send_wr *>(mem);
-            csge = <c.ibv_sge *>(cwr + n);
+            cwr = <c.ibv_send_wr *>(mem)
+            csge = <c.ibv_sge *>(cwr + n)
             for 0 <= i < n:
                 wr = wrlist[i]
-                wr_id = wr.wr_id;
+                wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
                 if i == n - 1:
                     cwr.next = NULL
@@ -1469,22 +1473,22 @@ cdef class QP:
                 elif self._qp_type == c.IBV_QPT_UD:
                     if not isinstance(wr.ah,AH):
                         raise TypeError("AH must be a AH")
-                    ah = wr.ah;
+                    ah = wr.ah
                     cwr.wr.ud.ah = ah._ah
                     cwr.wr.ud.remote_qpn = wr.remote_qpn
                     cwr.wr.ud.remote_qkey = wr.remote_qkey
 
                 cwr.send_flags = wr.send_flags
                 cwr.imm_data = wr.imm_data
-                cwr = cwr + 1;
+                cwr = cwr + 1
 
             rc = c.ibv_post_send(self._qp, <c.ibv_send_wr *>mem, &cbad_wr)
             if rc != 0:
-                cwr = <c.ibv_send_wr *>(mem);
+                cwr = <c.ibv_send_wr *>(mem)
                 for 0 <= i < n:
                     if cwr+i == cbad_wr:
-                        break;
-                raise WRError(rc,"ibv_post_send","Failed to post work request",n);
+                        break
+                raise WRError(rc,"ibv_post_send","Failed to post work request",n)
         finally:
             free(mem)
 
@@ -1506,15 +1510,15 @@ cdef class QP:
         wrlist = _post_check(arg, recv_wr, self._cap.max_recv_sge, &num_sge)
 
         n = len(wrlist)
-        mem = <unsigned char *>calloc(1,sizeof(dummy_wr)*n + sizeof(dummy_sge)*num_sge);
+        mem = <unsigned char *>calloc(1,sizeof(dummy_wr)*n + sizeof(dummy_sge)*num_sge)
         if mem == NULL:
             raise MemoryError()
         try:
-            cwr = <c.ibv_recv_wr *>(mem);
-            csge = <c.ibv_sge *>(cwr + n);
+            cwr = <c.ibv_recv_wr *>(mem)
+            csge = <c.ibv_sge *>(cwr + n)
             for 0 <= i < n:
                 wr = wrlist[i]
-                wr_id = wr.wr_id;
+                wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
                 if i == n - 1:
                     cwr.next = NULL
@@ -1532,20 +1536,20 @@ cdef class QP:
                         csge += 1
                 elif wr.sg_list is not None:
                     cwr.num_sge = 1
-                    sge = wr.sg_list;
+                    sge = wr.sg_list
                     csge.addr = sge.addr
                     csge.length = sge.length
                     csge.lkey = sge.lkey
                     csge += 1
-                cwr = cwr + 1;
+                cwr = cwr + 1
 
             rc = c.ibv_post_recv(self._qp, <c.ibv_recv_wr *>mem, &cbad_wr)
             if rc != 0:
-                cwr = <c.ibv_recv_wr *>(mem);
+                cwr = <c.ibv_recv_wr *>(mem)
                 for 0 <= i < n:
                     if cwr+i == cbad_wr:
-                        break;
-                raise WRError(rc,"ibv_post_recv","Failed to post work request",n);
+                        break
+                raise WRError(rc,"ibv_post_recv","Failed to post work request",n)
         finally:
             free(mem)
 
@@ -1568,7 +1572,7 @@ cdef class QP:
                      max_recv_wr=cattr.cap.max_recv_wr,
                      max_send_sge=cattr.cap.max_send_sge,
                      max_recv_sge=cattr.cap.max_recv_sge,
-                     max_inline_data=cattr.cap.max_inline_data);
+                     max_inline_data=cattr.cap.max_inline_data)
         attr = qp_attr(qp_state=cattr.qp_state,
                        cur_qp_state=cattr.cur_qp_state,
                        path_mtu=cattr.path_mtu,
@@ -1593,17 +1597,17 @@ cdef class QP:
                        retry_cnt=cattr.retry_cnt,
                        rnr_retry=cattr.rnr_retry,
                        alt_port_num=cattr.alt_port_num,
-                       alt_timeout=cattr.alt_timeout);
+                       alt_timeout=cattr.alt_timeout)
         icap = qp_cap(max_send_wr=cinit.cap.max_send_wr,
                      max_recv_wr=cinit.cap.max_recv_wr,
                      max_send_sge=cinit.cap.max_send_sge,
                      max_recv_sge=cinit.cap.max_recv_sge,
-                     max_inline_data=cinit.cap.max_inline_data);
+                     max_inline_data=cinit.cap.max_inline_data)
         init = qp_init_attr(send_cq=self._scq,
                             recv_cq=self._rcq,
                             cap=icap,
                             qp_type=cinit.qp_type,
-                            sq_sig_all=cinit.sq_sig_all);
+                            sq_sig_all=cinit.sq_sig_all)
         return (attr, init)
 
     def attach_mcast(self,path):
@@ -1615,12 +1619,12 @@ cdef class QP:
         if PyObject_AsReadBuffer(path.DGID, <const_void_ptr_ptr>&dgid,
                                  &length) != 0 or length != 16:
             raise TypeError("Expected buffer")
-        rc = c.ibv_attach_mcast(self._qp,<c.ibv_gid *>dgid,path.DLID);
+        rc = c.ibv_attach_mcast(self._qp,<c.ibv_gid *>dgid,path.DLID)
         if rc != 0:
             raise rdma.SysError(rc,"ibv_attach_mcast",
-                                "Failed to attach to %r"%(path));
+                                "Failed to attach to %r"%(path))
         if self._groups is None:
-            self._groups = [];
+            self._groups = []
         # Relying on verbs to fail on double add
         self._groups.append((path.DGID,path.DLID))
 
@@ -1634,10 +1638,10 @@ cdef class QP:
         if PyObject_AsReadBuffer(path.DGID, <const_void_ptr_ptr>&dgid,
                                  &length) != 0 or length != 16:
             raise TypeError("Expected buffer")
-        rc = c.ibv_detach_mcast(self._qp,<c.ibv_gid *>dgid,path.DLID);
+        rc = c.ibv_detach_mcast(self._qp,<c.ibv_gid *>dgid,path.DLID)
         if rc != 0:
             raise rdma.SysError(rc,"ibv_detach_mcast",
-                                "Failed to detach to %r"%(path));
+                                "Failed to detach to %r"%(path))
         # Relying on verbs to fail on double remove
         self._groups.remove((path.DGID,path.DLID))
 
@@ -1647,18 +1651,18 @@ cdef class QP:
             attr = qp_attr(qp_state=c.IBV_QPS_INIT,
                            pkey_index=path.pkey_index,
                            port_num=path.end_port.port_id,
-                           qkey=path.qkey);
+                           qkey=path.qkey)
         else:
             attr = qp_attr(qp_state=c.IBV_QPS_INIT,
                            pkey_index=path.pkey_index,
                            port_num=path.end_port.port_id,
-                           qp_access_flags=qp_access_flags);
+                           qp_access_flags=qp_access_flags)
         self.modify(attr,attr.MASK)
 
     def modify_to_rtr(self,path):
         """Modify the QP to the RTR state."""
         if self._qp_type == c.IBV_QPT_UD:
-            attr = qp_attr(qp_state=c.IBV_QPS_RTR);
+            attr = qp_attr(qp_state=c.IBV_QPS_RTR)
         elif self._qp_type == c.IBV_QPT_UC:
             attr = qp_attr(qp_state=c.IBV_QPS_RTR,
                            path_mtu=path.MTU,
@@ -1680,7 +1684,7 @@ cdef class QP:
         """Modify the QP to the RTS state."""
         if self._qp_type == c.IBV_QPT_UD or self._qp_type == c.IBV_QPT_UC:
             attr = qp_attr(qp_state=c.IBV_QPS_RTS,
-                           sq_psn=path.sqpsn);
+                           sq_psn=path.sqpsn)
         else:
             attr = qp_attr(qp_state=c.IBV_QPS_RTS,
                            timeout=rdma.IBA.to_timer(path.qp_timeout),
@@ -1688,21 +1692,22 @@ cdef class QP:
                            # FIXME
                            rnr_retry=7,
                            sq_psn=path.sqpsn,
-                           max_rd_atomic=path.srdatomic);
+                           max_rd_atomic=path.srdatomic
+                           )
         self.modify(attr,attr.MASK)
 
     def establish(self,path,int qp_access_flags=0):
         """Perform :meth:`modify_to_init`, :meth:`modify_to_rtr` and
         :meth`modify_to_rts`.  This function is most useful for UD QPs which
         do not require any external sequencing."""
-        self.modify_to_init(path,qp_access_flags);
-        self.modify_to_rtr(path);
-        self.modify_to_rts(path);
+        self.modify_to_init(path,qp_access_flags)
+        self.modify_to_rtr(path)
+        self.modify_to_rts(path)
 
     def __str__(self):
-        return "qp:%u:%s"%(self._qp.qp_num,self._pd);
+        return "qp:%u:%s"%(self._qp.qp_num,self._pd)
     def __repr__(self):
         return "QP(%r,0x%x,%u,qp_type=%s)"%(
             self._pd,self._qp.handle,self._qp.qp_num,
             IBA.const_str("IBV_QPT_",self._qp.qp_type,True,
-                          sys.modules["rdma.ibverbs"]));
+                          sys.modules["rdma.ibverbs"]))
