@@ -383,7 +383,7 @@ class Subnet(object):
         # LID route to a HCA followed by DR route after does not work, in the local
         # host case I think this is a kernel bug, but other cases seem to be as the
         # spec intends.
-        drPath = getattr(path, "drPath", "\0") + chr(portIdx)
+        drPath = getattr(path, "drPath", b"\0") + chr(portIdx).encode("ascii")
         if len(drPath) > 64:
             raise rdma.RDMAError("DR path length limit exceeded, %r" % (drPath))
         if (path.DLID == path.end_port.lid and
