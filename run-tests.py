@@ -28,4 +28,4 @@ for entry in fns:
 suite = unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromNames(fns, module))
 
 if __name__ == "__main__":
-    unittest.main(defaultTest="testAll")
+    unittest.main(defaultTest="test_all")
