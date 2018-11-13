@@ -254,6 +254,7 @@ class GUID(bytes):
             s = codecs.decode(("%016x" % (s)), "hex")
             raw = True
         if raw:
+            print(len(s))
             assert (len(s) == 8)
             # print(cls, s, type(s), len(s), "*", s, "*", [ord(x) for x in s])
             if isinstance(s, str):
@@ -273,7 +274,7 @@ class GUID(bytes):
     def pack_into(self, buf, offset=0):
         """ Pack the value into a byte array. """
 
-        buf[offset:offset + 8] = bytes.__str__(self).encode("ascii")
+        buf[offset:offset + 8] = [x for x in self]
 
     def __str__(self):
         """Return a printable string of the GUID."""
@@ -329,7 +330,10 @@ class GID(bytes):
             return s
         if raw:
             assert (len(s) == 16)
-            return bytes.__new__(cls, s.encode("ascii"))
+            if isinstance(s, str):
+                return bytes.__new__(cls, s.encode("ascii"))
+            else:
+                return bytes.__new__(cls, s)
         try:
             return bytes.__new__(cls, socket.inet_pton(socket.AF_INET6, s.strip()))
         except:
@@ -337,7 +341,7 @@ class GID(bytes):
 
     def pack_into(self, buf, offset=0):
         """Pack the value into a byte array."""
-        buf[offset:offset + 16] = bytes.__str__(self).encode("ascii")
+        buf[offset:offset + 16] = [x for x in self]  # bytes.__str__(self).encode("ascii")
 
     def __str__(self):
         """Return a printable string of the GID."""
@@ -358,7 +362,7 @@ class GID(bytes):
         return int(codecs.encode(self, "hex"), 16)
 
     def __reduce__(self):
-        return (GID, (bytes.__str__(self), True))
+        return (GID, (int(self), True))
 
 
 #: All zeros GID value.

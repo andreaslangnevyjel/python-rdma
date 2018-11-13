@@ -8,6 +8,7 @@ import rdma.IBA as IBA
 import rdma.IBA_describe as IBA_describe
 import rdma.path
 import rdma.satransactor
+from typing import Tuple, List
 
 
 class Node(object):
@@ -22,13 +23,15 @@ class Node(object):
     #: Result of :func:`rdma.IBA_describe.description` on the nodeString.
     desc = None
     #: Array of :class`Port`. Note: CA port 1 is stored in index 1.
-    ports = None
+    ports: List = None
 
-    def get_port_nc(self, portIdx):
-        """Return the port for index *portIdx*, or `None` if it does not
-        exist."""
+    def get_port_nc(self, port_idx: int):
+        """
+        Return the port for index *portIdx*, or `None` if it does not
+        exist.
+        """
         try:
-            port = self.ports[portIdx]
+            port = self.ports[port_idx]
             return port
         except TypeError:
             assert self.ports is None
@@ -36,13 +39,13 @@ class Node(object):
             pass
         return None
 
-    def get_port(self, portIdx):
+    def get_port(self, port_idx: int):
         """Return the port for index *portIdx*."""
         try:
-            port = self.ports[portIdx]
+            port = self.ports[port_idx]
             if port is None:
                 port = Port(self)
-                self.ports[portIdx] = port
+                self.ports[port_idx] = port
             return port
         except TypeError:
             assert self.ports is None
@@ -50,29 +53,29 @@ class Node(object):
             pass
 
         port = Port(self)
-        self.set_port(portIdx, port)
+        self.set_port(port_idx, port)
         return port
 
-    def set_port(self, portIdx, port):
+    def set_port(self, port_idx: int, port):
         """Store *port* in *portIdx* for :attr:`ports`."""
         try:
-            self.ports[portIdx] = port
+            self.ports[port_idx] = port
         except TypeError:
             assert self.ports is None
             if self.ninf:
                 self.ports = [None] * (self.ninf.numPorts + 1)
             else:
-                self.ports = [None] * (portIdx + 1)
+                self.ports = [None] * (port_idx + 1)
         except IndexError:
             if self.ninf:
                 self.ports.extend(None for I in range(len(self.ports), self.ninf.numPorts + 1))
             else:
-                self.ports.extend(None for I in range(len(self.ports), portIdx + 1))
-        self.ports[portIdx] = port
+                self.ports.extend(None for I in range(len(self.ports), port_idx + 1))
+        self.ports[port_idx] = port
 
-    def set_desc(self, nodeString):
+    def set_desc(self, node_string: str):
         """Set the description from a *nodeString* type value."""
-        self.desc = IBA_describe.description(nodeString)
+        self.desc = IBA_describe.description(node_string)
 
     def get_desc(self, sched, path):
         """Coroutine to fetch the node description"""
@@ -783,8 +786,8 @@ class Subnet(object):
         """
         return self.DRCacher(self, end_port, start)
 
-    def __getstate__(self):
-        return (self.all_nodes, self.topology, self.loaded, self.lid_routed)
+    def __getstate__(self) -> Tuple:
+        return self.all_nodes, self.topology, self.loaded, self.lid_routed
 
     def __setstate__(self, v):
         self.all_nodes = v[0]

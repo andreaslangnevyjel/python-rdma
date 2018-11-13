@@ -1,10 +1,12 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
+import sys
+
 import rdma
 import rdma.IBA as IBA
 import rdma.path
-import sys
+from rdma import binstruct
 
 TRACE_SEND = 0
 TRACE_COMPLETE = 1
@@ -13,7 +15,7 @@ TRACE_RECEIVE = 3
 TRACE_REPLY = 4
 
 
-class _MADFormat(rdma.binstruct.BinFormat, IBA.MADHeader):
+class _MADFormat(binstruct.BinFormat, IBA.MADHeader):
     """Support clase to let us trace error MADs."""
 
     def __init__(self, buf):
@@ -197,15 +199,21 @@ class MADTransactor(object):
         nfmt = fmt.__class__
         if getattr(fmt, "RMPPVersion", None) is not None:
             # Quick check if RMPP was used
-            if (rbuf[26] & IBA.RMPP_ACTIVE):
-                nfmt = IBA.SAHeader;  # FIXME, should be class specific
+            if rbuf[26] & IBA.RMPP_ACTIVE:
+                nfmt = IBA.SAHeader  # FIXME, should be class specific
                 rmpp = True
 
         if ((not rmpp and len(rbuf) != fmt.MAD_LENGTH) or
             (rmpp and len(rbuf) < nfmt.MAD_LENGTH)):
-            raise rdma.MADError(req=fmt, rep_buf=rbuf, path=path,
-                                msg="Invalid reply size. Got %u, expected %u" % (len(rbuf),
-                                                                                 fmt.MAD_LENGTH))
+            raise rdma.MADError(
+                req=fmt,
+                rep_buf=rbuf,
+                path=path,
+                msg="Invalid reply size. Got %u, expected %u" % (
+                    len(rbuf),
+                    fmt.MAD_LENGTH,
+                ),
+            )
         # The try wrappers the unpack incase the MAD is busted somehow.
         try:
             self.reply_fmt = nfmt(rbuf)

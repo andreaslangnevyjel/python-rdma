@@ -309,7 +309,7 @@ class HdrAtomicAckETH(rdma.binstruct.BinStruct):
 
 class HdrImmDt(rdma.binstruct.BinStruct):
     """Immediate Extended Transport Header (section 9.3.6)"""
-    __slots__ = ('immediateData')
+    __slots__ = ('immediateData',)
     MAD_LENGTH = 4
     MEMBERS = [('immediateData', 32, 1)]
 
@@ -4804,7 +4804,7 @@ MEMBER_FORMATS = {
     'capabilityMask2': 'hex', 'counterSelect9': 'hex', 'redirectTC': 'hex', 'trapPKey': 'hex', 'counterSelect11': 'hex',
     'transactionID': 'hex', 'counterSelect13': 'hex', 'SMKey': 'hex', 'MKey': 'hex', 'localCMQKey': 'hex',
     'redirectQP': 'hex', 'GIDPrefix': 'gid_prefix', 'localQKey': 'hex', 'serviceID': 'hex', 'deviceID': 'hex',
-    'trapQKey': 'hex', 'TClass': 'hex'
+    'trapQKey': 'hex', 'TClass': 'hex',
 }
 CLASS_TO_STRUCT = {
     (7, 258): CMFormat,
@@ -4815,8 +4815,9 @@ CLASS_TO_STRUCT = {
     (6, 257): DMFormat,
     (8, 257): SNMPFormat,
     (9, 257): VendFormat,
-    (48, 257): VendOUIFormat
+    (48, 257): VendOUIFormat,
 }
+
 ATTR_TO_STRUCT = {
     (CMFormat, 16): CMREQ,
     (CMFormat, 17): CMMRA,
@@ -4907,5 +4908,5 @@ ATTR_TO_STRUCT = {
     (SMPFormatDirected, 48): SMPVendorDiag,
     (SMPFormatDirected, 49): SMPLedInfo,
     (SNMPFormat, 16): SNMPCommunityInfo,
-    (SNMPFormat, 17): SNMPPDUInfo
+    (SNMPFormat, 17): SNMPPDUInfo,
 }

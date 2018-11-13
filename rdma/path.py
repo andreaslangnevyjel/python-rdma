@@ -411,7 +411,7 @@ class IBDRPath(IBPath):
 
     def __str__(self):
         # No LID components
-        drPath = tuple(ord(I) for I in self.drPath)
+        drPath = tuple(entry for entry in self.drPath)
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
             return "DR Path %r" % (drPath,)
         # LID route at the start

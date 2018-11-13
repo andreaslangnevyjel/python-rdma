@@ -91,9 +91,9 @@ def subnet_topology_SA(sched, sbn):
         fn, f = sbn.get_node(rdma.subnet.Node, LID=I.fromLID)
         tn, t = sbn.get_node(rdma.subnet.Node, LID=I.toLID)
         if isinstance(fn, rdma.subnet.Switch):
-            f = sbn.get_port(portIdx=I.fromPort, LID=I.fromLID)
+            f = sbn.get_port(port_idx=I.fromPort, LID=I.fromLID)
         if isinstance(tn, rdma.subnet.Switch):
-            t = sbn.get_port(portIdx=I.toPort, LID=I.toLID)
+            t = sbn.get_port(port_idx=I.toPort, LID=I.toLID)
 
         sbn.topology[f] = t
         sbn.topology[t] = f
@@ -419,7 +419,7 @@ def topo_peer_SMP(sched, sbn, port, get_desc=True, path=None,
             req.fromPort = portIdx
             rep = yield sched.SubnAdmGet(req)
             peer_path._cached_resolved_dlid = rep.toLID
-            peer_port = sbn.get_port(portIdx=rep.toPort, LID=rep.toLID,
+            peer_port = sbn.get_port(port_idx=rep.toPort, LID=rep.toLID,
                                      path=peer_path)
 
         peer_node, peer_zport = yield subnet_ninf_SMP(sched, sbn, peer_path,
@@ -428,7 +428,7 @@ def topo_peer_SMP(sched, sbn, port, get_desc=True, path=None,
         if not use_sa:
             lpn = getattr(peer_path, "_cached_subnet_localPortNum",
                           peer_node.ninf.localPortNum)
-            peer_port = sbn.get_port(portIdx=lpn,
+            peer_port = sbn.get_port(port_idx=lpn,
                                      path=peer_path)
 
         sbn.topology[port] = peer_port

@@ -256,7 +256,7 @@ def struct_dump(f_obj, s, offset=0, name_prefix=''):
     max_idx = len(s.MEMBERS)
     max_dword = len(buf)
     for nz_dword in range(max_dword - 1, -1, -1):
-        if buf[nz_dword] != '\0':
+        if buf[nz_dword] != b'\0':
             break
     cur_dword = 0
     while cur_dword < max_dword:
