@@ -272,7 +272,7 @@ class GUID(bytes):
 
     def pack_into(self, buf, offset=0):
         """ Pack the value into a byte array. """
-        
+
         buf[offset:offset + 8] = bytes.__str__(self).encode("ascii")
 
     def __str__(self):

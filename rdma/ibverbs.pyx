@@ -10,6 +10,8 @@ import sys
 import rdma.devices
 import rdma.IBA as IBA
 import rdma.path
+import collections
+import rdma.tools as tools
 
 from cpython.unicode cimport PyUnicode_AsEncodedString
 from libc.stdint cimport uint8_t
@@ -1090,7 +1092,7 @@ cdef class SRQ:
         try:
             cwr = <c.ibv_recv_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for i in range(0, n): #  0 <= i < n:
+            for i in range(0, n):  #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
