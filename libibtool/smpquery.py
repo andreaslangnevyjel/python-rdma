@@ -1,4 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
 
 import rdma.IBA_describe as IBA_describe
 from libibtool.libibopts import *

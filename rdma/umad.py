@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-
+# -*- coding: utf-8 -*-
 
 import copy
 import errno
@@ -376,7 +376,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                     self.trace_func(self, rdma.madtransactor.TRACE_UNEXPECTED,
                                     path=path, ret=ret)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s.%s object for %s at 0x%x>" % \
                (self.__class__.__module__,
                 self.__class__.__name__,

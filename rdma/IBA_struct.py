@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import rdma.binstruct
 import struct
 

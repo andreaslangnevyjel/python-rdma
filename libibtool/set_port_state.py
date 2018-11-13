@@ -1,4 +1,7 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
+
+
 import copy
 
 import rdma.discovery

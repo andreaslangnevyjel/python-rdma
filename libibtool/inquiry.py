@@ -1,5 +1,7 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
 # Fairly simple status/inquery commands
+
 import copy
 import struct
 

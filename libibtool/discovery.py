@@ -1,8 +1,9 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
+
 import math
 import time
 
-import rdma.IBA as IBA
 import rdma.IBA_describe as IBA_describe
 import rdma.subnet
 from libibtool.libibopts import *

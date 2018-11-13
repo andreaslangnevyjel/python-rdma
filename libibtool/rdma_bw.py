@@ -1,4 +1,6 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
+
 import contextlib
 import socket
 from collections import namedtuple

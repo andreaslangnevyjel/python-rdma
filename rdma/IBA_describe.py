@@ -1,5 +1,7 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
 # Describe various IBA constants as strings
+
 import rdma.IBA as IBA
 import rdma.binstruct
 
@@ -36,7 +38,7 @@ def node_type(value):
     return "?? %u" % (value)
 
 
-def link_state(value):
+def link_state(value) -> str:
     """Decode a Port Info port state *value* into a string."""
     if value == IBA.PORT_STATE_DOWN:
         return "Down"
@@ -49,7 +51,7 @@ def link_state(value):
     return "?? %u" % (value)
 
 
-def phys_link_state(value):
+def phys_link_state(value) -> str:
     """Decode a Port Info port physical state *value* into a string."""
     if value == IBA.PHYS_PORT_STATE_SLEEP:
         return "Sleep"
@@ -68,7 +70,7 @@ def phys_link_state(value):
     return "?? %u" % (value)
 
 
-def link_speed(value):
+def link_speed(value) -> str:
     """Decode a Port Info linkSpeedActive value into a string."""
     res = []
     if value & IBA.LINK_SPEED_2Gb5:
@@ -140,7 +142,7 @@ def rate(value):
         return 20000000000
     if value == IBA.PR_RATE_300Gb0:
         return 30000000000
-    return 2499999999;  # ???
+    return 2499999999  # ???
 
 
 def to_rate(value):

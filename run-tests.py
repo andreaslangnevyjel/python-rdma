@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+
 import fnmatch
 import os.path
 import unittest

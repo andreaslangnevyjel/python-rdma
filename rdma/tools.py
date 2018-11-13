@@ -1,9 +1,13 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
+
 import collections
 import io
 import os
 import os.path
 import stat
+import ctypes
+
 
 import rdma
 
@@ -37,8 +41,6 @@ class SysFSDevice(object):
             if st.st_mode == st2.st_mode and st.st_rdev == st2.st_rdev:
                 return (F, path)
             F.close()
-        except IOError:
-            pass
         except OSError:
             pass
         return None
@@ -49,7 +51,7 @@ class SysFSDevice(object):
         name = os.path.basename(sysfs)
         try:
             with open(sysfs + "/dev") as F:
-                dev = F.read().strip().split(':')
+                dev = F.read().strip().split(":")
                 dev = os.makedev(int(dev[0]), int(dev[1]))
         except IOError:
             raise rdma.RDMAError("Unable to open device node for %s, bad dev file?" % (repr(name)))
@@ -75,9 +77,6 @@ class SysFSDevice(object):
 
     def close(self):
         return self.dev.close()
-
-
-import ctypes
 
 
 class _timespec(ctypes.Structure):

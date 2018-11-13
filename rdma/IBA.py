@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 
 # NOTE: The docstrings for this module are specially processed in the
@@ -15,15 +16,15 @@ NODE_SWITCH = 2
 NODE_ROUTER = 3
 
 #: General Constants
-MAX_PORTS = 254;  # maximum number of physical ports on a device
+MAX_PORTS = 254  # maximum number of physical ports on a device
 INVALID_PORT = 255
 MAX_PKEYS = 65536
 MAX_GUIDS = 256
 MAX_PKT_WORDS = 4222 / 4
 
 #: LID Constants
-LID_RESERVED = 0;  # for uninitialized ports
-LID_MULTICAST = 0xC000;  # first multicast LID
+LID_RESERVED = 0  # for uninitialized ports
+LID_MULTICAST = 0xC000  # first multicast LID
 LID_PERMISSIVE = 0xFFFF
 LID_COUNT_UNICAST = 0xC000
 LID_COUNT_MULTICAST = (0xFFFE - 0xC000) + 1
@@ -203,7 +204,7 @@ def conv_lid(s, multicast=False):
     lid = int(s, 0)
     if multicast is None:
         return lid
-    if multicast == True:
+    if multicast:
         if lid < LID_MULTICAST or lid == LID_PERMISSIVE:
             raise ValueError("%r is not a multicast LID" % (s))
     else:
@@ -243,7 +244,7 @@ class GUID(bytes):
         :raises ValueError: If the string can not be parsed."""
         pass
 
-    def __new__(self, s=None, raw=False):
+    def __new__(cls, s=None, raw=False):
         if s is None:
             return ZERO_GUID
         if isinstance(s, GUID):
@@ -253,13 +254,13 @@ class GUID(bytes):
             raw = True
         if raw:
             assert (len(s) == 8)
-            return bytes.__new__(self, s)
+            return bytes.__new__(cls, s)
 
         v = ''.join(I.zfill(4) for I in s.strip().split(':'))
         if len(v) != 16:
             raise ValueError("%r is not a valid GUID" % (s))
         try:
-            return bytes.__new__(self, v.decode("hex"))
+            return bytes.__new__(cls, v.decode("hex"))
         except TypeError:
             raise ValueError("%r is not a valid GUID" % (s))
 
