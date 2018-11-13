@@ -1,9 +1,9 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-import sys;
-import rdma;
-import rdma.path;
-import rdma.madtransactor;
-import rdma.IBA as IBA;
+import rdma
+import rdma.IBA as IBA
+import rdma.madtransactor
+import rdma.path
+
 
 class SATransactor(rdma.madtransactor.MADTransactor):
     """This class wrappers another MADTransactor and transparently changes SMP
@@ -25,69 +25,69 @@ class SATransactor(rdma.madtransactor.MADTransactor):
 
     It is also a context manager that wrappers the *parent*'s :meth:`close`."""
 
-    def __init__(self,parent,sa_path=None):
+    def __init__(self, parent, sa_path=None):
         """*parent* is the :class:`~rdma.madtransactor.MADTransactor` we are
         wrappering."""
-        self._parent = parent;
-        self.end_port = parent.end_port;
-        self.sa_path = sa_path or self.end_port.sa_path;
+        self._parent = parent
+        self.end_port = parent.end_port
+        self.sa_path = sa_path or self.end_port.sa_path
 
-    def get_path_lid(self,path):
+    def get_path_lid(self, path):
         """Resolve *path* to a LID. This is only does something if *path*
         is directed route."""
-        if not isinstance(path,rdma.path.IBDRPath):
-            return path.DLID;
+        if not isinstance(path, rdma.path.IBDRPath):
+            return path.DLID
 
         if path.drDLID != IBA.LID_PERMISSIVE:
-            return path.drDLID;
+            return path.drDLID
 
         try:
-            return path._cached_resolved_dlid;
+            return path._cached_resolved_dlid
         except AttributeError:
-            pass;
+            pass
 
-        start_lid = path.DLID;
+        start_lid = path.DLID
         if start_lid == IBA.LID_PERMISSIVE:
-            start_lid = self.end_port.lid;
+            start_lid = self.end_port.lid
 
         if len(path.drPath) > 1:
-            self._parent.do_async(self.prepare_path_lid(path));
+            self._parent.do_async(self.prepare_path_lid(path))
         else:
-            path._cached_resolved_dlid = start_lid;
-        return path._cached_resolved_dlid;
+            path._cached_resolved_dlid = start_lid
+        return path._cached_resolved_dlid
 
-    def prepare_path_lid(self,path):
+    def prepare_path_lid(self, path):
         """Coroutine to resolve *path* to a LID. This only does something if
         *path* is directed route. This must be performed when using directed
         route paths with asynchronous MAD transactors."""
-        if (not isinstance(path,rdma.path.IBDRPath) or
+        if (not isinstance(path, rdma.path.IBDRPath) or
             path.drDLID != IBA.LID_PERMISSIVE or
-            getattr(path,"_cached_resolved_dlid",None) is not None):
-            self._parent.result = self.get_path_lid(path);
-            return;
+            getattr(path, "_cached_resolved_dlid", None) is not None):
+            self._parent.result = self.get_path_lid(path)
+            return
 
-        start_lid = path.DLID;
+        start_lid = path.DLID
         if start_lid == IBA.LID_PERMISSIVE:
-            start_lid = self.end_port.lid;
+            start_lid = self.end_port.lid
 
         # Use the SA to resolve the DR path to a LID.
-        req = IBA.ComponentMask(IBA.SALinkRecord());
+        req = IBA.ComponentMask(IBA.SALinkRecord())
         for I in path.drPath[1:]:
-            req.fromLID = start_lid;
-            req.fromPort = ord(I);
-            rep = yield self._parent.SubnAdmGet(req);
-            start_lid = rep.toLID;
-        path._cached_resolved_dlid = start_lid;
-        self._parent.result = start_lid;
+            req.fromLID = start_lid
+            req.fromPort = ord(I)
+            rep = yield self._parent.SubnAdmGet(req)
+            start_lid = rep.toLID
+        path._cached_resolved_dlid = start_lid
+        self._parent.result = start_lid
 
     def _get_new_TID(self):
-        return self._parent._get_new_TID();
+        return self._parent._get_new_TID()
 
-    def _doMAD(self,fmt,payload,path,attributeModifier,method,completer=None):
-        return self._parent._doMAD(fmt,payload,path,attributeModifier,method,
-                                   completer);
+    def _doMAD(self, fmt, payload, path, attributeModifier, method, completer=None):
+        return self._parent._doMAD(fmt, payload, path, attributeModifier, method,
+                                   completer)
 
-    def _sa_error(self,rfmt,class_code):
+    def _sa_error(self, rfmt, class_code):
         """IMHO it is an error for the SA to return NO_RECORDS for a valid
         query - just because it has no programmed records for that position.
         But opensm does, so we handle it by returning 0 for the record
@@ -96,149 +96,154 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         be using a :meth:`SubnAdmGetTable` anyhow...."""
         if class_code == IBA.MAD_STATUS_SA_NO_RECORDS:
             return IBA.ATTR_TO_STRUCT[self.req_fmt.__class__,
-                                      self.req_fmt.attributeID]();
+                                      self.req_fmt.attributeID]()
 
-    def _finish_port_info_attr0(self,rpayload):
+    def _finish_port_info_attr0(self, rpayload):
         if len(rpayload) == 0:
-            raise rdma.MADError(req=self.req_fmt,path=self.req_path,
+            raise rdma.MADError(req=self.req_fmt, path=self.req_path,
                                 rep=self.reply_fmt,
-                                msg="Empty SAPortInfoRecord");
+                                msg="Empty SAPortInfoRecord")
 
         for I in rpayload:
             if I.portNum == 0:
-                return I.portInfo;
-        return rpayload[0].portInfo;
+                return I.portInfo
+        return rpayload[0].portInfo
 
-    def _finish_nodedesc(self,rpayload):
-        self.req_path._cached_node_type = rpayload.nodeInfo.nodeType;
-        return rpayload.nodeDescription;
-    def _finish_nodeinfo(self,rpayload):
-        self.req_path._cached_node_type = rpayload.nodeInfo.nodeType;
-        return rpayload.nodeInfo;
+    def _finish_nodedesc(self, rpayload):
+        self.req_path._cached_node_type = rpayload.nodeInfo.nodeType
+        return rpayload.nodeDescription
 
-    def _subn_adm_do(self,payload,path,attributeModifier,method,completer=None):
+    def _finish_nodeinfo(self, rpayload):
+        self.req_path._cached_node_type = rpayload.nodeInfo.nodeType
+        return rpayload.nodeInfo
+
+    def _subn_adm_do(self, payload, path, attributeModifier, method, completer=None):
         if path is None:
             path = self.sa_path
-        return rdma.madtransactor.MADTransactor._subn_adm_do(self,payload,path,attributeModifier,method,completer)
+        return rdma.madtransactor.MADTransactor._subn_adm_do(self, payload, path, attributeModifier, method, completer)
 
-    def SubnGet(self,payload,path,attributeModifier=0):
-        ID = payload.MAD_ATTRIBUTE_ID;
-        meth = payload.MAD_SUBNGET;
+    def SubnGet(self, payload, path, attributeModifier=0):
+        ID = payload.MAD_ATTRIBUTE_ID
+        meth = payload.MAD_SUBNGET
         if ID == IBA.SMPGUIDInfo.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SAGUIDInfoRecord());
-            req.LID = self.get_path_lid(path);
-            req.blockNum = attributeModifier;
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SAGUIDInfoRecord())
+            req.LID = self.get_path_lid(path)
+            req.blockNum = attributeModifier
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     lambda x:x.GUIDInfo);
+                                     lambda x: x.GUIDInfo)
         if ID == IBA.SMPLinearForwardingTable.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SALinearForwardingTableRecord());
-            req.LID = self.get_path_lid(path);
-            req.blockNum = attributeModifier;
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SALinearForwardingTableRecord())
+            req.LID = self.get_path_lid(path)
+            req.blockNum = attributeModifier
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     (lambda x:x.linearForwardingTable,
-                                      self._sa_error));
+                                     (lambda x: x.linearForwardingTable,
+                                      self._sa_error))
         if ID == IBA.SMPMulticastForwardingTable.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SAMulticastForwardingTableRecord());
-            req.LID = self.get_path_lid(path);
-            req.blockNum = attributeModifier & ((1<<9)-1);
-            req.position = (attributeModifier >> 12) & 0xF;
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SAMulticastForwardingTableRecord())
+            req.LID = self.get_path_lid(path)
+            req.blockNum = attributeModifier & ((1 << 9) - 1)
+            req.position = (attributeModifier >> 12) & 0xF
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     (lambda x:x.multicastForwardingTable,
-                                      self._sa_error));
+                                     (lambda x: x.multicastForwardingTable,
+                                      self._sa_error))
         if ID == IBA.SMPNodeDescription.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SANodeRecord());
-            req.LID = self.get_path_lid(path);
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SANodeRecord())
+            req.LID = self.get_path_lid(path)
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     self._finish_nodedesc);
+                                     self._finish_nodedesc)
         if ID == IBA.SMPNodeInfo.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SANodeRecord());
-            req.LID = self.get_path_lid(path);
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SANodeRecord())
+            req.LID = self.get_path_lid(path)
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     self._finish_nodeinfo);
+                                     self._finish_nodeinfo)
 
         if ID == IBA.SMPPKeyTable.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SAPKeyTableRecord());
-            req.LID = self.get_path_lid(path);
-            nt = getattr(path,"_cached_node_type",None);
+            req = IBA.ComponentMask(IBA.SAPKeyTableRecord())
+            req.LID = self.get_path_lid(path)
+            nt = getattr(path, "_cached_node_type", None)
             if nt is None or nt == IBA.NODE_SWITCH:
-                req.portNum = attributeModifier >> 16;
-            req.blockNum = attributeModifier & 0xFFFF;
-            return self._subn_adm_do(req,self.sa_path,0,
+                req.portNum = attributeModifier >> 16
+            req.blockNum = attributeModifier & 0xFFFF
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     (lambda x:x.PKeyTable,
-                                      self._sa_error));
+                                     (lambda x: x.PKeyTable,
+                                      self._sa_error))
 
         if ID == IBA.SMPPortInfo.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SAPortInfoRecord());
-            req.endportLID = self.get_path_lid(path);
+            req = IBA.ComponentMask(IBA.SAPortInfoRecord())
+            req.endportLID = self.get_path_lid(path)
             if (attributeModifier == 0 and
-                getattr(path,"_cached_node_type",None) != IBA.NODE_SWITCH):
+                getattr(path, "_cached_node_type", None) != IBA.NODE_SWITCH):
                 # This can mean 'whatever port' or it can mean 'switch port 0'
                 # If we don't know the node type then do a get table and
                 # figure it out.
-                return self._subn_adm_do(req,self.sa_path,0,
+                return self._subn_adm_do(req, self.sa_path, 0,
                                          req.MAD_SUBNADMGETTABLE,
-                                         self._finish_port_info_attr0);
+                                         self._finish_port_info_attr0)
 
-            req.portNum = attributeModifier;
-            return self._subn_adm_do(req,self.sa_path,0,
+            req.portNum = attributeModifier
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     lambda x:x.portInfo);
+                                     lambda x: x.portInfo)
         if ID == IBA.SMPSLToVLMappingTable.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SASLToVLMappingTableRecord());
-            req.LID = self.get_path_lid(path);
-            req.inputPortNum = (attributeModifier >> 8) & 0xFF;
-            req.outputPortNum = attributeModifier & 0xFF;
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SASLToVLMappingTableRecord())
+            req.LID = self.get_path_lid(path)
+            req.inputPortNum = (attributeModifier >> 8) & 0xFF
+            req.outputPortNum = attributeModifier & 0xFF
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     (lambda x:x.SLToVLMappingTable,
-                                      self._sa_error));
+                                     (lambda x: x.SLToVLMappingTable,
+                                      self._sa_error))
         if ID == IBA.SMPSMInfo.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SASMInfoRecord());
-            req.LID = self.get_path_lid(path);
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SASMInfoRecord())
+            req.LID = self.get_path_lid(path)
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     lambda x:x.SMInfo);
+                                     lambda x: x.SMInfo)
         if ID == IBA.SMPSwitchInfo.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SASwitchInfoRecord());
-            req.LID = self.get_path_lid(path);
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SASwitchInfoRecord())
+            req.LID = self.get_path_lid(path)
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     lambda x:x.switchInfo);
+                                     lambda x: x.switchInfo)
         if ID == IBA.SMPVLArbitrationTable.MAD_ATTRIBUTE_ID:
-            req = IBA.ComponentMask(IBA.SAVLArbitrationTableRecord());
-            req.LID = self.get_path_lid(path);
-            req.outputPortNum = attributeModifier & 0xFFFF;
-            req.blockNum = (attributeModifier >> 16) & 0xFFFF;
-            return self._subn_adm_do(req,self.sa_path,0,
+            req = IBA.ComponentMask(IBA.SAVLArbitrationTableRecord())
+            req.LID = self.get_path_lid(path)
+            req.outputPortNum = attributeModifier & 0xFFFF
+            req.blockNum = (attributeModifier >> 16) & 0xFFFF
+            return self._subn_adm_do(req, self.sa_path, 0,
                                      req.MAD_SUBNADMGET,
-                                     (lambda x:x.VLArbitrationTable,
-                                      self._sa_error));
+                                     (lambda x: x.VLArbitrationTable,
+                                      self._sa_error))
 
-        return self._parent.SubnGet(payload,path,attributeModifier);
+        return self._parent.SubnGet(payload, path, attributeModifier)
 
-    def __getattr__(self,name):
+    def __getattr__(self, name):
         """Let us wrapper things with additional members."""
-        return getattr(self._parent,name);
+        return getattr(self._parent, name)
 
     @property
     def result(self):
-        return self._parent.result;
+        return self._parent.result
+
     @result.setter
-    def result(self,value):
-        self._parent.result = value;
+    def result(self, value):
+        self._parent.result = value
+
     @property
     def is_async(self):
-        return self._parent.is_async;
+        return self._parent.is_async
 
     def __enter__(self):
-        return self;
-    def __exit__(self,*exc_info):
-        self._parent.close();
+        return self
+
+    def __exit__(self, *exc_info):
+        self._parent.close()
+
     def close(self):
-        return self._parent.close();
+        return self._parent.close()

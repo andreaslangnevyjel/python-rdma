@@ -1,0 +1,67 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyBroadExceptionInspection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyCompatibilityInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ourVersions">
+        <value>
+          <list size="1">
+            <item index="0" class="java.lang.String" itemvalue="3.7" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyMandatoryEncodingInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyMissingTypeHintsInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="8">
+            <item index="0" class="java.lang.String" itemvalue="nose" />
+            <item index="1" class="java.lang.String" itemvalue="lazy-object-proxy" />
+            <item index="2" class="java.lang.String" itemvalue="colorama" />
+            <item index="3" class="java.lang.String" itemvalue="pylint" />
+            <item index="4" class="java.lang.String" itemvalue="wrapt" />
+            <item index="5" class="java.lang.String" itemvalue="lxml" />
+            <item index="6" class="java.lang.String" itemvalue="wsgiref" />
+            <item index="7" class="java.lang.String" itemvalue="astroid" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="zmq.POLLIN" />
+          <option value="zmq.FD" />
+          <option value="zmq.IDENTITY" />
+          <option value="zmq.PUSH" />
+          <option value="zmq.LINGER" />
+          <option value="zmq.SNDMORE" />
+          <option value="zmq.NOBLOCK" />
+          <option value="zmq.RCVMORE" />
+          <option value="zmq.ROUTER" />
+          <option value="zmq.IMMEDIATE" />
+          <option value="zmq.ROUTER_MANDATORY" />
+          <option value="zmq.POLLOUT" />
+          <option value="zmq.POLLERR" />
+          <option value="zmq.SNDTIMEO" />
+          <option value="zmq.Context" />
+          <option value="zmq.SUB" />
+          <option value="zmq.SUBSCRIBE" />
+          <option value="zmq.Poller" />
+          <option value="salt.config" />
+          <option value="salt.loader" />
+          <option value="zmq.DONTWAIT" />
+          <option value="" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
+      <option name="processCode" value="true" />
+      <option name="processLiterals" value="true" />
+      <option name="processComments" value="true" />
+    </inspection_tool>
+  </profile>
+</component>

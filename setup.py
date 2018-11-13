@@ -1,32 +1,33 @@
 #!/usr/bin/env python
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-import sys
-import re
 import imp
 import os.path
+import re
+import sys
 from distutils import log
-from distutils.core import setup
 from distutils.core import Command
+from distutils.core import setup
 from distutils.extension import Extension
 
+import Cython.Compiler.Version
 import Cython.Distutils
-import Cython.Compiler.Version;
+
 
 class build_ext(Cython.Distutils.build_ext):
     def build_extensions(self):
-        self.codegen();
-        Cython.Distutils.build_ext.build_extensions(self);
+        self.codegen()
+        Cython.Distutils.build_ext.build_extensions(self)
 
-    def get_enums(self,F):
+    def get_enums(self, F):
         s = []
         skip = True
         for I in F.readlines():
             if I[0] == '#':
-                skip = I.find("infiniband/verbs.h") == -1;
+                skip = I.find("infiniband/verbs.h") == -1
             else:
                 if not skip:
                     s.append(I)
-        s = "".join(s);
+        s = "".join(s)
 
         enum = {}
         for m in re.finditer(r'enum\s+(\w+)\s*{(.*?)}', s, re.DOTALL):
@@ -36,49 +37,52 @@ class build_ext(Cython.Distutils.build_ext):
 
         return enum
 
-    def write_enums_pxd(self,F,enums):
+    def write_enums_pxd(self, F, enums):
         print >> F, '\n\n'.join('\n'.join('%s = c.%s' % (c, c) for c in v)
-                                for e,v in sorted(enums.iteritems()))
-    def write_enums_pxi(self,F,enums):
-        sep = '\n' + ' '*8
-        print >> F, '\n\n'.join('    enum %s:%s' % (e,sep) + sep.join(v)
-                                for e,v in sorted(enums.iteritems()));
+                                for e, v in sorted(enums.iteritems()))
+
+    def write_enums_pxi(self, F, enums):
+        sep = '\n' + ' ' * 8
+        print >> F, '\n\n'.join('    enum %s:%s' % (e, sep) + sep.join(v)
+                                for e, v in sorted(enums.iteritems()))
 
     def codegen(self):
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
-        verbs_h = os.path.join(self.build_temp,"verbs_h.c")
+        verbs_h = os.path.join(self.build_temp, "verbs_h.c")
         verbs_h_o = verbs_h + ".out"
-        with open(verbs_h,"wt") as F:
+        with open(verbs_h, "wt") as F:
             F.write("#include <infiniband/verbs.h>")
-        self.compiler.preprocess(verbs_h,verbs_h_o);
+        self.compiler.preprocess(verbs_h, verbs_h_o)
 
         with open(verbs_h_o) as F:
-            enums = self.get_enums(F);
-        with open("rdma/libibverbs_enums.pxd","wt") as F:
-            print >> F, "cdef extern from 'infiniband/verbs.h':";
-            self.write_enums_pxi(F,enums);
-        with open("rdma/libibverbs_enums.pxi","wt") as F:
-            self.write_enums_pxd(F,enums);
+            enums = self.get_enums(F)
+        with open("rdma/libibverbs_enums.pxd", "wt") as F:
+            print >> F, "cdef extern from 'infiniband/verbs.h':"
+            self.write_enums_pxi(F, enums)
+        with open("rdma/libibverbs_enums.pxi", "wt") as F:
+            self.write_enums_pxd(F, enums)
+
 
 ibverbs_module = Extension('rdma.ibverbs', ['rdma/ibverbs.pyx'],
                            libraries=['ibverbs'],
                            depends=['rdma/libibverbs.pxd',
                                     'rdma/libibverbs.pxi'])
 
+
 # From PyCA
 class sphinx_build(Command):
     description = 'build documentation using Sphinx'
     user_options = [
-      ('builder=', 'b', 'builder to use; default is html'),
-      ('all', 'a', 'write all files; default is to only write new and changed files'),
-      ('reload-env', 'E', "don't use a saved environment, always read all files"),
-      ('out-dir=', 'o', 'path where output is stored (default: doc/<builder>)'),
-      ('cache-dir=', 'd', 'path for the cached environment and doctree files (default: outdir/.doctrees)'),
-      ('conf-dir=', 'c', 'path where configuration file (conf.py) is located (default: same as source-dir)'),
-      ('set=', 'D', '<setting=value> override a setting in configuration'),
-      ('no-color', 'N', 'do not do colored output'),
-      ('pdb', 'P', 'run Pdb on exception'),
+        ('builder=', 'b', 'builder to use; default is html'),
+        ('all', 'a', 'write all files; default is to only write new and changed files'),
+        ('reload-env', 'E', "don't use a saved environment, always read all files"),
+        ('out-dir=', 'o', 'path where output is stored (default: doc/<builder>)'),
+        ('cache-dir=', 'd', 'path for the cached environment and doctree files (default: outdir/.doctrees)'),
+        ('conf-dir=', 'c', 'path where configuration file (conf.py) is located (default: same as source-dir)'),
+        ('set=', 'D', '<setting=value> override a setting in configuration'),
+        ('no-color', 'N', 'do not do colored output'),
+        ('pdb', 'P', 'run Pdb on exception'),
     ]
     boolean_options = ['all', 'reload-env', 'no-color', 'pdb']
 
@@ -98,7 +102,7 @@ class sphinx_build(Command):
 
     def finalize_options(self):
         self.set_undefined_options('build',
-                                   ('build_lib', 'build_lib'));
+                                   ('build_lib', 'build_lib'))
         self.sphinx_args.append('sphinx-build')
 
         if self.builder is None:
@@ -123,7 +127,7 @@ class sphinx_build(Command):
         if self.set is not None:
             self.sphinx_args.extend(['-D', self.set])
 
-        self.source_dir = "doc";
+        self.source_dir = "doc"
         if self.out_dir is None:
             self.out_dir = os.path.join('doc', self.builder)
 
@@ -150,23 +154,26 @@ class sphinx_build(Command):
             try:
                 # We need to point Sphinx at the built library, including
                 # the extension module so that autodoc works properly.
-                sys.path.insert(0,os.path.realpath(self.build_lib))
+                sys.path.insert(0, os.path.realpath(self.build_lib))
                 sphinx.main(self.sphinx_args)
             finally:
-                sys.path = opath;
+                sys.path = opath
 
-version = imp.load_source('__tmp__','rdma/__init__.py').__version__;
+
+version = imp.load_source('__tmp__', 'rdma/__init__.py').__version__
 
 setup(name='rdma',
       version=version,
       description='RDMA functionality for python',
       ext_modules=[ibverbs_module],
-      packages=['rdma','libibtool'],
+      packages=['rdma', 'libibtool'],
       scripts=['ibtool'],
-      cmdclass={'build_ext': build_ext,
-                'docs': sphinx_build},
-      platforms = "ALL",
-      classifiers = [
+      cmdclass={
+          'build_ext': build_ext,
+          'docs': sphinx_build
+      },
+      platforms="ALL",
+      classifiers=[
           'Development Status :: 4 - Beta',
           'License :: OSI Approved :: GPL',
           'Intended Audience :: Developers',
@@ -175,4 +182,4 @@ setup(name='rdma',
           'Programming Language :: Python',
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 2.6',
-      ],)
+      ], )
