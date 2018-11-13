@@ -245,7 +245,7 @@ class GUID(bytes):
         :raises ValueError: If the string can not be parsed."""
         pass
 
-    def __new__(cls, s=None, raw=False):
+    def __new__(cls, s=None, raw: bool=False):
         if s is None:
             return ZERO_GUID
         if isinstance(s, GUID):
@@ -256,15 +256,19 @@ class GUID(bytes):
         if raw:
             assert (len(s) == 8)
             # print(cls, s, type(s), len(s), "*", s, "*", [ord(x) for x in s])
-            return bytes.__new__(cls, s.encode("ascii"))
+            if isinstance(s, str):
+                return bytes.__new__(cls, s.encode("ascii"))
+            else:
+                return bytes.__new__(cls, s)
+        else:
 
-        v = ''.join(I.zfill(4) for I in s.strip().split(':'))
-        if len(v) != 16:
-            raise ValueError("%r is not a valid GUID" % (s))
-        try:
-            return bytes.__new__(cls, codecs.decode(v, "hex"))
-        except TypeError:
-            raise ValueError("%r is not a valid GUID" % (s))
+            v = ''.join(I.zfill(4) for I in s.strip().split(':'))
+            if len(v) != 16:
+                raise ValueError("%r is not a valid GUID" % (s))
+            try:
+                return bytes.__new__(cls, codecs.decode(v, "hex"))
+            except TypeError:
+                raise ValueError("%r is not a valid GUID" % (s))
 
     def pack_into(self, buf, offset=0):
         """Pack the value into a byte array."""
