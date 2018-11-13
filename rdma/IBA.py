@@ -272,7 +272,7 @@ class GUID(bytes):
 
     def __str__(self):
         """Return a printable string of the GUID."""
-        tmp = self.encode("hex")
+        tmp = codecs.encode(self, "hex")
         return "%s:%s:%s:%s" % (tmp[0:4], tmp[4:8], tmp[8:12], tmp[12:16])
 
     def __repr__(self):
