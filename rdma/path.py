@@ -406,10 +406,10 @@ class IBDRPath(IBPath):
         return Path.complete(self) and bool(self.drPath)
 
     @classmethod
-    def _format_drPath(cls, v):
-        return ":".join("%d" % (entry) for entry in v) + ":"
+    def _format_drPath(cls, v) -> str:
+        return ":".join("{:d}".format(entry) for entry in v) + ":"
 
-    def __str__(self):
+    def __str__(self) -> str:
         # No LID components
         drPath = tuple(entry for entry in self.drPath)
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
@@ -438,7 +438,7 @@ class LazyIBPath(IBPath):
     deferred until necessary since most of the time we do not care."""
 
     def __getattribute__(self, name):
-        if name[0] != '_':
+        if name[0] != "_":
             # I wonder if this is evil? We switch out class to the
             # parent the first time someone requests an attribute.
             cls = self.__class__

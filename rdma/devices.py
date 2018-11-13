@@ -143,8 +143,10 @@ class DemandList(collections.Iterable):
         for I in self._okeys:
             self._data[I] = None
 
-    def __repr__(self):
-        return "{%s}" % (", ".join("%r: %r" % (k, self[k]) for k in self._okeys))
+    def __repr__(self) -> str:
+        return "{{{}}}".format(
+            ", ".join("%r: %r" % (k, self[k]) for k in self._okeys)
+        )
 
 
 class DemandList2(DemandList):
@@ -186,14 +188,14 @@ class EndPort(SysFSCache):
     def _iterate_services_end_port(self, dir_, matcher):
         """Iterate over all sysfs files that are associated with the
         device and with this end port."""
-        for I in self.parent._iterate_services_device(dir_, matcher):
+        for cur_obj in self.parent._iterate_services_device(dir_, matcher):
             try:
-                with open(I + "/port") as F:
+                with open(cur_obj + "/port") as F:
                     if int(F.read()) != self.port_id:
                         continue
             except IOError:
                 continue
-            yield I
+            yield cur_obj
 
     def enable_sa_capability(self):
         """Enable the SA capability mask. This returns an instance that
@@ -202,7 +204,11 @@ class EndPort(SysFSCache):
         for I in self._iterate_services_end_port(SYS_INFINIBAND_MAD, "issm\d+"):
             return rdma.tools.SysFSDevice(self, I)
         else:
-            raise rdma.RDMAError("Unable to open issm device for %s" % (repr(parent)))
+            raise rdma.RDMAError(
+                "Unable to open issm device for {}".format(
+                    repr(parent),
+                ),
+            )
 
     @property
     def lid(self):
@@ -315,10 +321,13 @@ class EndPort(SysFSCache):
         # Hmm, we could keep WeakRefs for all of the Paths associated
         # with this end port and fix them up too..
 
-    def __str__(self):
-        return "%s/%u" % (self.parent, self.port_id)
+    def __str__(self) -> str:
+        return "{}/{:d}".format(
+            self.parent,
+            self.port_id,
+        )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s.%s object for %s at 0x%x>" % \
                (self.__class__.__module__,
                 self.__class__.__name__,
@@ -351,16 +360,16 @@ class RDMADevice(SysFSCache):
         with this device. Use this to find the sysfs ID of slave kernel
         interface devices."""
         m = re.compile(matcher)
-        for I in os.listdir(dir_):
-            if not m.match(I):
+        for f_obj in os.listdir(dir_):
+            if not m.match(f_obj):
                 continue
             try:
-                with open("%s%s/ibdev" % (dir_, I)) as F:
+                with open("%s%s/ibdev" % (dir_, f_obj)) as F:
                     if F.read().strip() != self.name:
                         continue
             except IOError:
                 continue
-            yield dir_ + I
+            yield dir_ + f_obj
 
     @property
     def node_type(self):
@@ -377,7 +386,9 @@ class RDMADevice(SysFSCache):
 
     @property
     def fw_ver(self):
-        "Device firmware version string."
+        """
+        Device firmware version string.
+        """
         try:
             return self._cached_sysfs("fw_ver")
         except IOError:
@@ -390,12 +401,12 @@ class RDMADevice(SysFSCache):
 
     @property
     def board_id(self):
-        "Device board ID string."
+        """ Device board ID string. """
         return self._cached_sysfs("board_id")
 
     @property
     def hw_ver(self):
-        "Device hardware version string."
+        """ Device hardware version string. """
         return self._cached_sysfs("hw_rev")
 
     @property
@@ -403,10 +414,10 @@ class RDMADevice(SysFSCache):
         "HCA type string."
         return self._cached_sysfs("hca_type")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s.%s object for %s at 0x%x>" % \
                (self.__class__.__module__,
                 self.__class__.__name__,
@@ -452,13 +463,13 @@ def find_node_guid(devices, guid):
 
     :rtype: :class:`Device`
     :raises rdma.RDMAError: If no matching device is found."""
-    for I in devices:
-        if I.node_guid == guid:
-            return I
+    for cur_dev in devices:
+        if cur_dev.node_guid == guid:
+            return cur_dev
     raise rdma.RDMAError("RDMA device %r not found." % (guid))
 
 
-def find_port_name(devices, name):
+def find_port_name(devices, name: str):
     """Search the list *devices* for the end port with *name* and *name* may
     be a device name in which case the first end port is returned, otherwise
     it may be device/port.
@@ -469,19 +480,36 @@ def find_port_name(devices, name):
     try:
         device = devices[parts[0]]
     except KeyError:
-        raise rdma.RDMAError("RDMA device %r not found." % (name))
+        raise rdma.RDMAError(
+            "RDMA device {} not found.".format(
+                name,
+            ),
+        )
 
     if len(parts) == 1:
         return device.end_ports.first()
     if len(parts) != 2:
-        raise rdma.RDMAError("Invalid end port specification %r" % (name))
+        raise rdma.RDMAError(
+            "Invalid end port specification {}".format(
+                name,
+            ),
+        )
 
     try:
         idx = int(parts[1])
     except ValueError:
-        raise rdma.RDMAError("Invalid end port specification %r" % (name))
+        raise rdma.RDMAError(
+            "Invalid end port specification {}".format(
+                name,
+            ),
+        )
 
     try:
         return device.end_ports[idx]
     except KeyError:
-        raise rdma.RDMAError("RDMA device %r port %u not found." % (parts[0], idx))
+        raise rdma.RDMAError(
+            "RDMA device {} port {:d} not found.".format(
+                parts[0],
+                idx,
+            ),
+        )

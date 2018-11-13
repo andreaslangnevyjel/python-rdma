@@ -46,11 +46,11 @@ class MADError(RDMAError):
         :param exc_info: Result of :func:`sys.exc_info` if MAD processing failed due to an unexpected exception.
         """
         RDMAError.__init__(self)
-        for k, v in kwargs.items():
-            if k == "msg":
-                self.message(v)
+        for key, value in kwargs.items():
+            if key == "msg":
+                self.message(value)
             else:
-                setattr(self, k, v)
+                setattr(self, key, value)
 
         if self.messages is None:
             if self.req is not None and self.status is not None:
@@ -59,19 +59,24 @@ class MADError(RDMAError):
                     self.req.describe(), self.status,
                     rdma.IBA_describe.mad_status(self.status)))
         if self.exc_info is not None:
-            self.message("Internal error, unexpected MAD exception: %r" % (
-                self.exc_info,))
+            self.message(
+                "Internal error, unexpected MAD exception: {}".format(
+                    str(self.exc_info),
+                ),
+            )
 
     def _copy_init(self, err):
-        """Copy all the information from err into this class. This calls
-        `__init__` on the base class."""
+        """
+        Copy all the information from err into this class. This calls
+        `__init__` on the base class.
+        """
         RDMAError.__init__(self)
         if err is not None:
             for k, v in err.__dict__.items():
                 if k[0] != "_":
                     setattr(self, k, v)
 
-    def message(self, s):
+    def message(self, s: str):
         """Used to annotate additional messages onto the exception. For
         instance the library function issuing the RPC can call this with a
         short version of what the RPC actually was trying to do."""
@@ -80,7 +85,7 @@ class MADError(RDMAError):
         else:
             self.messages.append(s)
 
-    def dump_detailed(self, F=None, prefix="", level=1):
+    def dump_detailed(self, f_obj=None, prefix: str="", level: int=1):
         """Display detailed information about the exception. This prints
         a multi-line description to *F*. Many lines are prefixed with
         the text *prefix*. If *level* is 0 then the default summary
@@ -89,47 +94,59 @@ class MADError(RDMAError):
 
         If the :exc:`MADError` includes a captured exception then
         dump_detailed will re-throw it after printing our information."""
-        if F is None:
-            F = sys.stderr
+        if f_obj is None:
+            f_obj = sys.stderr
         if level == 0 and self.exc_info is not None:
-            print(prefix, self.__str__(), file=F)
+            print(prefix, self.__str__(), file=f_obj)
             return
         if self.messages:
             first = True
             for I in reversed(self.messages):
                 if first:
-                    print(prefix, I, file=F)
+                    print(prefix, I, file=f_obj)
                     first = False
                 else:
-                    print(prefix, "+%s" % (I), file=F)
+                    print(prefix, "+%s" % (I), file=f_obj)
         else:
-            print(prefix, self.__str__(), file=F)
+            print(prefix, self.__str__(), file=f_obj)
         if level >= 1 and self.path is not None:
-            print(prefix, "+MAD path was %r" % (self.path), file=F)
+            print(prefix, "+MAD path was %r" % (self.path), file=f_obj)
         if level >= 2 and self.req is not None:
-            print(prefix, "+Request Packet %s" % (self.req.__class__.__name__), file=F)
-            self.req.printer(F, header=False)
+            print(prefix, "+Request Packet %s" % (self.req.__class__.__name__), file=f_obj)
+            self.req.printer(f_obj, header=False)
             if self.rep:
-                print(prefix, "+Reply Packet %s" % (self.rep.__class__.__name__), file=F)
-                self.rep.printer(F, header=False)
+                print(prefix, "+Reply Packet %s" % (self.rep.__class__.__name__), file=f_obj)
+                self.rep.printer(f_obj, header=False)
         if self.exc_info is not None:
             raise self.exc_info[0](self.exc_info[1]).with_traceback(self.exc_info[2])
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.messages is not None:
             if len(self.messages) == 1:
                 return self.messages[-1]
-            return "%s [%s]" % (self.messages[-1], self.messages[-2])
-        return "Unlabeled exception %s: %r" % (self.__name__, self.__dict__)
+            return "{} [{}]".format(
+                self.messages[-1],
+                self.messages[-2],
+            )
+        return "Unlabeled exception {}: {}".format(
+            self.__name__,
+            str(self.__dict__),
+        )
 
 
 class MADTimeoutError(MADError):
     """Thrown when a MAD RPC times out."""
 
     def __init__(self, req, path):
-        MADError.__init__(self, req=req, path=path,
-                          msg="RPC %s timed out to '%s'" % (
-                              req.describe(), path))
+        MADError.__init__(
+            self,
+            req=req,
+            path=path,
+            msg="RPC {} timed out to '{}'".format(
+                req.describe(),
+                path,
+            ),
+        )
 
 
 class MADClassError(MADError):
@@ -140,30 +157,44 @@ class MADClassError(MADError):
     def __init__(self, req, code, **kwargs):
         import rdma.IBA as IBA
         if isinstance(req, IBA.SAFormat):
-            MADError.__init__(self, req=req, code=code,
-                              msg="RPC %s got class specific error %s" % (
-                                  req.describe(), IBA.const_str("MAD_STATUS_SA_", code, True)), **kwargs)
+            MADError.__init__(
+                self,
+                req=req,
+                code=code,
+                msg="RPC {} got class specific error {}".format(
+                    req.describe(),
+                    IBA.const_str("MAD_STATUS_SA_", code, True),
+                ),
+                **kwargs,
+            )
         else:
-            MADError.__init__(self, req=req, code=code,
-                              msg="RPC %s got class specific error %u" % (
-                                  req.describe(), code), **kwargs)
+            MADError.__init__(
+                self,
+                req=req,
+                code=code,
+                msg="RPC {} got class specific error {:d}".format(
+                    req.describe(),
+                    code,
+                ),
+                **kwargs,
+            )
 
 
 class SysError(RDMAError, OSError):
     """Thrown when a system call fails. Inclues errno"""
 
-    def __init__(self, errno, func, msg=None):
+    def __init__(self, errno, func, msg: str=None):
         """*errno* is the positive errno code, *func* is the system call that
         failed and msg is more information, if applicable."""
         if msg is not None:
-            strerror = "%s - %s (%s)" % (msg, func, os.strerror(errno))
+            strerror = "{} - {} ({})".format(msg, func, os.strerror(errno))
         else:
-            strerror = "%s (%s)" % (func, os.strerror(errno))
+            strerror = "{} ({})".format(func, os.strerror(errno))
         OSError.__init__(self, errno, strerror)
         self.func = func
 
 
-def get_end_port(name=None):
+def get_end_port(name: str=None):
     """Return a :class:`rdma.devices.EndPort` for the default end port if name
     is ``None``, or for the end port described by name.
 
@@ -207,7 +238,7 @@ def get_end_port(name=None):
     return rdma.devices.find_port_name(devices, name)
 
 
-def get_device(name=None):
+def get_device(name: str=None):
     """Return a :class:`rdma.devices.Device` for the default device if name
     is ``None``, or for the device described by name.
 
@@ -247,7 +278,7 @@ def get_device(name=None):
 _cached_devices = None
 
 
-def get_devices(refresh=False):
+def get_devices(refresh: bool=False):
     """Return a container of :class:`rdma.devices.RDMADevice` objects for all devices in the system.
 
     The return result is an object that looks like an ordered list of
@@ -268,7 +299,8 @@ def get_devices(refresh=False):
     _cached_devices = rdma.devices.DemandList2(
         rdma.devices.SYS_INFINIBAND,
         lambda x: rdma.devices.RDMADevice(x),
-        lambda x: x)
+        lambda x: x,
+    )
     return _cached_devices
 
 

@@ -4,16 +4,17 @@
 
 import abc
 import struct
+from typing import Tuple
 
 uint32_t = struct.Struct('>L')
 uint64_t = struct.Struct('>Q')
 
 
-def pack_array8(buf, offset, mlen, count, inp):
+def pack_array8(buf, offset: int, mlen: int, count: int, inp):
     val = 0
     width = 0
-    for I in range(count):
-        val = (val << mlen) | inp[I]
+    for idx in range(count):
+        val = (val << mlen) | inp[idx]
         width += mlen
         if width == 64:
             uint64_t.pack_into(buf, offset, val)
@@ -27,13 +28,13 @@ def pack_array8(buf, offset, mlen, count, inp):
     assert width == 0
 
 
-def unpack_array8(buf, offset, mlen, count, inp):
+def unpack_array8(buf, offset: int, mlen: int, count: int, inp):
     """Starting at *offset* in *buf* assign *count* entries each *mlen* bits
     wide to indexes in *inp*."""
     # Sigh, so much overhead..
     val = int(buf[offset:offset + (mlen * count) / 8].encode("hex"), 16)
-    for I in range(count):
-        inp[I] = (val >> ((count - 1 - I) * mlen)) & ((1 << mlen) - 1)
+    for idx in range(count):
+        inp[idx] = (val >> ((count - 1 - idx) * mlen)) & ((1 << mlen) - 1)
     return
 
 
@@ -45,7 +46,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
 
     __slots__ = ()
 
-    def __init__(self, buf=None, offset=0):
+    def __init__(self, buf=None, offset: int=0):
         """*buf* is either an instance of :class:`BinStruct` or a :class:`bytes`
         representing the data to unpack into the instance. *offset* is the
         starting offset in *buf* for unpacking. If no arguments are given then
@@ -61,18 +62,18 @@ class BinStruct(object, metaclass=abc.ABCMeta):
         else:
             self.zero()
 
-    def printer(self, F, offset=0, header=True, format="dump", **kwargs):
+    def printer(self, f_obj, offset: int=0, header: bool=True, format: str= "dump", **kwargs):
         """Pretty print the structure. *F* is the output file, *offset* is
         added to all printed offsets and *header* causes the display of the
         class type on the first line. *format* may be `dump` or `dotted`."""
         if header:
-            print("%s" % (self.__class__.__name__), file=F)
+            print("%s" % (self.__class__.__name__), file=f_obj)
         import rdma.IBA_describe
         if format == "dotted":
-            return rdma.IBA_describe.struct_dotted(F, self, **kwargs)
-        return rdma.IBA_describe.struct_dump(F, self, offset=offset, **kwargs)
+            return rdma.IBA_describe.struct_dotted(f_obj, self, **kwargs)
+        return rdma.IBA_describe.struct_dump(f_obj, self, offset=offset, **kwargs)
 
-    def __reduce__(self):
+    def __reduce__(self) -> Tuple:
         """When pickling, store in packed format. This gives us greater
         flexability across versions of the library and takes less space."""
         buf = bytearray(self.MAD_LENGTH)
@@ -98,7 +99,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
             if k.startswith("reserved") or k.endswith("Selector"):
                 continue
 
-            res = cmp(eval("self.%s" % (k)), eval("lhs.%s" % (k)))
+            res = cmp(eval("self.{}".format(k)), eval("lhs.{}".format(k)))
             if res != 0:
                 return res
         return 0
@@ -110,13 +111,13 @@ class BinStruct(object, metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def unpack_from(self, buf, offset=0):
+    def unpack_from(self, buf, offset: int=0):
         """Overridden in derived classes. Expand the :class:`bytes` *buf*
         starting at *offset* into this instance."""
         pass
 
     @abc.abstractmethod
-    def pack_into(self, buf, offset=0):
+    def pack_into(self, buf, offset: inta=0):
         """Overridden in derived classes. Compact this instance into the
         :class:`bytearray` *buf* starting at *offset*."""
         pass
@@ -125,12 +126,15 @@ class BinStruct(object, metaclass=abc.ABCMeta):
 class BinFormat(BinStruct):
     """Base class for all `*Format` type packet layouts."""
 
-    def describe(self):
+    def describe(self) -> str:
         """Return a short description of the RPC described by this format."""
         import rdma.IBA as IBA
         attr = IBA.ATTR_TO_STRUCT.get((self.__class__, self.attributeID))
-        return '%s %s(%u.%u) %s(%u)' % (IBA.const_str('MAD_METHOD_', self.method, True),
-                                        self.__class__.__name__,
-                                        self.mgmtClass, self.classVersion,
-                                        '??' if attr is None else attr.__name__,
-                                        self.attributeID)
+        return "{} {}({:d}.{:d}) {}({:d})".format(
+            IBA.const_str('MAD_METHOD_', self.method, True),
+            self.__class__.__name__,
+            self.mgmtClass,
+            self.classVersion,
+            '??' if attr is None else attr.__name__,
+            self.attributeID,
+        )

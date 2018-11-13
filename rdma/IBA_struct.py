@@ -7,10 +7,21 @@ import struct
 
 class HdrLRH(rdma.binstruct.BinStruct):
     """Local Route Header (section 7.7)"""
-    __slots__ = ('VL', 'LVer', 'SL', 'reserved_12', 'LNH', 'DLID', 'reserved_32', 'pktLen', 'SLID')
+    __slots__ = (
+        "VL", "LVer", "SL", "reserved_12", "LNH", "DLID", "reserved_32", "pktLen", "SLID",
+    )
     MAD_LENGTH = 8
-    MEMBERS = [('VL', 4, 1), ('LVer', 4, 1), ('SL', 4, 1), ('reserved_12', 2, 1), ('LNH', 2, 1), ('DLID', 16, 1),
-               ('reserved_32', 5, 1), ('pktLen', 11, 1), ('SLID', 16, 1)]
+    MEMBERS = [
+        ("VL", 4, 1),
+        ("LVer", 4, 1),
+        ("SL", 4, 1),
+        ("reserved_12", 2, 1),
+        ("LNH", 2, 1),
+        ("DLID", 16, 1),
+        ("reserved_32", 5, 1),
+        ("pktLen", 11, 1),
+        ("SLID", 16, 1),
+    ]
 
     def zero(self):
         self.VL = 0
@@ -48,35 +59,48 @@ class HdrLRH(rdma.binstruct.BinStruct):
         self.SLID = (value >> 0) & 0xFFFF
 
     def pack_into(self, buffer, offset=0):
-        struct.pack_into('>LL', buffer, offset + 0, self._pack_0_32, self._pack_1_32)
+        struct.pack_into(">LL", buffer, offset + 0, self._pack_0_32, self._pack_1_32)
 
-    def unpack_from(self, buffer, offset=0):
-        (self._pack_0_32, self._pack_1_32,) = struct.unpack_from('>LL', buffer, offset + 0)
+    def unpack_from(self, buffer, offset: int=0):
+        self._pack_0_32, self._pack_1_32 = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class HdrRWH(rdma.binstruct.BinStruct):
     """Raw Header (section 5.3)"""
-    __slots__ = ('reserved_0', 'etherType')
+    __slots__ = ("reserved_0", "etherType")
     MAD_LENGTH = 4
-    MEMBERS = [('reserved_0', 16, 1), ('etherType', 16, 1)]
+    MEMBERS = [
+        ("reserved_0", 16, 1),
+        ("etherType", 16, 1),
+    ]
 
     def zero(self):
         self.reserved_0 = 0
         self.etherType = 0
 
     def pack_into(self, buffer, offset=0):
-        struct.pack_into('>HH', buffer, offset + 0, self.reserved_0, self.etherType)
+        struct.pack_into(">HH", buffer, offset + 0, self.reserved_0, self.etherType)
 
     def unpack_from(self, buffer, offset=0):
-        (self.reserved_0, self.etherType,) = struct.unpack_from('>HH', buffer, offset + 0)
+        self.reserved_0, self.etherType = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class HdrGRH(rdma.binstruct.BinStruct):
     """Global Route Header (section 8.3)"""
-    __slots__ = ('IPVer', 'TClass', 'flowLabel', 'payLen', 'nxtHdr', 'hopLmt', 'SGID', 'DGID')
+    __slots__ = (
+        "IPVer", "TClass", "flowLabel", "payLen", "nxtHdr", "hopLmt", "SGID", "DGID",
+    )
     MAD_LENGTH = 40
-    MEMBERS = [('IPVer', 4, 1), ('TClass', 8, 1), ('flowLabel', 20, 1), ('payLen', 16, 1), ('nxtHdr', 8, 1),
-               ('hopLmt', 8, 1), ('SGID', 128, 1), ('DGID', 128, 1)]
+    MEMBERS = [
+        ("IPVer", 4, 1),
+        ("TClass", 8, 1),
+        ("flowLabel", 20, 1),
+        ("payLen", 16, 1),
+        ("nxtHdr", 8, 1),
+        ("hopLmt", 8, 1),
+        ("SGID", 128, 1),
+        ("DGID", 128, 1),
+    ]
 
     def zero(self):
         self.IPVer = 0
@@ -101,23 +125,36 @@ class HdrGRH(rdma.binstruct.BinStruct):
     def pack_into(self, buffer, offset=0):
         self.SGID.pack_into(buffer, offset + 8)
         self.DGID.pack_into(buffer, offset + 24)
-        struct.pack_into('>LHBB', buffer, offset + 0, self._pack_0_32, self.payLen, self.nxtHdr, self.hopLmt)
+        struct.pack_into(">LHBB", buffer, offset + 0, self._pack_0_32, self.payLen, self.nxtHdr, self.hopLmt)
 
     def unpack_from(self, buffer, offset=0):
         self.SGID = IBA.GID(buffer[offset + 8:offset + 24], raw=True)
         self.DGID = IBA.GID(buffer[offset + 24:offset + 40], raw=True)
-        (self._pack_0_32, self.payLen, self.nxtHdr, self.hopLmt,) = struct.unpack_from('>LHBB', buffer, offset + 0)
+        self._pack_0_32, self.payLen, self.nxtHdr, self.hopLmt = struct.unpack_from(">LHBB", buffer, offset + 0)
 
 
 class HdrBTH(rdma.binstruct.BinStruct):
     """Base Transport Header (section 9.2)"""
     __slots__ = (
-    'service', 'function', 'SE', 'migReq', 'padCnt', 'TVer', 'PKey', 'reserved_32', 'destQP', 'ackReq', 'reserved_65',
-    'PSN')
+        "service", "function", "SE", "migReq", "padCnt", "TVer",
+        "PKey", "reserved_32", "destQP", "ackReq", "reserved_65",
+        "PSN",
+    )
     MAD_LENGTH = 12
-    MEMBERS = [('service', 3, 1), ('function', 5, 1), ('SE', 1, 1), ('migReq', 1, 1), ('padCnt', 2, 1), ('TVer', 4, 1),
-               ('PKey', 16, 1), ('reserved_32', 8, 1), ('destQP', 24, 1), ('ackReq', 1, 1), ('reserved_65', 7, 1),
-               ('PSN', 24, 1)]
+    MEMBERS = [
+        ("service", 3, 1),
+        ("function", 5, 1),
+        ("SE", 1, 1),
+        ("migReq", 1, 1),
+        ("padCnt", 2, 1),
+        ("TVer", 4, 1),
+        ("PKey", 16, 1),
+        ("reserved_32", 8, 1),
+        ("destQP", 24, 1),
+        ("ackReq", 1, 1),
+        ("reserved_65", 7, 1),
+        ("PSN", 24, 1),
+    ]
 
     def zero(self):
         self.service = 0
@@ -168,18 +205,24 @@ class HdrBTH(rdma.binstruct.BinStruct):
         self.reserved_65 = (value >> 24) & 0x7F
         self.PSN = (value >> 0) & 0xFFFFFF
 
-    def pack_into(self, buffer, offset=0):
-        struct.pack_into('>LLL', buffer, offset + 0, self._pack_0_32, self._pack_1_32, self._pack_2_32)
+    def pack_into(self, buffer, offset: int=0):
+        struct.pack_into(">LLL", buffer, offset + 0, self._pack_0_32, self._pack_1_32, self._pack_2_32)
 
-    def unpack_from(self, buffer, offset=0):
-        (self._pack_0_32, self._pack_1_32, self._pack_2_32,) = struct.unpack_from('>LLL', buffer, offset + 0)
+    def unpack_from(self, buffer, offset: int=0):
+        self._pack_0_32, self._pack_1_32, self._pack_2_32 = struct.unpack_from(">LLL", buffer, offset + 0)
 
 
 class HdrRDETH(rdma.binstruct.BinStruct):
     """Reliable Datagram Extended Transport Header (section 9.3.1)"""
-    __slots__ = ('reserved_0', 'EEC')
+    __slots__ = (
+        "reserved_0",
+        "EEC",
+    )
     MAD_LENGTH = 4
-    MEMBERS = [('reserved_0', 8, 1), ('EEC', 24, 1)]
+    MEMBERS = [
+        ("reserved_0", 8, 1),
+        ("EEC", 24, 1),
+    ]
 
     def zero(self):
         self.reserved_0 = 0
@@ -195,17 +238,23 @@ class HdrRDETH(rdma.binstruct.BinStruct):
         self.EEC = (value >> 0) & 0xFFFFFF
 
     def pack_into(self, buffer, offset=0):
-        struct.pack_into('>L', buffer, offset + 0, self._pack_0_32)
+        struct.pack_into(">L", buffer, offset + 0, self._pack_0_32)
 
     def unpack_from(self, buffer, offset=0):
-        (self._pack_0_32,) = struct.unpack_from('>L', buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class HdrDETH(rdma.binstruct.BinStruct):
     """Datagram Extended Transport Header (section 9.3.2)"""
-    __slots__ = ('QKey', 'reserved_32', 'srcQP')
+    __slots__ = (
+        "QKey", "reserved_32", "srcQP",
+    )
     MAD_LENGTH = 8
-    MEMBERS = [('QKey', 32, 1), ('reserved_32', 8, 1), ('srcQP', 24, 1)]
+    MEMBERS = [
+        ("QKey", 32, 1),
+        ("reserved_32", 8, 1),
+        ("srcQP", 24, 1),
+    ]
 
     def zero(self):
         self.QKey = 0
@@ -221,36 +270,49 @@ class HdrDETH(rdma.binstruct.BinStruct):
         self.reserved_32 = (value >> 24) & 0xFF
         self.srcQP = (value >> 0) & 0xFFFFFF
 
-    def pack_into(self, buffer, offset=0):
-        struct.pack_into('>LL', buffer, offset + 0, self.QKey, self._pack_0_32)
+    def pack_into(self, buffer, offset: int=0):
+        struct.pack_into(">LL", buffer, offset + 0, self.QKey, self._pack_0_32)
 
-    def unpack_from(self, buffer, offset=0):
-        (self.QKey, self._pack_0_32,) = struct.unpack_from('>LL', buffer, offset + 0)
+    def unpack_from(self, buffer, offset: int=0):
+        self.QKey, self._pack_0_32 = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class HdrRETH(rdma.binstruct.BinStruct):
     """RDMA Extended Transport Header (section 9.3.3)"""
-    __slots__ = ('VA', 'RKey', 'DMALen')
+    __slots__ = (
+        "VA", "RKey", "DMALen",
+    )
     MAD_LENGTH = 16
-    MEMBERS = [('VA', 64, 1), ('RKey', 32, 1), ('DMALen', 32, 1)]
+    MEMBERS = [
+        ("VA", 64, 1),
+        ("RKey", 32, 1),
+        ("DMALen", 32, 1),
+    ]
 
     def zero(self):
         self.VA = 0
         self.RKey = 0
         self.DMALen = 0
 
-    def pack_into(self, buffer, offset=0):
-        struct.pack_into('>QLL', buffer, offset + 0, self.VA, self.RKey, self.DMALen)
+    def pack_into(self, buffer, offset: int=0):
+        struct.pack_into(">QLL", buffer, offset + 0, self.VA, self.RKey, self.DMALen)
 
-    def unpack_from(self, buffer, offset=0):
-        (self.VA, self.RKey, self.DMALen,) = struct.unpack_from('>QLL', buffer, offset + 0)
+    def unpack_from(self, buffer, offset: int=0):
+        self.VA, self.RKey, self.DMALen = struct.unpack_from(">QLL", buffer, offset + 0)
 
 
 class HdrAtomicETH(rdma.binstruct.BinStruct):
     """Atomic Extended Transport Header (section 9.3.4)"""
-    __slots__ = ('VA', 'RKey', 'swapData', 'cmpData')
+    __slots__ = (
+        "VA", "RKey", "swapData", "cmpData",
+    )
     MAD_LENGTH = 28
-    MEMBERS = [('VA', 64, 1), ('RKey', 32, 1), ('swapData', 64, 1), ('cmpData', 64, 1)]
+    MEMBERS = [
+        ("VA", 64, 1),
+        ("RKey", 32, 1),
+        ("swapData", 64, 1),
+        ("cmpData", 64, 1),
+    ]
 
     def zero(self):
         self.VA = 0
@@ -258,11 +320,11 @@ class HdrAtomicETH(rdma.binstruct.BinStruct):
         self.swapData = 0
         self.cmpData = 0
 
-    def pack_into(self, buffer, offset=0):
-        struct.pack_into('>QLQQ', buffer, offset + 0, self.VA, self.RKey, self.swapData, self.cmpData)
+    def pack_into(self, buffer, offset: int=0):
+        struct.pack_into(">QLQQ", buffer, offset + 0, self.VA, self.RKey, self.swapData, self.cmpData)
 
-    def unpack_from(self, buffer, offset=0):
-        (self.VA, self.RKey, self.swapData, self.cmpData,) = struct.unpack_from('>QLQQ', buffer, offset + 0)
+    def unpack_from(self, buffer, offset: int=0):
+        self.VA, self.RKey, self.swapData, self.cmpData = struct.unpack_from(">QLQQ", buffer, offset + 0)
 
 
 class HdrAETH(rdma.binstruct.BinStruct):

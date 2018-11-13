@@ -46,7 +46,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
     Work = collections.namedtuple("Work", "buf fmt path newer completer")
 
     @property
-    def is_async(self):
+    def is_async(self) -> bool:
         return True
 
     def __init__(self, umad):
@@ -237,17 +237,23 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                 self._timeouts.remove(res)
                 try:
                     work = res[1]._work
-                    res[1]._result = self._completeMAD(ret, work.fmt,
-                                                       work.path,
-                                                       work.newer,
-                                                       work.completer)
+                    res[1]._result = self._completeMAD(
+                        ret,
+                        work.fmt,
+                        work.path,
+                        work.newer,
+                        work.completer,
+                    )
                 except:
                     res[1]._exc = sys.exc_info()
                 self._step(res[1])
             else:
                 if self.trace_func is not None:
-                    self.trace_func(self, rdma.madtransactor.TRACE_UNEXPECTED,
-                                    ret=ret)
+                    self.trace_func(
+                        self,
+                        rdma.madtransactor.TRACE_UNEXPECTED,
+                        ret=ret,
+                    )
 
     def _do_timeout(self, res):
         """The timeout list entry *res* has timed out - either error it
@@ -259,8 +265,13 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
             # Pass the timeout back into MADTransactor and capture the
             # result
             try:
-                self._completeMAD(None, work.fmt, work.path,
-                                  work.newer, work.completer)
+                self._completeMAD(
+                    None,
+                    work.fmt,
+                    work.path,
+                    work.newer,
+                    work.completer,
+                )
             except:
                 ctx._exc = sys.exc_info()
                 self._step(ctx)
@@ -271,8 +282,12 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
 
         # Resend
         if self.trace_func is not None:
-            self.trace_func(self, rdma.madtransactor.TRACE_RECEIVE,
-                            fmt=work.fmt, path=work.path)
+            self.trace_func(
+                self,
+                rdma.madtransactor.TRACE_RECEIVE,
+                fmt=work.fmt,
+                path=work.path,
+            )
         rep = self._umad._execute(work.buf, work.path, sendOnly=True)
         if rep:
             self._replyqueue.append(rep)

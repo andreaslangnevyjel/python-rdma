@@ -31,19 +31,20 @@ class LazyIBPath(rdma.path.LazyIBPath):
 
         Our convention is that the path describes the packet headers as they
         existed on the wire, so this untwiddles things."""
-        (sqpn,
-         qkey,
-         SLID,
-         self.SL,
-         DLID_bits,
-         self.has_grh,
-         DGID_index,
-         self.hop_limit,
-         self.traffic_class,
-         self.SGID,
-         flow_label,
-         pkey_index) = \
-            UMAD.ib_mad_addr_t.unpack(self._cached_umad_ah)
+        (
+            sqpn,
+            qkey,
+            SLID,
+            self.SL,
+            DLID_bits,
+            self.has_grh,
+            DGID_index,
+            self.hop_limit,
+            self.traffic_class,
+            self.SGID,
+            flow_label,
+            pkey_index,
+        ) = UMAD.ib_mad_addr_t.unpack(self._cached_umad_ah)
         self.sqpn = cpu_to_be32(sqpn)
         # There is no pkey validation for SMPs (see IBA figure 156), so the
         # pkey should always be the default NOTE: mtcha at least has been seen
@@ -139,20 +140,29 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         fcntl.ioctl(self.dev.fileno(), self.IB_USER_MAD_UNREGISTER_AGENT,
                     struct.pack("=I", agent_id))
 
-    def _ioctl_register_agent(self, dqpn, mgmt_class, mgmt_class_version,
-                              oui, rmpp_version, method_mask):
+    def _ioctl_register_agent(
+        self,
+        dqpn,
+        mgmt_class,
+        mgmt_class_version,
+        oui,
+        rmpp_version,
+        method_mask,
+    ):
         """Returns agent_id"""
-        buf = struct.pack("=L4LBBB3BB",
-                          0,
-                          (method_mask >> 0) & 0xFFFFFFFF,
-                          (method_mask >> 32) & 0xFFFFFFFF,
-                          (method_mask >> 64) & 0xFFFFFFFF,
-                          (method_mask >> 96) & 0xFFFFFFFF,
-                          dqpn,
-                          mgmt_class,
-                          mgmt_class_version,
-                          (oui >> 16) & 0xFF, (oui >> 8) & 0xFF, oui & 0xFF,
-                          rmpp_version)
+        buf = struct.pack(
+            "=L4LBBB3BB",
+            0,
+            (method_mask >> 0) & 0xFFFFFFFF,
+            (method_mask >> 32) & 0xFFFFFFFF,
+            (method_mask >> 64) & 0xFFFFFFFF,
+            (method_mask >> 96) & 0xFFFFFFFF,
+            dqpn,
+            mgmt_class,
+            mgmt_class_version,
+            (oui >> 16) & 0xFF, (oui >> 8) & 0xFF, oui & 0xFF,
+            rmpp_version,
+        )
         buf = fcntl.ioctl(self.dev.fileno(), self.IB_USER_MAD_REGISTER_AGENT,
                           buf)
         return struct.unpack("=L", buf[:4])[0]
@@ -188,9 +198,12 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         """Same as :meth:`register_server` except the arguments are deduced
         from *fmt* which should be derived from
         :class:`rdma.binstruct.BinFormat`."""
-        return self.register_server(fmt.MAD_CLASS, fmt.MAD_CLASS_VERSION,
-                                    getattr(fmt, "MAD_CLASS_OUI", 0),
-                                    getattr(fmt, "MAD_METHOD_MASK", 6))
+        return self.register_server(
+            fmt.MAD_CLASS,
+            fmt.MAD_CLASS_VERSION,
+            getattr(fmt, "MAD_CLASS_OUI", 0),
+            getattr(fmt, "MAD_METHOD_MASK", 6),
+        )
 
     def _cache_make_ah(self, path):
         """Construct the address handle for UMAD and cache it in the path
@@ -210,25 +223,29 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
             pkey_idx = path.pkey_index
 
         if path.has_grh:
-            res = self.ib_mad_addr_t.pack(cpu_to_be32(path.dqpn),
-                                          cpu_to_be32(path.qkey),
-                                          cpu_to_be16(path.DLID),
-                                          path.SL,
-                                          slid_bits,
-                                          1,
-                                          path.SGID_index,
-                                          path.hop_limit,
-                                          path.traffic_class,
-                                          path.DGID,
-                                          cpu_to_be32(path.flow_label),
-                                          pkey_idx)
+            res = self.ib_mad_addr_t.pack(
+                cpu_to_be32(path.dqpn),
+                cpu_to_be32(path.qkey),
+                cpu_to_be16(path.DLID),
+                path.SL,
+                slid_bits,
+                1,
+                path.SGID_index,
+                path.hop_limit,
+                path.traffic_class,
+                path.DGID,
+                cpu_to_be32(path.flow_label),
+                pkey_idx,
+            )
         else:
-            res = self.ib_mad_addr_local_t.pack(cpu_to_be32(path.dqpn),
-                                                cpu_to_be32(path.qkey),
-                                                cpu_to_be16(path.DLID),
-                                                path.SL,
-                                                slid_bits,
-                                                pkey_idx)
+            res = self.ib_mad_addr_local_t.pack(
+                cpu_to_be32(path.dqpn),
+                cpu_to_be32(path.qkey),
+                cpu_to_be16(path.DLID),
+                path.SL,
+                slid_bits,
+                pkey_idx,
+            )
         path._cached_umad_ah = res
         return res
 
@@ -255,11 +272,16 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
 
         if agent_id is None:
             agent_id = path.umad_agent_id
-        self.ib_user_mad_t.pack_into(self.sbuf, 0,
-                                     agent_id, 0,
-                                     max(500, int(path.mad_timeout * 1000) - 500), 0,
-                                     len(buf),
-                                     addr)
+        self.ib_user_mad_t.pack_into(
+            self.sbuf,
+            0,
+            agent_id,
+            0,
+            max(500, int(path.mad_timeout * 1000) - 500),
+            0,
+            len(buf),
+            addr,
+        )
         del self.sbuf[64:]
         self.sbuf.extend(buf)
         self.dev.write(self.sbuf)
@@ -336,15 +358,19 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         MADs received during this call are discarded until the reply is seen."""
         if path.umad_agent_id is None:
             if isinstance(buf, bytearray):
-                agent_id = self.register_client(buf[1], buf[2],
-                                                (buf[37] << 16) |
-                                                (buf[38] << 8) |
-                                                buf[39])
+                agent_id = self.register_client(
+                    buf[1], buf[2],
+                    (buf[37] << 16) |
+                    (buf[38] << 8) |
+                    buf[39],
+                )
             else:
-                agent_id = self.register_client(ord(buf[1]), ord(buf[2]),
-                                                (ord(buf[37]) << 16) |
-                                                (ord(buf[38]) << 8) |
-                                                ord(buf[39]))
+                agent_id = self.register_client(
+                    ord(buf[1]), ord(buf[2]),
+                    (ord(buf[37]) << 16) |
+                    (ord(buf[38]) << 8) |
+                    ord(buf[39]),
+                )
         else:
             agent_id = None
         try:
@@ -374,8 +400,12 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 return ret
             else:
                 if self.trace_func is not None:
-                    self.trace_func(self, rdma.madtransactor.TRACE_UNEXPECTED,
-                                    path=path, ret=ret)
+                    self.trace_func(
+                        self,
+                        rdma.madtransactor.TRACE_UNEXPECTED,
+                        path=path,
+                        ret=ret,
+                    )
 
     def __repr__(self) -> str:
         return "<%s.%s object for %s at 0x%x>" % \

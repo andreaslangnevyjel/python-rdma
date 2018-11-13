@@ -7,7 +7,7 @@
 import socket
 import sys
 import codecs
-
+from typing import List, Dict, Tuple
 import rdma.binstruct
 
 #: Node Type Constants
@@ -214,14 +214,14 @@ def conv_lid(s, multicast=False):
     return lid
 
 
-def lid_lmc_range(lid, lmc):
+def lid_lmc_range(lid: int, lmc: int) -> List:
     """Return all the LIDs described by *lid* and *lmc*. Similar to `range`"""
     lmc = 1 << lmc
     lid = lid & (~(lmc - 1))
     return list(range(lid, lid + lmc))
 
 
-def to_timer(sec):
+def to_timer(sec: float):
     """Take a timeout value in float seconds and convert it into the IBA format
     that satisfies `sec <= 4.096 us * 2**ret`"""
     import math
@@ -235,7 +235,7 @@ class GUID(bytes):
     that formats to the GUID. :meth:`pack_into` is used to store the GUID in
     network format. Instances are immutable and can be hashed."""
 
-    def __init__(self, s=None, raw=False):
+    def __init__(self, s=None, raw: bool=False):
         """Convert from a string to our GUID representation. *s* is the input
         string and if *raw* is True then *s* must be a length 8 :class:`bytes`.
 
@@ -271,37 +271,47 @@ class GUID(bytes):
             except TypeError:
                 raise ValueError("%r is not a valid GUID" % (s))
 
-    def pack_into(self, buf, offset=0):
+    def pack_into(self, buf, offset: int=0):
         """ Pack the value into a byte array. """
 
         buf[offset:offset + 8] = [x for x in self]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a printable string of the GUID."""
         tmp = codecs.encode(self, "hex").decode("ascii")
-        return "%s:%s:%s:%s" % (tmp[0:4], tmp[4:8], tmp[8:12], tmp[12:16])
+        return "{}:{}:{}:{}".format(
+            tmp[0:4],
+            tmp[4:8],
+            tmp[8:12],
+            tmp[12:16],
+        )
 
-    def __repr__(self):
-        return "GUID('%s')" % (self.__str__())
+    def __repr__(self) -> str:
+        return "GUID('{}')".format(self.__str__())
 
-    def __int__(self):
+    def __int__(self) -> int:
         return int(bytes.__str__(self).encode("hex"), 16)
 
-    def __reduce__(self):
-        return (GUID, (bytes.__str__(self), True))
+    def __reduce__(self) -> Tuple:
+        return GUID, (bytes.__str__(self), True)
 
 
 #: All zeros GUID value.
-ZERO_GUID = GUID('\x00\x00\x00\x00\x00\x00\x00\x00', raw=True)
+ZERO_GUID = GUID(
+    b'\x00\x00\x00\x00\x00\x00\x00\x00',
+    raw=True,
+)
 
 
 class GID(bytes):
-    """Stores a GID in internal format. In string format a GID is formatted
+    """
+    Stores a GID in internal format. In string format a GID is formatted
     like an IPv6 addres eg ``fe80::2:c903:0:1491``. Externally the class looks
     like a string that formats to the GID. :meth:`pack_into` is used to store
-    the GID in network format. Instances are immutable and can be hashed."""
+    the GID in network format. Instances are immutable and can be hashed.
+    """
 
-    def __init__(self, s=None, raw=False, prefix=None, guid=None):
+    def __init__(self, s=None, raw: bool=False, prefix=None, guid=None):
         """Convert from a string to our GID representation. *s* is the input
         string and if *raw* is `True` then *s* must be a length 16 :class:`bytes`.
 
@@ -314,7 +324,7 @@ class GID(bytes):
         :raises ValueError: If the string can not be parsed."""
         pass
 
-    def __new__(cls, s=None, raw=False, prefix=None, guid=None):
+    def __new__(cls, s=None, raw: bool=False, prefix=None, guid=None):
         if s is None:
             if prefix is None:
                 return ZERO_GID
@@ -336,37 +346,40 @@ class GID(bytes):
                 return bytes.__new__(cls, s)
         try:
             return bytes.__new__(cls, socket.inet_pton(socket.AF_INET6, s.strip()))
-        except:
-            raise ValueError("%r is not a valid GID" % (s))
+        except Exception:
+            raise ValueError("{} is not a valid GID".format(str(s)))
 
-    def pack_into(self, buf, offset=0):
+    def pack_into(self, buf, offset: int=0):
         """Pack the value into a byte array."""
         buf[offset:offset + 16] = [x for x in self]  # bytes.__str__(self).encode("ascii")
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a printable string of the GID."""
         return socket.inet_ntop(socket.AF_INET6, self)  # bytes.__str__(self))
 
-    def __repr__(self):
-        return "GID('%s')" % (self.__str__())
+    def __repr__(self) -> str:
+        return "GID('{}')".format(self.__str__())
 
-    def guid(self):
+    def guid(self) -> GUID:
         """Return the GUID portion of the GID."""
         return GUID(bytes.__getitem__(self, slice(8, 16)), raw=True)
 
-    def prefix(self):
+    def prefix(self) -> GUID:
         """Return the prefix portion of the GID."""
         return GUID(bytes.__getitem__(self, slice(0, 8)), raw=True)
 
-    def __int__(self):
+    def __int__(self) -> int:
         return int(codecs.encode(self, "hex"), 16)
 
-    def __reduce__(self):
-        return (GID, (int(self), True))
+    def __reduce__(self) -> Tuple:
+        return GID, (int(self), True)
 
 
 #: All zeros GID value.
-ZERO_GID = GID('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00', raw=True)
+ZERO_GID = GID(
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+    raw=True,
+)
 
 
 def conv_ep_addr(s):
@@ -392,7 +405,11 @@ def conv_ep_addr(s):
         return conv_lid(s)
     except ValueError:
         pass
-    raise ValueError("%r is not a valid end port address (GID, port GUID or LID)" % (s))
+    raise ValueError(
+        "{} is not a valid end port address (GID, port GUID or LID)".format(
+            str(s),
+        ),
+    )
 
 
 class ComponentMask(object):
@@ -420,24 +437,33 @@ class ComponentMask(object):
 
         :raises ValueError: If *name* is not a valid component name"""
         bit = self._obj.COMPONENT_MASK[name]
-        object.__setattr__(self, "component_mask",
-                           self.component_mask | (1 << bit))
+        object.__setattr__(
+            self,
+            "component_mask",
+            self.component_mask | (1 << bit),
+        )
 
-    def unmask(self, name):
+    def unmask(self, name: str):
         """Exclude the component mask value *name* in the calculation.
 
         :raises ValueError: If *name* is not a valid component name"""
         bit = self._obj.COMPONENT_MASK[name]
-        object.__setattr__(self, "component_mask",
-                           self.component_mask & (0xFFFFFFFFFFFFFFFF ^ (1 << bit)))
+        object.__setattr__(
+            self,
+            "component_mask",
+            self.component_mask & (0xFFFFFFFFFFFFFFFF ^ (1 << bit)),
+        )
 
-    def _touch(self, name):
+    def _touch(self, name: str):
         bit = self._obj.COMPONENT_MASK.get(name)
         if bit is not None:
-            object.__setattr__(self, "component_mask",
-                               self.component_mask | (1 << bit))
+            object.__setattr__(
+                self,
+                "component_mask",
+                self.component_mask | (1 << bit),
+            )
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         res = getattr(self._obj, name)
         if isinstance(res, rdma.binstruct.BinStruct):
             return ComponentMask._Proxy(self, name, res)
@@ -447,7 +473,7 @@ class ComponentMask(object):
             self._touch(name)
         return res
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value):
         if name == 'component_mask':
             return object.__setattr__(self, name, value)
         self._touch(name)
@@ -474,7 +500,7 @@ class ComponentMask(object):
             return setattr(self._obj, name, value)
 
 
-def const_str(prefix, value, with_int=False, me=sys.modules[__name__]):
+def const_str(prefix, value, with_int: int=False, me=sys.modules[__name__]) -> str:
     """Generalized constant integer to string that uses introspection
     to figure it out."""
     for k, v in me.__dict__.items():
@@ -482,27 +508,30 @@ def const_str(prefix, value, with_int=False, me=sys.modules[__name__]):
             try:
                 if value == v:
                     if with_int:
-                        return "%s(%u)" % (k, value)
+                        return "{}({:d})".format(
+                            k,
+                            value,
+                        )
                     else:
                         return k
             except rdma.RDMAError:
                 pass
     if with_int:
-        return "%s??(%u)" % (prefix, value)
-    return "%s?%u" % (prefix, value)
+        return "{}??({:d})".format(prefix, value)
+    return "{}?{:d}".format(prefix, value)
 
 
-def get_fmt_payload(class_id, class_version, attribute_id):
+def get_fmt_payload(class_id, class_version, attribute_id) -> Tuple:
     """Find the MAD format and MAD payload classes for class_id and
     attribute_id. *class_version* is `(base_version << 8) | class_version`.
     See :meth:`rdma.madtransactor.MADTransactor.get_request_match_key`."""
     cls = CLASS_TO_STRUCT.get((class_id, class_version))
     if cls is None:
-        return (None, None)
+        return None, None
     attr = ATTR_TO_STRUCT.get((cls, attribute_id))
     if attr is None:
-        return (cls, None)
-    return (cls, attr)
+        return cls, None
+    return cls, attr
 
 
 from rdma.IBA_struct import *
@@ -515,8 +544,8 @@ def _make_IBA_link():
     don't think you can do #include in python, which is what
     I really want.."""
     me = sys.modules[__name__]
-    struct = sys.modules["rdma.IBA_struct"]
-    setattr(struct, "IBA", me)
+    _struct = sys.modules["rdma.IBA_struct"]
+    setattr(_struct, "IBA", me)
 
 
 _make_IBA_link()

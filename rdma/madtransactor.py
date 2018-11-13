@@ -6,6 +6,7 @@ import sys
 import rdma
 import rdma.IBA as IBA
 import rdma.path
+from typing import List, Tuple, Dict
 from rdma import binstruct
 
 TRACE_SEND = 0
@@ -22,14 +23,17 @@ class _MADFormat(binstruct.BinFormat, IBA.MADHeader):
         IBA.MADHeader.__init__(self, buf)
         self.match = MADTransactor.get_request_match_key(buf)
 
-    def describe(self):
+    def describe(self) -> str:
         """Return a short description of the RPC described by this format."""
         kind = IBA.get_fmt_payload(*self.match)
-        return '%s %s(%u.%u) %s(%u)' % (IBA.const_str('MAD_METHOD_', self.method, True),
-                                        '??' if kind[0] is None else kind[0].__name__,
-                                        self.mgmtClass, self.classVersion,
-                                        '??' if kind[1] is None else kind[1].__name__,
-                                        self.attributeID)
+        return "{} {}({:d}.{:d}) {}({:d})".format(
+            IBA.const_str('MAD_METHOD_', self.method, True),
+            '??' if kind[0] is None else kind[0].__name__,
+            self.mgmtClass,
+            self.classVersion,
+            '??' if kind[1] is None else kind[1].__name__,
+            self.attributeID,
+        )
 
 
 def simple_tracer(mt, kind, fmt=None, path=None, ret=None):
@@ -109,7 +113,7 @@ class MADTransactor(object):
     result = None
 
     @property
-    def is_async(self):
+    def is_async(self) -> bool:
         """True if this is an async MADTransactor interface."""
         return False
 
@@ -123,28 +127,32 @@ class MADTransactor(object):
         pass
 
     @staticmethod
-    def _get_match_key(buf):
+    def _get_match_key(buf) -> int:
         """Return an integer that represents the 'key' for MAD buf.
            If two keys match then they are the same transaction.
            The result is mgmtClass || transactionID[31:0], see
            C13-19.1.1"""
         # FIXME: vmad needs to test all 64 bits.
         if isinstance(buf, bytearray):
-            return ((buf[1] << 32) |
-                    (buf[12] << 24) |
-                    (buf[13] << 16) |
-                    (buf[14] << 8) |
-                    (buf[15] << 0))
-        return ((ord(buf[1]) << 32) |
-                (ord(buf[12]) << 24) |
-                (ord(buf[13]) << 16) |
-                (ord(buf[14]) << 8) |
-                (ord(buf[15]) << 0))
+            return (
+                (buf[1] << 32) |
+                (buf[12] << 24) |
+                (buf[13] << 16) |
+                (buf[14] << 8) |
+                (buf[15] << 0)
+            )
+        return (
+            (ord(buf[1]) << 32) |
+            (ord(buf[12]) << 24) |
+            (ord(buf[13]) << 16) |
+            (ord(buf[14]) << 8) |
+            (ord(buf[15]) << 0)
+        )
 
     _get_reply_match_key = _get_match_key
 
     @staticmethod
-    def get_request_match_key(buf):
+    def get_request_match_key(buf) -> Tuple:
         """Return a :class:`tuple` for matching a request MAD buf. The :class:`tuple`
         is `((oui << 8) | mgmtClass,(baseVersion << 8) | classVersion,attributeID)`. Where *oui* is 0
         if this is not a vendor OUI MAD."""
@@ -209,7 +217,7 @@ class MADTransactor(object):
                 req=fmt,
                 rep_buf=rbuf,
                 path=path,
-                msg="Invalid reply size. Got %u, expected %u" % (
+                msg="Invalid reply size. Got {:d}, expected {:d}".format(
                     len(rbuf),
                     fmt.MAD_LENGTH,
                 ),
@@ -229,8 +237,13 @@ class MADTransactor(object):
         # FIXME: Handle redirect
         status = self.reply_fmt.status
         if status & 0x1F != 0:
-            raise rdma.MADError(req=fmt, rep=self.reply_fmt, path=path,
-                                rep_buf=rbuf, status=self.reply_fmt.status)
+            raise rdma.MADError(
+                req=fmt,
+                rep=self.reply_fmt,
+                path=path,
+                rep_buf=rbuf,
+                status=self.reply_fmt.status,
+            )
 
         # Throw a class specific code..
         class_code = (status >> IBA.MAD_STATUS_CLASS_SHIFT) & IBA.MAD_STATUS_CLASS_MASK
@@ -245,9 +258,14 @@ class MADTransactor(object):
                 self.req_path = None
                 if ret is not None:
                     return ret
-            raise rdma.MADClassError(req=fmt, rep=self.reply_fmt, path=path,
-                                     status=self.reply_fmt.status,
-                                     rep_buf=rbuf, code=class_code)
+            raise rdma.MADClassError(
+                req=fmt,
+                rep=self.reply_fmt,
+                path=path,
+                status=self.reply_fmt.status,
+                rep_buf=rbuf,
+                code=class_code,
+            )
 
         try:
             if rmpp:
@@ -259,10 +277,16 @@ class MADTransactor(object):
                 else:
                     step = 8 * self.reply_fmt.attributeOffset
                     if step < newer.MAD_LENGTH:
-                        raise rdma.MADError(req=fmt, rep=self.reply_fmt, path=path,
-                                            status=self.reply_fmt.status,
-                                            msg="RMPP attribute is too small. Got %u, expected %u" % (
-                                                step, newer.MAD_LENGTH))
+                        raise rdma.MADError(
+                            req=fmt,
+                            rep=self.reply_fmt,
+                            path=path,
+                            status=self.reply_fmt.status,
+                            msg="RMPP attribute is too small. Got {:d}, expected {:d}".format(
+                                step,
+                                newer.MAD_LENGTH,
+                            ),
+                        )
 
                     start = self.reply_fmt.MAD_LENGTH
                     count = (len(rbuf) - start) // (step)
@@ -271,18 +295,27 @@ class MADTransactor(object):
                     # print repr(rbuf[start+step*len(rpayload):])
                     # I wonder why the data2 element makes no sense?
                     if start + step * count > len(rbuf):
-                        raise rdma.MADError(req=fmt, rep=self.reply_fmt, path=path,
-                                            status=self.reply_fmt.status,
-                                            msg="RMPP complete packet was too short.")
-                    rpayload = [newer(rbuf[start + step * I:start + step * (I + 1)])
-                                for I in range(count)]
+                        raise rdma.MADError(
+                            req=fmt,
+                            rep=self.reply_fmt,
+                            path=path,
+                            status=self.reply_fmt.status,
+                            msg="RMPP complete packet was too short.",
+                        )
+                    rpayload = [
+                        newer(rbuf[start + step * idx:start + step * (idx + 1)]) for idx in range(count)
+                    ]
             else:
                 rpayload = newer(self.reply_fmt.data)
         except rdma.MADError:
             raise
         except:
-            e = rdma.MADError(req=fmt, rep_buf=rbuf, path=path,
-                              exc_info=sys.exc_info())
+            e = rdma.MADError(
+                req=fmt,
+                rep_buf=rbuf,
+                path=path,
+                exc_info=sys.exc_info(),
+            )
             raise rdma.MADError(e).with_traceback(e.exc_info[2])
 
         if completer:
@@ -320,20 +353,38 @@ class MADTransactor(object):
         return self._doMAD(fmt, payload, path, attributeModifier, method)
 
     def SubnGet(self, payload, path, attributeModifier=0):
-        return self._subn_do(payload, path, attributeModifier,
-                             payload.MAD_SUBNGET)
+        return self._subn_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_SUBNGET,
+        )
 
     def SubnSet(self, payload, path, attributeModifier=0):
-        return self._subn_do(payload, path, attributeModifier,
-                             payload.MAD_SUBNSET)
+        return self._subn_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_SUBNSET,
+        )
 
     def PerformanceGet(self, payload, path, attributeModifier=0):
-        return self._doMAD(IBA.PMFormat(), payload, path, attributeModifier,
-                           payload.MAD_PERFORMANCEGET)
+        return self._doMAD(
+            IBA.PMFormat(),
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_PERFORMANCEGET,
+        )
 
     def PerformanceSet(self, payload, path, attributeModifier=0):
-        return self._doMAD(IBA.PMFormat(), payload, path, attributeModifier,
-                           payload.MAD_PERFORMANCESET)
+        return self._doMAD(
+            IBA.PMFormat(),
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_PERFORMANCESET,
+        )
 
     def _subn_adm_do(self, payload, path, attributeModifier, method, completer=None):
         if path is None:
@@ -346,28 +397,54 @@ class MADTransactor(object):
         return self._doMAD(fmt, payload, path, attributeModifier, method, completer)
 
     def SubnAdmGet(self, payload, path=None, attributeModifier=0):
-        return self._subn_adm_do(payload, path, attributeModifier,
-                                 payload.MAD_SUBNADMGET)
+        return self._subn_adm_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_SUBNADMGET,
+        )
 
     def SubnAdmGetTable(self, payload, path=None, attributeModifier=0):
-        return self._subn_adm_do(payload, path, attributeModifier,
-                                 payload.MAD_SUBNADMGETTABLE)
+        return self._subn_adm_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_SUBNADMGETTABLE,
+        )
 
     def SubnAdmSet(self, payload, path=None, attributeModifier=0):
-        return self._subn_adm_do(payload, path, attributeModifier,
-                                 payload.MAD_SUBNADMSET)
+        return self._subn_adm_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_SUBNADMSET,
+        )
 
     def _vend_do(self, payload, path, attributeModifier, method):
         fmt = payload.FORMAT()
-        return self._doMAD(fmt, payload, path, attributeModifier, method)
+        return self._doMAD(
+            fmt,
+            payload,
+            path,
+            attributeModifier,
+            method,
+        )
 
     def VendGet(self, payload, path, attributeModifier=0):
-        return self._vend_do(payload, path, attributeModifier,
-                             payload.MAD_VENDGET)
+        return self._vend_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_VENDGET,
+        )
 
     def VendSet(self, payload, path, attributeModifier=0):
-        return self._vend_do(payload, path, attributeModifier,
-                             payload.MAD_VENDSET)
+        return self._vend_do(
+            payload,
+            path,
+            attributeModifier,
+            payload.MAD_VENDSET,
+        )
 
     def parse_request(self, rbuf, path):
         """Parse a request packet into a format and data.
@@ -375,49 +452,82 @@ class MADTransactor(object):
         :raises rdma.MADError: If the packet could not be parsed."""
         l = len(rbuf)
         if l <= IBA.MADHeader.MAD_LENGTH:
-            raise rdma.MADError(req_buf=rbuf, path=path,
-                                reply_status=0,
-                                msg="Invalid request size.Got %u, expected at least %u" % (
-                                    l, IBA.MADHeader.MAD_LENGTH))
+            raise rdma.MADError(
+                req_buf=rbuf,
+                path=path,
+                reply_status=0,
+                msg="Invalid request size.Got {:d}, expected at least {:d}".format(
+                    l,
+                    IBA.MADHeader.MAD_LENGTH,
+                )
+            )
         match = self.get_request_match_key(rbuf)
         if match[1] >> 8 != IBA.MAD_BASE_VERSION:
-            raise rdma.MADError(req_buf=rbuf, path=path,
-                                reply_status=IBA.MAD_STATUS_BAD_VERSION,
-                                msg="Invalid base version, got key %r" % (match))
+            raise rdma.MADError(
+                req_buf=rbuf,
+                path=path,
+                reply_status=IBA.MAD_STATUS_BAD_VERSION,
+                msg="Invalid base version, got key {}".format(match),
+            )
         kind = IBA.get_fmt_payload(*match)
         if kind[0] is None:
             for clsid, ver in IBA.CLASS_TO_STRUCT.keys():
                 if clsid == kind[0]:
-                    raise rdma.MADError(req_buf=rbuf, path=path,
-                                        reply_status=IBA.MAD_STATUS_BAD_VERSION,
-                                        msg="Invalid class version, got key %r" % (match))
-            raise rdma.MADError(req_buf=rbuf, path=path,
-                                reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
-                                msg="Unsupported class ID, got key %r" % (match))
+                    raise rdma.MADError(
+                        req_buf=rbuf,
+                        path=path,
+                        reply_status=IBA.MAD_STATUS_BAD_VERSION,
+                        msg="Invalid class version, got key {}".format(match),
+                    )
+            raise rdma.MADError(
+                req_buf=rbuf,
+                path=path,
+                reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
+                msg="Unsupported class ID, got key {}".format(match),
+            )
         if l != kind[0].MAD_LENGTH:
-            raise rdma.MADError(req_buf=rbuf, path=path,
-                                reply_status=0,
-                                msg="Invalid request size.Got %u, expected %u" % (
-                                    l, kind[0].MAD_LENGTH))
+            raise rdma.MADError(
+                req_buf=rbuf,
+                path=path,
+                reply_status=0,
+                msg="Invalid request size.Got {:d}, expected {:d}".format(
+                    l,
+                    kind[0].MAD_LENGTH,
+                ),
+            )
 
         # The try wrappers the unpack incase the MAD is busted somehow.
         try:
             fmt = kind[0](rbuf)
             if self.trace_func is not None:
-                self.trace_func(self, TRACE_RECEIVE, fmt=fmt, path=path,
-                                ret=(rbuf, path))
+                self.trace_func(
+                    self,
+                    TRACE_RECEIVE,
+                    fmt=fmt,
+                    path=path,
+                    ret=(rbuf, path),
+                )
             if kind[1] is None:
-                raise rdma.MADError(req=fmt, req_buf=rbuf, path=path,
-                                    reply_status=IBA.MAD_STATUS_UNSUP_METHOD_ATTR_COMBO,
-                                    msg="Unsupported attribute ID for %s, got key %r" % (
-                                        fmt.describe(), match))
+                raise rdma.MADError(
+                    req=fmt,
+                    req_buf=rbuf,
+                    path=path,
+                    reply_status=IBA.MAD_STATUS_UNSUP_METHOD_ATTR_COMBO,
+                    msg="Unsupported attribute ID for {}, got key {}".format(
+                        fmt.describe(),
+                        match,
+                    ),
+                )
             return fmt, kind[1](fmt.data)
         except rdma.MADError:
             raise
         except:
-            e = rdma.MADError(req_buf=rbuf, path=path,
-                              reply_status=IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER,
-                              exc_info=sys.exc_info())
+            e = rdma.MADError(
+                req_buf=rbuf,
+                path=path,
+                reply_status=IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER,
+                exc_info=sys.exc_info(),
+            )
             raise rdma.MADError(e).with_traceback(e.exc_info[2])
 
     def send_error_exc(self, exc):

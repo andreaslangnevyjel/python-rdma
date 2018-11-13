@@ -1,4 +1,6 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
+# -*- coding: utf-8 -*-
+
 import collections
 
 import rdma
@@ -316,7 +318,7 @@ class _SubnetTopo(object):
             # The first pinf we get for the path with a LID transforms it into
             # a LID path. Some switches will return the LID on all ports,
             # others return 0 for everything but port 0.
-            if (pinf.LID != 0 and pinf.LID < IBA.LID_MULTICAST):
+            if pinf.LID != 0 and pinf.LID < IBA.LID_MULTICAST:
                 path.SLID = path.end_port.lid
                 path.DLID = pinf.LID
                 path.__class__ = rdma.path.IBPath
@@ -325,14 +327,12 @@ class _SubnetTopo(object):
                 path._cached_subnet_end_port = tmp
                 delattr(path, "drPath")
 
-        if (pinf.portState == IBA.PORT_STATE_DOWN or
-            portIdx == 0 or
-            aport in self.sbn.topology):
+        if pinf.portState == IBA.PORT_STATE_DOWN or portIdx == 0 or aport in self.sbn.topology:
             return
 
         self.sched_node(aport, path, portIdx, depth + 1)
 
-    def do_node(self, path, depth=0, peer=None):
+    def do_node(self, path, depth: int=0, peer=None):
         """Coroutine to get the :class:`~rdma.IBA.SMPNodeInfo` and scan all the
         port infos."""
         ninf = yield self.sched.SubnGet(IBA.SMPNodeInfo, path)
@@ -358,12 +358,12 @@ class _SubnetTopo(object):
             self.sched_ports(node, path, ninf.localPortNum, depth)
 
 
-def topo_SMP(sched, sbn, get_desc=True):
+def topo_SMP(sched, sbn, get_desc: bool=True):
     """Generator to fetch an entire subnet topology using SMPs."""
     # Wipe out existing volatile information. Maybe nodeDescription too?
     sbn.topology = {}
-    for I, idx in sbn.iterports():
-        I.pinf = None
+    for _obj, idx in sbn.iterports():
+        _obj.pinf = None
 
     fetcher = _SubnetTopo(sched, sbn, get_desc, sbn.lid_routed)
     if sbn.lid_routed:
@@ -382,8 +382,14 @@ def topo_SMP(sched, sbn, get_desc=True):
     sbn.loaded.add("all_topology")
 
 
-def topo_peer_SMP(sched, sbn, port, get_desc=True, path=None,
-                  peer_path=None):
+def topo_peer_SMP(
+    sched,
+    sbn,
+    port,
+    get_desc: bool=True,
+    path=None,
+    peer_path=None,
+):
     """Coroutine to fetch a single connected peer. This updates
     :attr:`rdma.subnet.Subnet.topology`. It also fetches a port info to setup
     LID routing.
@@ -394,18 +400,17 @@ def topo_peer_SMP(sched, sbn, port, get_desc=True, path=None,
     This does nothing if the information is already loaded."""
     peer_port = sbn.topology.get(port)
     if peer_port is None:
-        portIdx = port.port_id
+        port_idx = port.port_id
 
         if peer_path is None:
             if path is None:
                 path = sbn.get_path_smp(sched, port.to_end_port())
-            peer_path = sbn.advance_dr(path, portIdx)
+            peer_path = sbn.advance_dr(path, port_idx)
 
         if port.pinf is None:
-            yield subnet_pinf_SMP(sched, sbn, portIdx, path)
+            yield subnet_pinf_SMP(sched, sbn, port_idx, path)
 
-        if (port.pinf.portState == IBA.PORT_STATE_DOWN or
-            portIdx == 0):
+        if port.pinf.portState == IBA.PORT_STATE_DOWN or port_idx == 0:
             return
 
         # Resolve the DR path using the SA and update our topology information
@@ -416,20 +421,33 @@ def topo_peer_SMP(sched, sbn, port, get_desc=True, path=None,
                 path = sbn.get_path_smp(sched, port.to_end_port())
             req = IBA.ComponentMask(IBA.SALinkRecord())
             req.fromLID = yield sched.prepare_path_lid(path)
-            req.fromPort = portIdx
+            req.fromPort = port_idx
             rep = yield sched.SubnAdmGet(req)
             peer_path._cached_resolved_dlid = rep.toLID
-            peer_port = sbn.get_port(port_idx=rep.toPort, LID=rep.toLID,
-                                     path=peer_path)
+            peer_port = sbn.get_port(
+                port_idx=rep.toPort,
+                LID=rep.toLID,
+                path=peer_path,
+            )
 
-        peer_node, peer_zport = yield subnet_ninf_SMP(sched, sbn, peer_path,
-                                                      get_desc, use_sa)
+        peer_node, peer_zport = yield subnet_ninf_SMP(
+            sched,
+            sbn,
+            peer_path,
+            get_desc,
+            use_sa,
+        )
         get_desc = False
         if not use_sa:
-            lpn = getattr(peer_path, "_cached_subnet_localPortNum",
-                          peer_node.ninf.localPortNum)
-            peer_port = sbn.get_port(port_idx=lpn,
-                                     path=peer_path)
+            lpn = getattr(
+                peer_path,
+                "_cached_subnet_localPortNum",
+                peer_node.ninf.localPortNum,
+            )
+            peer_port = sbn.get_port(
+                port_idx=lpn,
+                path=peer_path,
+            )
 
         sbn.topology[port] = peer_port
         sbn.topology[peer_port] = port
@@ -445,7 +463,7 @@ def topo_peer_SMP(sched, sbn, port, get_desc=True, path=None,
         yield subnet_pinf_SMP(sched, sbn, 0, peer_path)
 
 
-def topo_surround_SMP(sched, sbn, node, get_desc=True):
+def topo_surround_SMP(sched, sbn, node, get_desc: bool=True):
     """Coroutine to fetch everything connected to all end ports on *node*.  This
     updates :attr:`rdma.subnet.Subnet.topology`. It also fetches a port info
     to setup LID routing.
@@ -496,13 +514,19 @@ def subnet_fill_port(sched, sbn, port, path=None, get_desc=True):
     if get_desc and node.desc is None:
         yield node.get_desc(sched, path)
     if port.pinf is None:
-        yield rdma.discovery.subnet_pinf_SMP(sched, sbn,
-                                             node.ports.index(port),
-                                             path)
+        yield rdma.discovery.subnet_pinf_SMP(
+            sched,
+            sbn,
+            node.ports.index(port),
+            path,
+        )
     if port_ep.pinf is None and port_ep != port:
-        yield rdma.discovery.subnet_pinf_SMP(sched, sbn,
-                                             node.ports.index(port_ep),
-                                             path)
+        yield rdma.discovery.subnet_pinf_SMP(
+            sched,
+            sbn,
+            node.ports.index(port_ep),
+            path,
+        )
 
 
 def subnet_get_port(sched, sbn, path, get_desc=True):
@@ -556,7 +580,7 @@ def load(sched, sbn, stuff):
     def fetch_SA(sched):
         if "all_SwitchInfo" in stuff:
             yield subnet_swinf_SA(sched, sbn)
-            stuff.add("all_NodeInfo %u" % (IBA.NODE_SWITCH))
+            stuff.add("all_NodeInfo {:d}".format(IBA.NODE_SWITCH))
 
         if "all_NodeInfo" in stuff or "all_NodeDescription" in stuff:
             yield subnet_ninf_SA(sched, sbn)
@@ -592,16 +616,28 @@ def load(sched, sbn, stuff):
 
         if ("all_LIDs" in stuff or "all_NodeInfo" in stuff or
             "all_NodeDescription" in stuff or "all_topology" in stuff):
-            sched.run(queue=topo_SMP(sched, sbn,
-                                     "all_NodeDescription" in stuff))
+            sched.run(
+                queue=topo_SMP(
+                    sched,
+                    sbn,
+                    "all_NodeDescription" in stuff,
+                )
+            )
         if "all_SwitchInfo" in stuff:
             sched.run(queue=subnet_swinf_SMP(sched, sbn))
 
     stuff.difference_update(sbn.loaded)
 
     if "all_PortInfo" in stuff:
-        sched.run(mqueue=(subnet_pinf_SMP(sched, sbn, I[1],
-                                          sbn.get_path_smp(sched, I[0].to_end_port()))
-                          for I in sbn.iterports() if I[0].pinf is None))
+        sched.run(
+            mqueue=(
+                subnet_pinf_SMP(
+                    sched,
+                    sbn,
+                    _port[1],
+                    sbn.get_path_smp(sched, _port[0].to_end_port()),
+                ) for _port in sbn.iterports() if _port[0].pinf is None
+            ),
+        )
         sbn.loaded.add("all_PortInfo")
         sbn.loaded.add("all_LIDs")

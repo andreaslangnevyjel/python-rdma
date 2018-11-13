@@ -147,10 +147,11 @@ def struct(name, fields):
         return ','.join(L)
 
     d = {
-        '_finfo': dict((f[0], finfo(f[1], f[2] if len(f) > 2 else 0))
-                       for f in fields),
+        '_finfo': {
+            f[0]: finfo(f[1], f[2] if len(f) > 2 else 0) for f in fields
+        },
         '__init__': init,
         '__setattr__': sattr,
-        '__str__': pretty
+        '__str__': pretty,
     }
     return type(name, (object,), d)
