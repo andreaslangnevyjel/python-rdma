@@ -40,13 +40,13 @@ class build_ext(Cython.Distutils.build_ext):
         return enum
 
     def write_enums_pxd(self, F, enums):
-        print >> F, '\n\n'.join('\n'.join('%s = c.%s' % (c, c) for c in v)
-                                for e, v in sorted(enums.iteritems()))
+        print('\n\n'.join('\n'.join('%s = c.%s' % (c, c) for c in v)
+                                for e, v in sorted(enums.items())), file=F)
 
     def write_enums_pxi(self, F, enums):
         sep = '\n' + ' ' * 8
-        print >> F, '\n\n'.join('    enum %s:%s' % (e, sep) + sep.join(v)
-                                for e, v in sorted(enums.iteritems()))
+        print('\n\n'.join('    enum %s:%s' % (e, sep) + sep.join(v)
+                                for e, v in sorted(enums.items())), file=F)
 
     def codegen(self):
         if not os.path.exists(self.build_temp):
@@ -60,7 +60,7 @@ class build_ext(Cython.Distutils.build_ext):
         with open(verbs_h_o) as F:
             enums = self.get_enums(F)
         with open("rdma/libibverbs_enums.pxd", "wt") as F:
-            print >> F, "cdef extern from 'infiniband/verbs.h':"
+            print("cdef extern from 'infiniband/verbs.h':", file=F)
             self.write_enums_pxi(F, enums)
         with open("rdma/libibverbs_enums.pxi", "wt") as F:
             self.write_enums_pxd(F, enums)
