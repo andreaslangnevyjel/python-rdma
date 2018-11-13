@@ -336,18 +336,18 @@ class GID(bytes):
 
     def __str__(self):
         """Return a printable string of the GID."""
-        return socket.inet_ntop(socket.AF_INET6, bytes.__str__(self))
+        return socket.inet_ntop(socket.AF_INET6, self)  # bytes.__str__(self))
 
     def __repr__(self):
         return "GID('%s')" % (self.__str__())
 
     def guid(self):
         """Return the GUID portion of the GID."""
-        return GUID(bytes.__getslice__(self, 8, 16), raw=True)
+        return GUID(bytes.__getitem__(self, slice(8, 16)), raw=True)
 
     def prefix(self):
         """Return the prefix portion of the GID."""
-        return GUID(bytes.__getslice__(self, 0, 8), raw=True)
+        return GUID(bytes.__getitem__(self, slice(0, 8)), raw=True)
 
     def __int__(self):
         return int(bytes.__str__(self).encode("hex"), 16)

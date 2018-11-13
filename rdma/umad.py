@@ -102,7 +102,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         """*parent* is the owning :class:`rdma.devices.EndPort`."""
         rdma.madtransactor.MADTransactor.__init__(self)
 
-        for I in parent._iterate_services_end_port(SYS_INFINIBAND_MAD, "umad\d+"):
+        for I in parent._iterate_services_end_port(SYS_INFINIBAND_MAD, r"umad\d+"):
             rdma.tools.SysFSDevice.__init__(self, parent, I)
             break
         else:
