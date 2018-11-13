@@ -1,24 +1,25 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-import sys;
-import rdma;
-from libibtool.tools import *;
+
+import rdma
+from libibtool.tools import *
 
 # Generate the global command map
-banner = """Command suite for IB management v%s"""%(rdma.__version__);
+banner = """Command suite for IB management v%s""" % (rdma.__version__)
 
 commands = {
     "ibroute": None,
     "dump_lfts": (".ibroute",),
-    "dump_lfts.sh": (".ibroute","cmd_dump_lfts",False),
+    "dump_lfts.sh": (".ibroute", "cmd_dump_lfts", False),
     "dump_mfts": (".ibroute",),
-    "dump_mfts.sh": (".ibroute","cmd_dump_mfts",False),
+    "dump_mfts.sh": (".ibroute", "cmd_dump_mfts", False),
     "ibfindnodesusing": (".ibroute",),
-    "ibfindnodesusing.pl": (".ibroute","cmd_ibfindnodesusing",False),
+    "ibfindnodesusing.pl": (".ibroute", "cmd_ibfindnodesusing", False),
 
     "perfquery": None,
     "ibswportwatch": (".perfquery",),
-    "ibswportwatch.pl": (".perfquery","cmd_ibswportwatch",False),
+    "ibswportwatch.pl": (".perfquery", "cmd_ibswportwatch", False),
     "saquery": None,
     "smpquery": None,
     "ibtracert": None,
@@ -33,21 +34,21 @@ commands = {
     "ibportstate": (".inquiry",),
     "query": (".inquiry",),
     "set_nodedesc": (".inquiry",),
-    "set_nodedesc.sh": (".inquiry","cmd_set_nodedesc",False),
+    "set_nodedesc.sh": (".inquiry", "cmd_set_nodedesc", False),
 
     "ibhosts": (".discovery",),
     "ibprintca": (".discovery",),
-    "ibprintca.pl": (".discovery","cmd_ibprintca",False),
+    "ibprintca.pl": (".discovery", "cmd_ibprintca", False),
     "ibrouters": (".discovery",),
     "ibprintrt": (".discovery",),
-    "ibprintrt.pl": (".discovery","cmd_ibprintrt",False),
+    "ibprintrt.pl": (".discovery", "cmd_ibprintrt", False),
     "ibswitches": (".discovery",),
     "ibprintswitch": (".discovery",),
-    "ibprintswitch.pl": (".discovery","cmd_ibprintswitch",False),
+    "ibprintswitch.pl": (".discovery", "cmd_ibprintswitch", False),
     "ibnodes": (".discovery",),
     "ibnetdiscover": (".discovery",),
     "iblinkinfo": (".discovery",),
-    "iblinkinfo.pl": (".discovery","cmd_iblinkinfo",False),
+    "iblinkinfo.pl": (".discovery", "cmd_iblinkinfo", False),
 
     "ibchecknode": (".errors",),
     "ibcheckstate": (".errors",),
@@ -63,7 +64,7 @@ commands = {
     "ibdatacounters": (".errors",),
     "ibdatacounts": (".errors",),
     "ibidsverify": (".errors",),
-    "ibidsverify.pl": (".errors","cmd_ibidsverify",False),
+    "ibidsverify.pl": (".errors", "cmd_ibidsverify", False),
 
     "rdma_bw": None,
 
@@ -72,42 +73,42 @@ commands = {
     "ibping": (".vendstat",),
 
     "subnet_diff": None,
-    "ibdiscover.pl": (".subnet_diff","cmd_subnet_diff",False),
+    "ibdiscover.pl": (".subnet_diff", "cmd_subnet_diff", False),
     "set_port_state": None,
     "init_all_ports": (".set_port_state",),
 
     "set_guid": (".guid",),
 
     "help": (".tools",),
-};
+}
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        cmd_help([],MyOptParse(cmd_help));
-        sys.exit(0);
+        cmd_help([], MyOptParse(cmd_help))
+        sys.exit(0)
 
-    argv = sys.argv[2:];
-    cmd = sys.argv[1];
-    if commands.has_key(cmd):
-        func,shown = get_cmd_func(cmd);
-        o = MyOptParse(func);
+    argv = sys.argv[2:]
+    cmd = sys.argv[1]
+    if cmd in commands:
+        func, shown = get_cmd_func(cmd)
+        o = MyOptParse(func)
         try:
-            if not func(argv,o):
-                sys.exit(100);
-            sys.exit(0);
+            if not func(argv, o):
+                sys.exit(100)
+            sys.exit(0)
         except CmdError as err:
-            print "E:",err;
+            print("E:", err)
             if o.verbosity >= 2:
-                raise;
+                raise
         except rdma.MADError as err:
-            err.dump_detailed(sys.stderr,"E:",level=o.verbosity);
+            err.dump_detailed(sys.stderr, "E:", level=o.verbosity)
             if o.verbosity >= 2:
-                raise;
+                raise
         except rdma.RDMAError as err:
-            print "E:",err;
+            print("E:", err)
             if o.verbosity >= 2:
-                raise;
-        sys.exit(100);
+                raise
+        sys.exit(100)
     else:
-        sys.stderr.write("Bad command %s\n"%(sys.argv[1]));
-        sys.exit(1);
+        sys.stderr.write("Bad command %s\n" % (sys.argv[1]))
+        sys.exit(1)
