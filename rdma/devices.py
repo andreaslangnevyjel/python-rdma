@@ -465,7 +465,7 @@ def find_port_name(devices, name):
 
     :rtype: :class:`EndPort`
     :raises rdma.RDMAError: If no matching device is found."""
-    parts = name.split('/')
+    parts = name.split("/")
     try:
         device = devices[parts[0]]
     except KeyError:
