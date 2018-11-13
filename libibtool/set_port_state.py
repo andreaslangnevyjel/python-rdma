@@ -43,8 +43,8 @@ def cmd_init_all_ports(argv,o):
                     pinf.portState = IBA.PORT_STATE_DOWN;
                     yield self.sched.SubnSet(pinf,path,portIdx);
                 except rdma.MADError as e:
-                    print "Failed to set port state on %s via %s"%(aport,path);
-                    print "   ",e
+                    print("Failed to set port state on %s via %s"%(aport,path));
+                    print("   ",e)
 
         sbn = rdma.subnet.Subnet();
         fetcher = MyTopo(sched,sbn,get_desc=False,lid_route=False);
@@ -163,6 +163,6 @@ def cmd_set_port_state(argv,o):
             if args.phys_state != 0:
                 umad.SubnSet(mpinf,path,portIdx);
             else:
-                print "Would have changed %s@%u on %s"%(
-                    port.portGUID,portIdx,path);
+                print("Would have changed %s@%u on %s"%(
+                    port.portGUID,portIdx,path));
     return lib.done();

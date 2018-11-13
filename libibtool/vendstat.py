@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import struct;
 import socket;
 import time;
@@ -176,16 +176,16 @@ def cmd_ibping(argv,o):
                 maxrtt = max(rtt,maxrtt);
                 totalrtt = totalrtt + rtt;
                 if not args.flood:
-                    print "Ping reply, '%s': seq=%u time %.03f ms"%(
-                        path,count,rtt*1000)
+                    print("Ping reply, '%s': seq=%u time %.03f ms"%(
+                        path,count,rtt*1000))
                     if count != args.count:
                         time.sleep(1);
         except KeyboardInterrupt:
             pass;
-        print "--- %s statistics ---"%(path)
-        print "%u packets transmitted, %u received, %u%% packet loss, time %.03fms"%(
+        print("--- %s statistics ---"%(path))
+        print("%u packets transmitted, %u received, %u%% packet loss, time %.03fms"%(
             count,count - lost,lost*100/count,
-            (rdma.tools.clock_monotonic() - start_time)*1000);
-        print "rtt min/avg/max = %.03f/%.03f/%.03f ms"%(
-            minrtt*1000,totalrtt/(count-lost)*1000,maxrtt*1000);
+            (rdma.tools.clock_monotonic() - start_time)*1000));
+        print("rtt min/avg/max = %.03f/%.03f/%.03f ms"%(
+            minrtt*1000,totalrtt/(count-lost)*1000,maxrtt*1000));
     return lib.done();

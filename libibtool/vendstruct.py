@@ -27,7 +27,7 @@ def install_vend():
     """Since the vendor MADs can collide we prefer to only setup the dumper
     if they are going to be used."""
     import libibtool.vend as vend;
-    formats = set(I[0] for I in vend.ATTR_TO_STRUCT.iterkeys());
+    formats = set(I[0] for I in vend.ATTR_TO_STRUCT.keys());
     for I in formats:
         vend.ATTR_TO_STRUCT[I,IBA.MADClassPortInfo.MAD_ATTRIBUTE_ID] = IBA.MADClassPortInfo;
         vend.CLASS_TO_STRUCT[I.MAD_CLASS | (getattr(I,"MAD_CLASS_OUI",0) << 8),

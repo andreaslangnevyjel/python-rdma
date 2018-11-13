@@ -8,15 +8,15 @@ class path_test(unittest.TestCase):
     def check_path(self,end_port,cls=rdma.path.IBPath,**kwargs):
         path = rdma.path.IBPath(end_port,**kwargs);
         npath = rdma.path.from_string(repr(path),end_port);
-        self.assertEquals(path.__dict__,npath.__dict__)
+        self.assertEqual(path.__dict__,npath.__dict__)
 
     def check_path_str(self,end_port,s,cls=rdma.path.IBPath,**kwargs):
         path = cls(end_port,**kwargs);
         npath = rdma.path.from_string(s);
-        self.assertEquals(path.__dict__,npath.__dict__)
-        self.assertEquals(npath.__class__,cls);
+        self.assertEqual(path.__dict__,npath.__dict__)
+        self.assertEqual(npath.__class__,cls);
         npath = rdma.path.from_string(repr(path),end_port);
-        self.assertEquals(path.__dict__,npath.__dict__)
+        self.assertEqual(path.__dict__,npath.__dict__)
 
     def test_str_good(self):
         """Check good input to :func:`rdma.path.from_string`."""

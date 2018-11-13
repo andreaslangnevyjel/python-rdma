@@ -1,9 +1,9 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 import unittest;
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
-    import pickle;
+    from . import pickle;
 import rdma.IBA as IBA;
 import rdma.binstruct;
 import rdma.subnet;
@@ -11,13 +11,13 @@ import rdma.subnet;
 class pickle_test(unittest.TestCase):
     def test_basic(self):
         "Check that all IBA structs can be pickled and unpickled"
-        for I in IBA.__dict__.itervalues():
+        for I in IBA.__dict__.values():
             if not isinstance(I,rdma.binstruct.BinStruct):
                 continue;
             tmp = I()
             ret = pickle.dumps(I());
             tmp2 = pickle.loads(ret);
-            self.assertEquals(tmp.__class__,tmp2.__class__);
+            self.assertEqual(tmp.__class__,tmp2.__class__);
 
     def test_subnet(self):
         "Pickling Subnet objects"
@@ -33,9 +33,9 @@ class pickle_test(unittest.TestCase):
         ret = pickle.dumps(sbn);
         tmp2 = pickle.loads(ret);
 
-        self.assertEquals(len(sbn.all_nodes),len(tmp2.all_nodes));
-        self.assertEquals(sorted(sbn.nodes.keys()),sorted(tmp2.nodes.keys()));
-        self.assertEquals(sorted(sbn.ports.keys()),sorted(tmp2.ports.keys()));
+        self.assertEqual(len(sbn.all_nodes),len(tmp2.all_nodes));
+        self.assertEqual(sorted(sbn.nodes.keys()),sorted(tmp2.nodes.keys()));
+        self.assertEqual(sorted(sbn.ports.keys()),sorted(tmp2.ports.keys()));
 
 if __name__ == '__main__':
     unittest.main()

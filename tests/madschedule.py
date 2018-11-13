@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import unittest
 import sys;
 from contextlib import contextmanager;
@@ -29,7 +29,7 @@ class madschedule_test(unittest.TestCase):
         else:
             if hasattr(excClass,'__name__'): excName = excClass.__name__
             else: excName = str(excClass)
-            raise self.failureException, "%s not raised" % excName
+            raise self.failureException("%s not raised" % excName)
 
     def test_except(self):
         """Check that exceptions flow up the coroutine call chain."""
@@ -62,15 +62,15 @@ class madschedule_test(unittest.TestCase):
         sched.run(first(self,sched));
 
     def get_port_info(self,sched,path,port,follow):
-        print "Get port_info %u follow=%r"%(port,follow)
+        print("Get port_info %u follow=%r"%(port,follow))
         pinf = yield sched.SubnGet(IBA.SMPPortInfo,path,port);
-        print "Done port",port;
+        print("Done port",port);
         #pinf.printer(sys.stdout);
 
         if follow and pinf.portState != IBA.PORT_STATE_DOWN:
             npath = rdma.path.IBDRPath(self.end_port);
             npath.drPath = path.drPath + chr(port);
-            print "Probe port",port,repr(npath.drPath)
+            print("Probe port",port,repr(npath.drPath))
             yield self.get_node_info(sched,npath);
 
     def get_node_info(self,sched,path):
@@ -79,7 +79,7 @@ class madschedule_test(unittest.TestCase):
             return;
         self.guids.add(ninf.nodeGUID);
 
-        print "Got Node %r"%(ninf.nodeGUID);
+        print("Got Node %r"%(ninf.nodeGUID));
         if ninf.nodeType == IBA.NODE_SWITCH:
             sched.mqueue(self.get_port_info(sched,path,I,True) \
                          for I in range(1,ninf.numPorts+1));
@@ -95,6 +95,6 @@ class madschedule_test(unittest.TestCase):
         try:
             sched.run(self.get_node_info(sched,self.local_path));
         except rdma.MADError as err:
-            print err
+            print(err)
             err.req.printer(sys.stdout);
             raise;

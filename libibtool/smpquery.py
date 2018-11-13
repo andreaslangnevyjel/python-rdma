@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import sys;
 import rdma;
 import rdma.path;
@@ -9,21 +9,21 @@ from libibtool import *;
 from libibtool.libibopts import *;
 
 def do_ni(umad,kind,path,attr):
-    print "# Node info:",path;
+    print("# Node info:",path);
     ni = umad.SubnGet(kind,path,attr);
     ni.printer(sys.stdout,**_format_args);
 
 def do_nd(umad,kind,path,attr):
     nd = umad.SubnGet(kind,path,attr);
-    print "Node Description: %r"%(IBA_describe.description(nd.nodeString));
+    print("Node Description: %r"%(IBA_describe.description(nd.nodeString)));
 
 def do_pi(umad,kind,path,attr):
-    print "# Port info:",path;
+    print("# Port info:",path);
     pi = umad.SubnGet(kind,path,attr);
     pi.printer(sys.stdout,**_format_args);
 
 def do_si(umad,kind,path,attr):
-    print "# Switch info:",path;
+    print("# Switch info:",path);
     si = umad.SubnGet(kind,path,attr);
     si.printer(sys.stdout,**_format_args);
 
@@ -44,12 +44,12 @@ def do_pkeys(umad,kind,path,attr):
     for num,I in enumerate(pkeys[:count]):
         if num % 8 == 0:
             if num != 0:
-                print;
-            print "%4u:"%(num),
-        print "0x%04x"%(I),
+                print();
+            print("%4u:"%(num), end=' ')
+        print("0x%04x"%(I), end=' ')
     if count != 0:
-        print;
-    print "%u pkeys capacity for this port"%(count);
+        print();
+    print("%u pkeys capacity for this port"%(count));
 
 def do_sl2vl(umad,kind,path,attr):
     ni = umad.SubnGet(IBA.SMPNodeInfo,path);
@@ -62,19 +62,19 @@ def do_sl2vl(umad,kind,path,attr):
         attr = ni.localPortNum;
         sl2vl = (umad.SubnGet(kind,path,attr).SLtoVL,);
 
-    print "# SL2VL table",path
-    print "#                 SL: |" + "|".join("%2u"%(I) for I in range(16))+"|";
+    print("# SL2VL table",path)
+    print("#                 SL: |" + "|".join("%2u"%(I) for I in range(16))+"|");
     for iport,I in enumerate(sl2vl):
-        print "ports: in %2u, out %2u: |"%(iport,attr) + "|".join("%2u"%(J) for J in I)+"|";
+        print("ports: in %2u, out %2u: |"%(iport,attr) + "|".join("%2u"%(J) for J in I)+"|");
 
 def dump_vlarb(umad,path,attr,name,offset,cap):
-    print "# %s priority VL Arbitration Table:"%(name);
+    print("# %s priority VL Arbitration Table:"%(name));
     vl = [];
     for I in range((cap + 31)//32):
         vl.extend(umad.SubnGet(IBA.SMPVLArbitrationTable,path,
                                (offset + I) << 16 | attr).VLWeightBlock);
-    print "VL    : |" + "|".join("%-4s"%("0x%x"%((I >> 8) & 0xF)) for I in vl[:cap]) + "|";
-    print "WEIGHT: |" + "|".join("%-4s"%("0x%x"%(I & 0xFF)) for I in vl[:cap]) + "|";
+    print("VL    : |" + "|".join("%-4s"%("0x%x"%((I >> 8) & 0xF)) for I in vl[:cap]) + "|");
+    print("WEIGHT: |" + "|".join("%-4s"%("0x%x"%(I & 0xFF)) for I in vl[:cap]) + "|");
 
 def do_vlarb(umad,kind,path,attr):
     ni = umad.SubnGet(IBA.SMPNodeInfo,path);
@@ -82,12 +82,12 @@ def do_vlarb(umad,kind,path,attr):
         if ni.nodeType == IBA.NODE_SWITCH:
             si = umad.SubnGet(IBA.SMPSwitchInfo,path);
             if not si.enhancedPort0:
-                print "# No VLArbitration tables (BSP0): %s port %u"%(path,attr);
+                print("# No VLArbitration tables (BSP0): %s port %u"%(path,attr));
                 return;
 
     pi = umad.SubnGet(IBA.SMPPortInfo,path,attr);
-    print "# VLArbitration tables: %s port %u LowCap %u High Cap %u"%(
-        path,attr,pi.VLArbitrationLowCap,pi.VLArbitrationHighCap);
+    print("# VLArbitration tables: %s port %u LowCap %u High Cap %u"%(
+        path,attr,pi.VLArbitrationLowCap,pi.VLArbitrationHighCap));
     if pi.VLArbitrationLowCap > 0:
         dump_vlarb(umad,path,attr,"Low",1,pi.VLArbitrationLowCap);
     if pi.VLArbitrationHighCap > 0:
@@ -104,12 +104,12 @@ def do_guid(umad,kind,path,attr):
     for num,I in enumerate(guids[:count]):
         if num % 2 == 0:
             if num != 0:
-                print;
-            print "%4u:"%(num),
-        print I,
+                print();
+            print("%4u:"%(num), end=' ')
+        print(I, end=' ')
     if count != 0:
-        print;
-    print "%u guids capacity for this port"%(count);
+        print();
+    print("%u guids capacity for this port"%(count));
 
 def do_lft(umad,kind,path,attr):
     swi = umad.SubnGet(IBA.SMPSwitchInfo,path);
@@ -122,12 +122,12 @@ def do_lft(umad,kind,path,attr):
     for num,I in enumerate(lft[:count]):
         if num % 8 == 0:
             if num != 0:
-                print;
-            print "%3u:"%(num),
-        print I,
+                print();
+            print("%3u:"%(num), end=' ')
+        print(I, end=' ')
     if count != 0:
-        print;
-    print "%u LFT capacity for this port, top is %u"%(count,swi.linearFDBTop);
+        print();
+    print("%u LFT capacity for this port, top is %u"%(count,swi.linearFDBTop));
 
 OPS = {"NodeInfo": ("NI",IBA.SMPNodeInfo,do_ni),
        "NodeDesc": ("ND",IBA.SMPNodeDescription,do_nd),
@@ -142,7 +142,7 @@ OPS = {"NodeInfo": ("NI",IBA.SMPNodeInfo,do_ni),
 def tmpl_op(s):
     s = s.lower();
     res = None;
-    for k,v in OPS.iteritems():
+    for k,v in OPS.items():
         k = k.lower();
         k2 = v[0].lower();
         k3 = v[1].__name__.lower();
@@ -159,7 +159,7 @@ def tmpl_op(s):
 def cmd_smpquery_help(o,cmd,usage):
     """Generate the help text by merging in information from OPS."""
     def doc_op():
-        for k,v in OPS.iteritems():
+        for k,v in OPS.items():
             if v[0]:
                 yield "%s %s"%(k,v[0]);
             else:

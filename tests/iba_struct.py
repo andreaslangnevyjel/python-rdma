@@ -4,7 +4,7 @@ import rdma.IBA as IBA;
 import rdma.binstruct;
 import os
 
-structs = set(I for I in IBA.__dict__.itervalues()
+structs = set(I for I in IBA.__dict__.values()
               if isinstance(I,type) and issubclass(I,rdma.binstruct.BinStruct));
 
 class structs_test(unittest.TestCase):

@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import sys;
 import os;
 import time;
@@ -120,7 +120,7 @@ class Querier(object):
 
         if self.accumulate:
             if not self.args.loop:
-                print "Emulating AllPortSelect by iterating through all ports";
+                print("Emulating AllPortSelect by iterating through all ports");
             if self.ninf.nodeInfo.nodeType == IBA.NODE_CA:
                 raise CmdError("Can't fetch all ports on a CA.");
             numPorts = self.ninf.nodeInfo.numPorts;
@@ -179,10 +179,10 @@ class Querier(object):
 
     def header(self,F,res):
         if self.path.DGID is not None:
-            print >> F,"# Port counters: Lid %u (%s) port %u"%(self.path.DLID,self.path.DGID,
-                                                          res.portSelect);
+            print("# Port counters: Lid %u (%s) port %u"%(self.path.DLID,self.path.DGID,
+                                                          res.portSelect), file=F);
         else:
-            print >> F,"# Port counters: Lid %u port %u"%(self.path.DLID,res.portSelect);
+            print("# Port counters: Lid %u port %u"%(self.path.DLID,res.portSelect), file=F);
     def printer(self,F,res):
         self.header(F,res);
         res.printer(F,**self.format_args);
@@ -195,7 +195,7 @@ class Querier(object):
                 s = "%-8u (+ %d)"%(refv,refv - lastv);
         else:
             s = "%u"%(refv);
-        print >> F, "%s%s%s"%(cname,"."*(column-len(cname)),s);
+        print("%s%s%s"%(cname,"."*(column-len(cname)),s), file=F);
 
     def _print_thresh(self,F,oname,cname,column,refv,lastv,dtime):
         if lastv == refv or dtime is None:
@@ -204,7 +204,7 @@ class Querier(object):
         if rate < self.thresh.get(oname,0xFFFFFFFF):
             return;
         s = "%-8u (+ %.3f/s)"%(refv,rate);
-        print >> F, "%s%s%s"%(cname,"."*(column-len(cname)),s);
+        print("%s%s%s"%(cname,"."*(column-len(cname)),s), file=F);
 
     def printer_delta(self,F,res,last,dtime):
         self.header(F,res);

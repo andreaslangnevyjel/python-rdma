@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import inspect
 import sys;
 import copy;
@@ -129,7 +129,7 @@ def set_mad_attr(attr,name,v):
     except AttributeError:
         raise CmdError("%r is not a valid attribute for %r"%(name,attr));
     try:
-        if isinstance(arg,int) or isinstance(arg,long):
+        if isinstance(arg,int) or isinstance(arg,int):
             v = int(v,0);
         elif isinstance(arg,IBA.GID):
             v = IBA.GID(v);
@@ -149,12 +149,12 @@ def set_mad_attr(attr,name,v):
                 type(arg),arg));
     except ValueError as err:
         raise CmdError("String %r did not parse: %s"%(v,err));
-    exec "attr.%s = v"%(name)
+    exec("attr.%s = v"%(name))
 
 def tmpl_op(s):
     s = s.lower();
     res = None;
-    for k,v in OPS.iteritems():
+    for k,v in OPS.items():
         k = k.lower();
         k2 = v[0].lower();
         k3 = v[1].__name__.lower();
@@ -199,15 +199,15 @@ def do_print(out,s):
             args = _format_args;
         s.printer(out,**args);
         ninf.printer(out,**args);
-        print >> out,"NodeDescription%s%s"%(
+        print("NodeDescription%s%s"%(
             "."*(args.get("column",33) - 15),
-            IBA_describe.dstr(IBA_describe.description(desc.nodeString)));
+            IBA_describe.dstr(IBA_describe.description(desc.nodeString))), file=out);
     elif isinstance(s,IBA.SAPortInfoRecord):
         pinf = s.portInfo;
         s.portInfo = None;
-        print "\tRID:"
+        print("\tRID:")
         s.printer(out,**_format_args);
-        print "\tPortInfo dump:"
+        print("\tPortInfo dump:")
         if _format_args.get("name_map") is not None:
             args = copy.copy(_format_args);
             args["name_map"] = libib_name_map_smpquery;
@@ -219,9 +219,9 @@ def do_print(out,s):
     elif isinstance(s,IBA.SASwitchInfoRecord):
         sinf = s.switchInfo;
         s.switchInfo = None;
-        print "\tRID:"
+        print("\tRID:")
         s.printer(out,**_format_args);
-        print "\tSwitchInfo dump:"
+        print("\tSwitchInfo dump:")
         if _format_args.get("name_map") is not None:
             args = copy.copy(_format_args);
             args["name_map"] = libib_name_map_smpquery;
@@ -234,44 +234,44 @@ def do_print(out,s):
         ft = s.multicastForwardingTable.portMaskBlock;
         s.multicastForwardingTable = None;
         s.printer(out,**_format_args);
-        print >> out,"MFT:"
-        print >> out,"MLID\tPort Mask"
+        print("MFT:", file=out)
+        print("MLID\tPort Mask", file=out)
         for I,v in enumerate(ft):
-            print >> out,"0x%x\t0x%x"%(IBA.LID_MULTICAST + I + s.blockNum*32,v);
+            print("0x%x\t0x%x"%(IBA.LID_MULTICAST + I + s.blockNum*32,v), file=out);
     elif isinstance(s,IBA.SALinearForwardingTableRecord):
         ft = s.linearForwardingTable.portBlock;
         s.linearForwardingTable = None;
         s.printer(out,**_format_args);
-        print >> out,"LFT:"
-        print >> out,"LID\tPort Number"
+        print("LFT:", file=out)
+        print("LID\tPort Number", file=out)
         for I,v in enumerate(ft):
-            print >> out,"%u\t%u"%(I + s.blockNum*64,v);
+            print("%u\t%u"%(I + s.blockNum*64,v), file=out);
     elif isinstance(s,IBA.SAPKeyTableRecord):
         pk = s.PKeyTable.PKeyBlock;
         s.PKeyTable = None;
         s.printer(out,**_format_args);
-        print >> out,"PKey Table:"
+        print("PKey Table:", file=out)
         for num,I in enumerate(pk):
             if num % 8 == 0:
                 if num != 0:
-                    print >> out;
-            print >> out,"0x%04x"%(I),
-        print >> out;
+                    print(file=out);
+            print("0x%04x"%(I), end=' ', file=out)
+        print(file=out);
     elif isinstance(s,IBA.SAVLArbitrationTableRecord):
         vl = s.VLArbitrationTable.VLWeightBlock;
         s.VLArbitrationTable = None;
         s.printer(out,**_format_args);
-        print >> out, "VL    :" + "|".join(("%2u"%((I >> 8) & 0xF)) for I in vl[:16]) + "|";
-        print >> out, "Weight:" + "|".join(("%2u"%(I & 0xFF)) for I in vl[:16]) + "|";
-        print >> out, "VL    :" + "|".join(("%2u"%((I >> 8) & 0xF)) for I in vl[16:]) + "|";
-        print >> out, "Weight:" + "|".join(("%2u"%(I & 0xFF)) for I in vl[16:]) + "|";
+        print("VL    :" + "|".join(("%2u"%((I >> 8) & 0xF)) for I in vl[:16]) + "|", file=out);
+        print("Weight:" + "|".join(("%2u"%(I & 0xFF)) for I in vl[:16]) + "|", file=out);
+        print("VL    :" + "|".join(("%2u"%((I >> 8) & 0xF)) for I in vl[16:]) + "|", file=out);
+        print("Weight:" + "|".join(("%2u"%(I & 0xFF)) for I in vl[16:]) + "|", file=out);
     else:
         s.printer(out,**_format_args);
 
 def cmd_saquery_help(o,cmd,usage):
     """Generate the help text by merging in information from OPS."""
     def doc_op():
-        for k,v in OPS.iteritems():
+        for k,v in OPS.items():
             if v[0]:
                 yield "%s %s"%(k,v[0]);
             else:
@@ -285,13 +285,13 @@ def cmd_saquery_help(o,cmd,usage):
             I.metavar = "MATCH";
             I.help = "Match using the %s member."%(name);
             ret = [];
-            for k,v in OPS.iteritems():
+            for k,v in OPS.items():
                 if name in v[1].COMPONENT_MASK:
                     ret.append(k);
             if ret:
                 I.help += " Use with: %s"%(", ".join(ret));
         if I.dest == "kind":
-            for k,v in OPS.iteritems():
+            for k,v in OPS.items():
                 if v[1] == I.const:
                     I.help = "Perform a query for %s"%(k);
                     break;
@@ -399,7 +399,7 @@ def cmd_saquery(argv,o):
     if len(values) >= 1:
         # The first value(s) are a kind specific thing, parsed with the kind
         # helper.
-        for v in OPS.itervalues():
+        for v in OPS.values():
             if v[1] == args.kind and len(v) >= 3:
                 try:
                     v[2](query_cm,values);
@@ -426,7 +426,7 @@ def cmd_saquery(argv,o):
     for n,v in to_set:
         if n not in query.COMPONENT_MASK:
             raise CmdError("Cannot set member %s on %s. Try one of %s"%(
-                n,query.__class__.__name__,", ".join(query.COMPONENT_MASK.iterkeys())));
+                n,query.__class__.__name__,", ".join(iter(query.COMPONENT_MASK.keys()))));
         set_mad_attr(query_cm,n,v);
 
     path = None
@@ -448,30 +448,30 @@ def cmd_saquery(argv,o):
         if o.verbosity >= 1:
             cm = query_cm.component_mask;
             ret = [];
-            for k,v in query.COMPONENT_MASK.iteritems():
+            for k,v in query.COMPONENT_MASK.items():
                 if cm & (1 << v):
                     ret.append((v,k,eval("query_cm.%s"%(k))))
             ret.sort();
             if ret:
-                print "Performing query on %s with component mask:"%(query.__class__.__name__);
+                print("Performing query on %s with component mask:"%(query.__class__.__name__));
                 for v,k,arg in ret:
-                    print "  %2u %s = %r"%(v,k,arg);
+                    print("  %2u %s = %r"%(v,k,arg));
 
         name_map = _format_args.get("name_map",{});
         try:
             if getattr(query,"MAD_SUBNADMGETTABLE",None) is None or args.use_get:
                 ret = umad.SubnAdmGet(query_cm,path);
                 n = ret.__class__.__name__;
-                print "%s:"%(name_map.get(n,n));
+                print("%s:"%(name_map.get(n,n)));
                 do_print(out,ret);
             else:
                 ret = umad.SubnAdmGetTable(query_cm,path);
                 for I in ret:
                     n = I.__class__.__name__;
-                    print "%s dump:"%(name_map.get(n,n));
+                    print("%s dump:"%(name_map.get(n,n)));
                     do_print(out,I);
         except rdma.MADClassError as err:
             if err.code != IBA.MAD_STATUS_SA_NO_RECORDS:
                 raise;
-            print "No Records.";
+            print("No Records.");
     return True;

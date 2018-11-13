@@ -20,7 +20,7 @@ class ibtool_cmds_test(unittest.TestCase):
         else:
             if hasattr(excClass,'__name__'): excName = excClass.__name__
             else: excName = str(excClass)
-            raise self.failureException, "%s not raised" % excName
+            raise self.failureException("%s not raised" % excName)
 
     @contextmanager
     def ignore_mad_unsupported(self):
@@ -55,7 +55,7 @@ class ibtool_cmds_test(unittest.TestCase):
             nargs = args + self.extra_opts;
         else:
             nargs = args;
-        print "------------- Execute",nargs," ------------";
+        print("------------- Execute",nargs," ------------");
         sys.stdout.flush();
         try:
             os.system("/opt/ofa64-1.5.1/sbin/" + " ".join("%s"%(I) for I in args));
@@ -65,7 +65,7 @@ class ibtool_cmds_test(unittest.TestCase):
     def cmd(self,*args):
         if self.extra_opts:
             args = args + self.extra_opts;
-        print "------------- Execute",args," ------------";
+        print("------------- Execute",args," ------------");
         sys.stdout.flush();
         try:
             func,shown = self.get_cmd_func(args[0],top_mod=self.cmd_mod);
@@ -73,7 +73,7 @@ class ibtool_cmds_test(unittest.TestCase):
             if not func(["%s"%(I) for I in args[1:]],o):
                 raise self.ibtool.CmdError("Command failed");
         except:
-            print "Command %r threw exception"%(args,);
+            print("Command %r threw exception"%(args,));
             raise;
 
     def test_help(self):
@@ -110,14 +110,14 @@ class ibtool_cmds_test(unittest.TestCase):
         self.cmd("vendstat","-N",self.end_port.lid);
 
     def test_with_link_exc(self):
-        self.assertEquals(self.end_port.state,IBA.PORT_STATE_ACTIVE);
+        self.assertEqual(self.end_port.state,IBA.PORT_STATE_ACTIVE);
         with self.with_assertRaises(rdma.MADError):
             self.cmd("ibaddr","0,99");
         with self.with_assertRaises(rdma.path.SAPathNotFoundError):
             self.cmd("ibaddr","2::");
 
     def test_with_link(self):
-        self.assertEquals(self.end_port.state,IBA.PORT_STATE_ACTIVE);
+        self.assertEqual(self.end_port.state,IBA.PORT_STATE_ACTIVE);
 
         self.cmd("ibaddr","-D",self.peer_dr);
         self.cmd("ibaddr",self.end_port.lid);
@@ -181,7 +181,7 @@ class ibtool_cmds_test(unittest.TestCase):
             self.cmd(I,self.peer_pinf.LID,self.peer_pinf.localPortNum,"-v");
 
     def test_discovery(self):
-        self.assertEquals(self.end_port.state,IBA.PORT_STATE_ACTIVE);
+        self.assertEqual(self.end_port.state,IBA.PORT_STATE_ACTIVE);
 
         self.cmd("ibswitches");
         self.cmd("ibhosts");
@@ -200,12 +200,12 @@ class ibtool_cmds_test(unittest.TestCase):
             self.cmd(I,"-v");
 
     def test_with_link_no_sa(self):
-        self.assertEquals(self.end_port.state,IBA.PORT_STATE_ACTIVE);
+        self.assertEqual(self.end_port.state,IBA.PORT_STATE_ACTIVE);
         self.cmd("dump_lfts","-D");
         self.cmd("dump_mfts","-D");
 
     def test_with_link_sa(self):
-        self.assertEquals(self.end_port.state,IBA.PORT_STATE_ACTIVE);
+        self.assertEqual(self.end_port.state,IBA.PORT_STATE_ACTIVE);
         self.extra_opts = ("--sa",);
         self.test_with_link();
         self.test_discovery();

@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import sys
 import rdma;
 import rdma.satransactor;
@@ -11,11 +11,11 @@ from libibtool import *;
 from libibtool.libibopts import *;
 
 def display_MFDB(switch,path,all):
-    print "Multicast mlids [0x%x-0x%x] of switch %s %r"%(
+    print("Multicast mlids [0x%x-0x%x] of switch %s %r"%(
         IBA.LID_MULTICAST,IBA.LID_MULTICAST+len(switch.mfdb)-1,
-        path,switch.desc);
-    print "     Ports:"," ".join("%3u"%(I) for I in range(switch.ninf.numPorts+1));
-    print " MLid"
+        path,switch.desc));
+    print("     Ports:"," ".join("%3u"%(I) for I in range(switch.ninf.numPorts+1)));
+    print(" MLid")
     count = 0;
     for lid,bits in enumerate(switch.mfdb):
         if bits == 0 and not all:
@@ -24,7 +24,7 @@ def display_MFDB(switch,path,all):
         s = " ".join((" x " if bits & (1<<I) else "   ")
                      for I in range(switch.ninf.numPorts+1))
         count = count+1;
-        print "0x%x       %s"%(IBA.LID_MULTICAST+lid,s)
+        print("0x%x       %s"%(IBA.LID_MULTICAST+lid,s))
 
     # If a default route is configured then show it as well.
     bits = 0;
@@ -33,20 +33,20 @@ def display_MFDB(switch,path,all):
         if 0 < switch.swinf.defaultMulticastNotPrimaryPort <= switch.ninf.numPorts:
             bits = bits | (1 << switch.swinf.defaultMulticastNotPrimaryPort);
     if bits != 0:
-        print "default      %s"%(" ".join((" x " if bits & (1<<I) else "   ")
-                                       for I in range(switch.ninf.numPorts+1)));
+        print("default      %s"%(" ".join((" x " if bits & (1<<I) else "   ")
+                                       for I in range(switch.ninf.numPorts+1))));
 
     if all:
-        print "%u mlids dumped"%(count);
+        print("%u mlids dumped"%(count));
     else:
-        print "%u valid mlids dumped"%(count);
+        print("%u valid mlids dumped"%(count));
 
 def display_LFDB(switch,sbn,path,all):
     max_port = switch.ninf.numPorts;
-    print "Unicast lids [%u-%u] of switch %s %r"%(0,len(switch.lfdb)-1,
-                                                  path,switch.desc);
-    print "  Lid  Out   Destination";
-    print "       Port     Info";
+    print("Unicast lids [%u-%u] of switch %s %r"%(0,len(switch.lfdb)-1,
+                                                  path,switch.desc));
+    print("  Lid  Out   Destination");
+    print("       Port     Info");
     top_lid = len(sbn.lids);
     count = 0
     for lid,oport in enumerate(switch.lfdb):
@@ -67,11 +67,11 @@ def display_LFDB(switch,sbn,path,all):
                 desc = "(illegal port)";
 
         count = count+1;
-        print "%6u %03u : %s"%(lid,oport,desc);
+        print("%6u %03u : %s"%(lid,oport,desc));
     if all:
-        print "%u lids dumped"%(count);
+        print("%u lids dumped"%(count));
     else:
-        print "%u valid lids dumped"%(count);
+        print("%u valid lids dumped"%(count));
 
 def get_switch(sched,sbn,args,path):
     node,port = yield rdma.discovery.subnet_ninf_SMP(sched,sbn,path);
@@ -231,11 +231,11 @@ def cmd_ibfindnodesusing(argv,o):
 
         if o.verbosity >= 1:
             for I in ports:
-                print ' %s lid %u "%s"'%(I.portGUID,I.LID,
-                                         IBA_describe.dstr(I.parent.desc));
+                print(' %s lid %u "%s"'%(I.portGUID,I.LID,
+                                         IBA_describe.dstr(I.parent.desc)));
         else:
             for I in ports:
-                print ' %s'%(IBA_describe.dstr(I.parent.desc));
+                print(' %s'%(IBA_describe.dstr(I.parent.desc)));
 
     with lib.get_umad_for_target(values[0]) as umad:
         path = lib.path;
@@ -250,7 +250,7 @@ def cmd_ibfindnodesusing(argv,o):
         if args.port <= 0 or args.port > switch.ninf.numPorts:
             raise CmdError("Port %u is invalid, switch has %u ports"%(
                 args.port,switch,ninf.numPorts));
-        print switch.desc
+        print(switch.desc)
         port = switch.get_port(args.port);
         eport = port.to_end_port();
         LIDs = set(LID for LID,port in enumerate(switch.lfdb)
@@ -272,23 +272,23 @@ def cmd_ibfindnodesusing(argv,o):
 
         sched.run(queue=rdma.discovery.subnet_ninf_LIDS_SMP(sched,sbn,list(LIDs),
                                                             True));
-        print '%s %u "%s" ==>> %s %u "%s"'%(eport.portGUID,
+        print('%s %u "%s" ==>> %s %u "%s"'%(eport.portGUID,
                                             switch.ports.index(port),
                                             IBA_describe.dstr(switch.desc),
                                             peport.portGUID,
                                             pnode.ports.index(pport),
-                                            IBA_describe.dstr(pnode.desc));
+                                            IBA_describe.dstr(pnode.desc)));
         display_nodes(LID for LID,port in enumerate(switch.lfdb) if port == args.port);
 
-        print
-        print '%s %u "%s" <<== %s %u "%s"'%(eport.portGUID,
+        print()
+        print('%s %u "%s" <<== %s %u "%s"'%(eport.portGUID,
                                             switch.ports.index(port),
                                             IBA_describe.dstr(switch.desc),
                                             peport.portGUID,
                                             pnode.ports.index(pport),
-                                            IBA_describe.dstr(pnode.desc));
+                                            IBA_describe.dstr(pnode.desc)));
         if not isinstance(pnode,rdma.subnet.Switch):
-            print " ** Not a switch **";
+            print(" ** Not a switch **");
         else:
             display_nodes(LID for LID,port in enumerate(pnode.lfdb) if port == pportIdx);
 

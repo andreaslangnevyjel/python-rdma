@@ -5,7 +5,7 @@ import rdma.IBA as IBA;
 import rdma.IBA_describe as IBA_describe;
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle;
 
@@ -58,8 +58,8 @@ def cmd_subnet_diff(argv,o):
     def diff_map(fn):
         ep = dict(fn(sbn));
         rep = dict(fn(rsbn));
-        ep_s = set(ep.iterkeys());
-        rep_s = set(rep.iterkeys());
+        ep_s = set(ep.keys());
+        rep_s = set(rep.keys());
         map_diff = {}
         map_diff.update((I,(ep[I],None))
                         for I in ep_s.difference(rep_s));
@@ -73,17 +73,17 @@ def cmd_subnet_diff(argv,o):
     def report(v,extra,same,printer=str):
         v = sorted(v);
         if v:
-            print extra%(len(v));
+            print(extra%(len(v)));
             for I in v:
-                print "  ",printer(I)
+                print("  ",printer(I))
         else:
-            print same;
+            print(same);
 
     # Difference port GUIDs
     df = diff_set(lambda x:(I.portGUID
-                        for I in x.iterbfs(next(x.topology.itervalues()).to_end_port())));
-    print "Current subnet has %u end ports, reference subnet has %u end ports"%(
-        len(df[3]),len(df[2]));
+                        for I in x.iterbfs(next(iter(x.topology.values())).to_end_port())));
+    print("Current subnet has %u end ports, reference subnet has %u end ports"%(
+        len(df[3]),len(df[2])));
     report(df[0]," Current subnet has %u more end ports than the reference subnet:",
            " All end ports in the current subnet are in the reference subnet.");
     report(df[1],"Reference subnet has %u more end ports than the current subnet:",
@@ -91,9 +91,9 @@ def cmd_subnet_diff(argv,o):
 
     # Difference node GUIDs
     df = diff_set(lambda x:(I.parent.ninf.nodeGUID
-                        for I in x.iterbfs(next(x.topology.itervalues()).to_end_port())));
-    print "Current subnet has %u nodes, reference subnet has %u nodes"%(
-        len(df[3]),len(df[2]));
+                        for I in x.iterbfs(next(iter(x.topology.values())).to_end_port())));
+    print("Current subnet has %u nodes, reference subnet has %u nodes"%(
+        len(df[3]),len(df[2])));
     report(df[0]," Current subnet has %u more nodes than the reference subnet:",
            " All nodes in the current subnet are in the reference subnet.");
     report(df[1],"Reference subnet has %u more nodes than the current subnet:",
@@ -105,9 +105,9 @@ def cmd_subnet_diff(argv,o):
         b = (b.to_end_port().portGUID,b.port_id);
         return (a,b) if a > b else (b,a);
     df = diff_set(lambda x:(link(k,v)
-                        for k,v in x.topology.iteritems()));
-    print "Current subnet has %u links, reference subnet has %u links"%(
-        len(df[3]),len(df[2]));
+                        for k,v in x.topology.items()));
+    print("Current subnet has %u links, reference subnet has %u links"%(
+        len(df[3]),len(df[2])));
     print_link = lambda x:"%s[%u] <=> %s[%u]"%(x[0][0],x[0][1],
                                                x[1][0],x[1][1]);
     report(df[0]," Current subnet has %u more links than the reference subnet:",
@@ -137,15 +137,15 @@ def cmd_subnet_diff(argv,o):
             IBA_describe.link_speed(ref[0]),
             IBA_describe.link_width(ref[1]));
 
-    report(df[0].iteritems()," The subnets have %u different link rates",
+    report(iter(df[0].items())," The subnets have %u different link rates",
            " All links in the current subnet have the same rate in the reference subnet.",
            print_rate);
 
     # Difference LID assignment
     df = diff_map(lambda x:((LID,I.portGUID)
                         for LID,I in enumerate(x.lids) if I is not None))
-    print "Current subnet has %u LIDs, reference subnet has %u LIDs"%(
-        len(df[3]),len(df[2]));
+    print("Current subnet has %u LIDs, reference subnet has %u LIDs"%(
+        len(df[3]),len(df[2])));
     def print_lid(v):
         lid,tp = v;
         if tp[0] is None:
@@ -153,6 +153,6 @@ def cmd_subnet_diff(argv,o):
         if tp[1] is None:
             return "%5u: %s %-19s"%(lid,tp[0],"      !Ref");
         return "%5u: %s %s"%(lid,tp[0],tp[1]);
-    report(df[0].iteritems()," The subnets have %u different LID assignments (LID: Current portGUID, Reference portGUID):",
+    report(iter(df[0].items())," The subnets have %u different LID assignments (LID: Current portGUID, Reference portGUID):",
            " All LIDs in the current subnet are the same as the reference subnet.",
            print_lid);

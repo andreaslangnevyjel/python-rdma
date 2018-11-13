@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import rdma;
 import rdma.IBA as IBA;
 import rdma.IBA_describe as IBA_describe;
@@ -239,7 +239,7 @@ def cmd_ibtracert(argv,o):
             else:
                 lpath = rdma.path.IBDRPath(sched.end_port);
             if lib.debug >= 1:
-                print "D: Figuring out route from local port to source"
+                print("D: Figuring out route from local port to source")
             paths.append(lpath);
             sched.run(queue=rdma.discovery.subnet_get_port(sched,sbn,lpath));
             lport = sbn.path_to_port(lpath);
@@ -259,30 +259,30 @@ def cmd_ibtracert(argv,o):
 
         if lib.debug >= 1:
             for n,path,port in zip(("SRC","DST","START"),paths,ports):
-                print "D: %s is %s (%s)"%(n,path,port.portGUID);
+                print("D: %s is %s (%s)"%(n,path,port.portGUID));
 
 
-        print "From %s %s portnum %u LID %u/%u %s"%(
+        print("From %s %s portnum %u LID %u/%u %s"%(
             IBA_describe.node_type(sport.parent.ninf.nodeType),
             sport.portGUID,sport.port_id,
             sport.LID,16-sport.pinf.LMC,
-            IBA_describe.dstr(sport.parent.desc,quotes=True));
+            IBA_describe.dstr(sport.parent.desc,quotes=True)));
         def step(out_port,nport):
             nport_ep = nport.to_end_port();
-            print "[%u] -> %s port %s[%u] lid %u/%u %s"%(
+            print("[%u] -> %s port %s[%u] lid %u/%u %s"%(
                 out_port.port_id,
                 IBA_describe.node_type(nport.parent.ninf.nodeType),
                 nport_ep.portGUID,
                 nport.port_id,
                 nport_ep.LID,16 - nport_ep.pinf.LMC,
-                IBA_describe.dstr(nport.parent.desc,quotes=True));
+                IBA_describe.dstr(nport.parent.desc,quotes=True)));
 
         if args.mlid is not None:
             if args.mlid < IBA.LID_MULTICAST:
                 raise CmdError("Multicast LID %r is invalid"%(args.mlid));
             topo = fetch_mcast(sched,sbn,sport,paths[0],args.mlid);
             if lib.debug >= 1:
-                print "D: Multicast spanning tree topology contains %u entries"%(len(topo))
+                print("D: Multicast spanning tree topology contains %u entries"%(len(topo)))
             lst = trace_mcast(topo,ports[0],ports[1]);
             step(ports[0],topo[ports[0]]);
             for I in lst:
@@ -290,10 +290,10 @@ def cmd_ibtracert(argv,o):
         else:
             trace(umad,sched,sbn,ports[0],paths[0],ports[1],paths[1],step);
 
-        print "To %s %s portnum %u LID %u/%u %s"%(
+        print("To %s %s portnum %u LID %u/%u %s"%(
             IBA_describe.node_type(dport.parent.ninf.nodeType),
             dport.portGUID,dport.port_id,
             paths[1].DLID,16-dport.pinf.LMC,
-            IBA_describe.dstr(dport.parent.desc,quotes=True));
+            IBA_describe.dstr(dport.parent.desc,quotes=True)));
 
     return lib.done();

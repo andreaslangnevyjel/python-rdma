@@ -1,10 +1,11 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import rdma.IBA as IBA;
 import rdma.IBA_describe as IBA_describe;
 from libibtool import *;
 from libibtool.libibopts import *;
 from libibtool.perfquery import sum_result;
+from functools import reduce
 
 class CheckError(CmdError):
     pass
@@ -55,8 +56,8 @@ def load_thresholds(fn):
     # Canonize and check the names
     res2 = {};
     keys = set(I[0] for I in IBA.PMPortCounters.MEMBERS);
-    onames = dict((v,k) for k,v in libib_name_map_perfquery.iteritems());
-    for k,v in res.iteritems():
+    onames = dict((v,k) for k,v in libib_name_map_perfquery.items());
+    for k,v in res.items():
         if k not in keys:
             k = onames.get(k,k);
         if k not in keys:
@@ -74,7 +75,7 @@ def check(o,a,v,comp,compn,fmt,desc,error=False):
     c = getattr(o,a);
     if comp(c,v):
         if lib.debug >= 1:
-            print "D: Check OK: %r %r against %r: %s"%(a,fmt(c),fmt(v),desc)
+            print("D: Check OK: %r %r against %r: %s"%(a,fmt(c),fmt(v),desc))
         return;
     msg = "%s is %r, %s %r: %s"%(a,fmt(c),compn,fmt(v),desc);
     if error:
@@ -183,7 +184,7 @@ def do_check_node(sched,path,portGUID,ninf,**kwargs):
                                              dqpn=1,
                                              qkey=IBA.IB_DEFAULT_QP1_QKEY);
         if lib.debug >= 1:
-            print "D: SA path to end port is",repr(npath);
+            print("D: SA path to end port is",repr(npath));
     except rdma.path.SAPathNotFoundError:
         raise CheckError("SA could not find a path for %r"%(ninf.portGUID));
     path._cached_gmp_path = npath;
@@ -280,7 +281,7 @@ def do_check_errors(sched,path,gpath,ninf,pinf,portGUID,portIdx,**kwargs):
     else:
         desc = "lid %u port %u"%(pinf.LID,ret.portSelect);
 
-    for k,v in thresh.iteritems():
+    for k,v in thresh.items():
         if v > 0 and hasattr(ret,k):
             checkLTE(ret,k,v,desc=desc);
 
@@ -292,11 +293,11 @@ def do_show_counts(sched,path,gpath,ninf,pinf,portGUID,portIdx,**kwargs):
         n = field[0].upper() + field[1:];
         if not getattr(lib.args,"int_names",True):
             n = libib_name_map_perfquery.get(n,n);
-        print "%s:%s%u"%(n,"."*(33 - len(n)),getattr(ret,field))
+        print("%s:%s%u"%(n,"."*(33 - len(n)),getattr(ret,field)))
     if portIdx == 255:
-        print "# Port counters: Lid %u all ports"%(pinf.LID);
+        print("# Port counters: Lid %u all ports"%(pinf.LID));
     else:
-        print "# Port counters: Lid %u port %u"%(pinf.LID,ret.portSelect);
+        print("# Port counters: Lid %u port %u"%(pinf.LID,ret.portSelect));
     do_print("portXmitData");
     do_print("portRcvData");
     do_print("portXmitPkts");
@@ -319,33 +320,33 @@ def print_header(ninf,pinf,desc,portIdx,failed,kind):
         else:
             desc = ' ';
         if kind & KIND_PORT:
-            print "Port check lid %u%sport %u:"%(pinf.LID,desc,portIdx),
+            print("Port check lid %u%sport %u:"%(pinf.LID,desc,portIdx), end=' ')
         if kind & KIND_PERF:
             if portIdx == 0xFF:
-                print "Error check lid %u%sall ports:"%(pinf.LID,desc),
+                print("Error check lid %u%sall ports:"%(pinf.LID,desc), end=' ')
             else:
-                print "Error check lid %u%sport %u:"%(pinf.LID,desc,portIdx),
+                print("Error check lid %u%sport %u:"%(pinf.LID,desc,portIdx), end=' ')
         if kind & KIND_CLEAR:
             if portIdx == 0xFF:
-                print "Clear counters lid %u%sall ports:"%(pinf.LID,desc),
+                print("Clear counters lid %u%sall ports:"%(pinf.LID,desc), end=' ')
             else:
-                print "Clear counters lid %u%sport %u:"%(pinf.LID,desc,portIdx),
+                print("Clear counters lid %u%sport %u:"%(pinf.LID,desc,portIdx), end=' ')
         if kind & KIND_NODE:
             if ninf.nodeType == IBA.NODE_SWITCH:
-                print "# Checking %s: nodeguid %s lid %s"%(
+                print("# Checking %s: nodeguid %s lid %s"%(
                     IBA_describe.node_type(ninf.nodeType),
-                    ninf.nodeGUID,pinf.LID);
+                    ninf.nodeGUID,pinf.LID));
             else:
-                print "# Checking %s: nodeguid %s lid %s port %u"%(
+                print("# Checking %s: nodeguid %s lid %s port %u"%(
                     IBA_describe.node_type(ninf.nodeType),
-                    ninf.nodeGUID,pinf.LID,portIdx);
-            print "Node check lid %u:"%(pinf.LID),
+                    ninf.nodeGUID,pinf.LID,portIdx));
+            print("Node check lid %u:"%(pinf.LID), end=' ')
         if failed is not None:
-            print (red("FAILED") if failed else
+            print((red("FAILED") if failed else
                    blue("WARNING") if warnings else
-                   green("OK"));
+                   green("OK")));
     for I in warnings:
-        print blue("#warn: %s"%(I));
+        print(blue("#warn: %s"%(I)));
     return not (failed or warnings);
 
 def perform_single_check(argv,o,funcs):
@@ -370,8 +371,8 @@ def perform_single_check(argv,o,funcs):
         global thresh
         thresh = load_thresholds(args.load_thresh);
         if args.show_thresh:
-            for I in sorted(thresh.iteritems()):
-                print "%s=%u"%I
+            for I in sorted(thresh.items()):
+                print("%s=%u"%I)
             return True;
         if len(values) < 1:
             raise CmdError("Got %u arguments but expected at least 1"%(len(values)));
@@ -414,11 +415,11 @@ def perform_single_check(argv,o,funcs):
             if kind & KIND_PERF and warnings:
                 failed = True;
             if lib.args.verbosity >= 1:
-                print (red("FAILED") if failed else
+                print((red("FAILED") if failed else
                        blue("WARNING") if warnings else
-                       green("OK"));
+                       green("OK")));
                 for I in warnings:
-                    print blue("#warn: %s"%(I));
+                    print(blue("#warn: %s"%(I)));
             else:
                 print_header(ninf,ep_pinf,nodeDesc,portIdx,failed,
                              kind);
@@ -545,10 +546,10 @@ def perform_topo_check(argv,o,funcs):
             for func in funcs:
                 if func.kind & kind:
                     yield func(sched,path,**kwargs);
-        except (CmdError,rdma.RDMAError), e:
+        except (CmdError,rdma.RDMAError) as e:
             counts[cidx+1] = counts[cidx+1] + 1;
             sched.result = print_header(node.ninf,ep.pinf,node.desc,portIdx,True,kind);
-            print red("#error: %s"%(e));
+            print(red("#error: %s"%(e)));
         else:
             failed = False;
             if kind & KIND_PERF and warnings:
@@ -587,13 +588,13 @@ def perform_topo_check(argv,o,funcs):
                     yield run(path,port,port.port_id,kind);
                 kind = kind*2;
         sched.run(mqueue=(do(I) for I in sbn.iterend_ports()));
-    print "## Summary: %u nodes checked, %u bad nodes found"%(counts[0],counts[1]);
+    print("## Summary: %u nodes checked, %u bad nodes found"%(counts[0],counts[1]));
     if kinds & KIND_PORT:
-        print "##          %u ports checked, %u ports with bad state found"%(counts[2],counts[3]);
+        print("##          %u ports checked, %u ports with bad state found"%(counts[2],counts[3]));
     if kinds & KIND_PERF:
-        print "##          %u ports checked, %u ports have errors beyond threshold"%(counts[4],counts[5]);
+        print("##          %u ports checked, %u ports have errors beyond threshold"%(counts[4],counts[5]));
     if kinds & KIND_CLEAR:
-        print "##          %u port counters cleared."%(counts[6]);
+        print("##          %u port counters cleared."%(counts[6]));
     return lib.done();
 
 def cmd_ibcheckstate(argv,o):

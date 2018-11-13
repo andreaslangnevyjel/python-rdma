@@ -25,9 +25,9 @@ def as_port_name(port):
 
 def summary(sched,sbn,node):
     if isinstance(node,rdma.subnet.CA):
-        print '%-8s: %s ports %u "%s"'%(
+        print('%-8s: %s ports %u "%s"'%(
             "Ca",node.ninf.nodeGUID,node.ninf.numPorts,
-            IBA_describe.dstr(node.desc));
+            IBA_describe.dstr(node.desc)));
     elif isinstance(node,rdma.subnet.Switch):
         zport = node.ports[0];
         pinf = zport.pinf;
@@ -39,18 +39,18 @@ def summary(sched,sbn,node):
             path = sbn.get_path_smp(sched,zport);
             pinf = yield sched.SubnGet(IBA.SMPPortInfo,path);
             sbn.get_port_pinf(pinf,path=path,portIdx=0);
-        print '%-8s: %s ports %u "%s" base port 0 lid %u lmc %u'%(
+        print('%-8s: %s ports %u "%s" base port 0 lid %u lmc %u'%(
             "Switch",node.ninf.nodeGUID,node.ninf.numPorts,
             IBA_describe.dstr(node.desc),
-            zport.LID,pinf.LMC);
+            zport.LID,pinf.LMC));
     elif isinstance(node,rdma.subnet.Router):
-        print '%-8s: %s ports %u "%s"'%(
+        print('%-8s: %s ports %u "%s"'%(
             "Router",node.ninf.nodeGUID,node.ninf.numPorts,
-            IBA_describe.dstr(node.desc));
+            IBA_describe.dstr(node.desc)));
     else:
-        print '%-8s: %s ports %u "%s"'%(
+        print('%-8s: %s ports %u "%s"'%(
             "??%u"%(node.ninf.nodeType),node.ninf.nodeGUID,node.ninf.numPorts,
-            IBA_describe.dstr(node.desc));
+            IBA_describe.dstr(node.desc)));
 
 def summary2(node):
     if isinstance(node,rdma.subnet.CA):
@@ -62,10 +62,10 @@ def summary2(node):
     else:
         kind = "??%u"%(node.ninf.nodeType);
 
-    print '%-8s: %s ports %u devid 0x%x vendid 0x%x "%s"'%(
+    print('%-8s: %s ports %u devid 0x%x vendid 0x%x "%s"'%(
         kind,node.ninf.nodeGUID,node.ninf.numPorts,
         node.ninf.deviceID,node.ninf.vendorID,
-        IBA_describe.dstr(node.desc));
+        IBA_describe.dstr(node.desc)));
 
 def go_listing(argv,o,node_type,lib=None):
     if lib is None:
@@ -172,29 +172,29 @@ def cmd_ibnodes(argv,o):
 
 def print_ibnetdiscover_single(sbn,node):
     ninf = node.ninf;
-    print '''vendid=0x%x
+    print('''vendid=0x%x
 devid=0x%x
-sysimgguid=%s'''%(ninf.vendorID,ninf.deviceID,ninf.systemImageGUID)
+sysimgguid=%s'''%(ninf.vendorID,ninf.deviceID,ninf.systemImageGUID))
     is_switch = False;
     if isinstance(node,rdma.subnet.CA):
-        print '''caguid=%s
+        print('''caguid=%s
 Ca\t%u %s\t# "%s"'''%(ninf.nodeGUID,ninf.numPorts,as_node_name(node),
-                      IBA_describe.dstr(node.desc));
+                      IBA_describe.dstr(node.desc)));
     elif isinstance(node,rdma.subnet.Switch):
         is_switch = True;
         port = node.ports[0];
-        print '''switchguid=%s(%s)
+        print('''switchguid=%s(%s)
 Switch\t%u %s\t# "%s" base port 0 lid %u lmc %u'''%\
                 (ninf.nodeGUID,port.portGUID,ninf.numPorts,as_node_name(node),
-                 IBA_describe.dstr(node.desc),port.LID or 0,port.pinf.LMC);
+                 IBA_describe.dstr(node.desc),port.LID or 0,port.pinf.LMC));
     elif isinstance(node,rdma.subnet.Router):
-        print '''rtguid=%s
+        print('''rtguid=%s
 Rt\t%u %s\t# "%s"'''%(ninf.nodeGUID,ninf.numPorts,as_node_name(node),
-                      IBA_describe.dstr(node.desc));
+                      IBA_describe.dstr(node.desc)));
     else:
-        print '''nodeguid=%s
+        print('''nodeguid=%s
 ??%u\t%u %s\t# "%s"'''%(ninf.nodeGUID,ninf.nodeType,ninf.numPorts,as_node_name(node),
-                      IBA_describe.dstr(node.desc));
+                      IBA_describe.dstr(node.desc)));
 
     for port,idx in node.iterports():
         peer = sbn.topology.get(port);
@@ -203,41 +203,41 @@ Rt\t%u %s\t# "%s"'''%(ninf.nodeGUID,ninf.numPorts,as_node_name(node),
 
         if port.pinf.linkSpeedExtActive == 0:
             if is_switch:
-                print '[%s]\t%s\t# "%s" lid %u %ux%s'%(
+                print('[%s]\t%s\t# "%s" lid %u %ux%s'%(
                         idx,as_port_name(peer),IBA_describe.dstr(peer.parent.desc),
                         peer.to_end_port().LID or 0,
                         IBA_describe.link_width(port.pinf.linkWidthActive),
-                        IBA_describe.link_speed(port.pinf.linkSpeedActive));
+                        IBA_describe.link_speed(port.pinf.linkSpeedActive)));
             else:
-                print '[%s](%s)\t%s\t# lid %u lmc %u "%s" %ux%s'%(
+                print('[%s](%s)\t%s\t# lid %u lmc %u "%s" %ux%s'%(
                     idx,port.portGUID,as_port_name(peer),
                     port.LID or 0,port.pinf.LMC,
                     IBA_describe.dstr(peer.parent.desc),
                     IBA_describe.link_width(port.pinf.linkWidthActive),
-                    IBA_describe.link_speed(port.pinf.linkSpeedActive));
+                    IBA_describe.link_speed(port.pinf.linkSpeedActive)));
         else:
             if is_switch:
-                print '[%s]\t%s\t# "%s" lid %u %ux%s'%(
+                print('[%s]\t%s\t# "%s" lid %u %ux%s'%(
                         idx,as_port_name(peer),IBA_describe.dstr(peer.parent.desc),
                         peer.to_end_port().LID or 0,
                         IBA_describe.link_width(port.pinf.linkWidthActive),
-                        IBA_describe.link_speed_ext(port.pinf.linkSpeedExtActive));
+                        IBA_describe.link_speed_ext(port.pinf.linkSpeedExtActive)));
             else:
-                print '[%s](%s)\t%s\t# lid %u lmc %u "%s" %ux%s'%(
+                print('[%s](%s)\t%s\t# lid %u lmc %u "%s" %ux%s'%(
                     idx,port.portGUID,as_port_name(peer),
                     port.LID or 0,port.pinf.LMC,
                     IBA_describe.dstr(peer.parent.desc),
                     IBA_describe.link_width(port.pinf.linkWidthActive),
-                    IBA_describe.link_speed_ext(port.pinf.linkSpeedExtActive));
+                    IBA_describe.link_speed_ext(port.pinf.linkSpeedExtActive)));
 
 def print_ibnetdiscover_topology(sbn,root):
     """Usual ibnetdiscover output."""
-    print "#"
-    print "# Topology file: generated on %s"%(time.strftime("%a %b %d %X %Y"))
-    print "#"
-    print "# Initiated from node %s port %s"%(root.parent.ninf.nodeGUID,
-                                              root.portGUID);
-    print
+    print("#")
+    print("# Topology file: generated on %s"%(time.strftime("%a %b %d %X %Y")))
+    print("#")
+    print("# Initiated from node %s port %s"%(root.parent.ninf.nodeGUID,
+                                              root.portGUID));
+    print()
 
     done = set();
     for I in sbn.iterbfs(root):
@@ -246,7 +246,7 @@ def print_ibnetdiscover_topology(sbn,root):
             continue;
         done.add(node);
         print_ibnetdiscover_single(sbn,node);
-        print
+        print()
 
 def cmd_ibnetdiscover(argv,o):
     """Display the topology of the subnet.
@@ -317,8 +317,8 @@ def print_switch(sbn,args,switch):
             if pinf.portPhysicalState == IBA.PHYS_PORT_STATE_POLLING:
                 continue
         if first and not args.line_mode:
-            print "Switch %s %s:"%(guid,
-                                   IBA_describe.dstr(switch.desc,True));
+            print("Switch %s %s:"%(guid,
+                                   IBA_describe.dstr(switch.desc,True)));
             first = False;
         if pinf.portPhysicalState != IBA.PHYS_PORT_STATE_LINK_UP:
             link = "%s/%s"%(
@@ -371,11 +371,11 @@ def print_switch(sbn,args,switch):
             err = " (%s)"%(err);
 
         if args.line_mode:
-            print "%s %s %-40s==> %s%s"%(guid,
+            print("%s %s %-40s==> %s%s"%(guid,
                                          IBA_describe.dstr(switch.desc,True),
-                                         lhs,rhs,err);
+                                         lhs,rhs,err));
         else:
-            print "   %-40s==> %s%s"%(lhs,rhs,err);
+            print("   %-40s==> %s%s"%(lhs,rhs,err));
 
 def cmd_iblinkinfo(argv,o):
     """Display the topology of the subnet, differently.

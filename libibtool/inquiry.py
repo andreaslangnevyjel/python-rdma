@@ -17,10 +17,10 @@ def cmd_ibv_devices(argv,o):
        Usage: %prog"""
     (args,values) = o.parse_args(argv,expected_values = 0);
 
-    print "    %-16s\t    node GUID"%("device");
-    print "    %-16s\t-------------------"%("------");
+    print("    %-16s\t    node GUID"%("device"));
+    print("    %-16s\t-------------------"%("------"));
     for I in rdma.get_devices():
-        print "    %-16s\t%s"%(I.name,I.node_guid);
+        print("    %-16s\t%s"%(I.name,I.node_guid));
     return True;
 
 def cmd_ibstat(argv,o):
@@ -37,7 +37,7 @@ def cmd_ibstat(argv,o):
     if args.list_cas:
         if len(values) != 0: raise CmdError("Too many arguments");
         for I in rdma.get_devices():
-            print I.name;
+            print(I.name);
         return True;
 
     if len(values) == 0:
@@ -51,26 +51,26 @@ def cmd_ibstat(argv,o):
 
     if args.ports:
         for I in end_ports:
-            print I.port_guid;
+            print(I.port_guid);
         return True;
 
     def show_ca(dev):
-        print "CA %r"%(dev.name);
-        print "\tCA type: %s"%(dev.hca_type);
-        print "\tNumber of ports: %s"%(len(dev.end_ports));
-        print "\tFirmware version: %s"%(IBA_describe.dstr(dev.fw_ver));
-        print "\tHardware version: %s"%(IBA_describe.dstr(dev.hw_ver));
-        print "\tNode GUID: %s"%(dev.node_guid);
-        print "\tSystem image GUID: %s"%(dev.sys_image_guid);
+        print("CA %r"%(dev.name));
+        print("\tCA type: %s"%(dev.hca_type));
+        print("\tNumber of ports: %s"%(len(dev.end_ports)));
+        print("\tFirmware version: %s"%(IBA_describe.dstr(dev.fw_ver)));
+        print("\tHardware version: %s"%(IBA_describe.dstr(dev.hw_ver)));
+        print("\tNode GUID: %s"%(dev.node_guid));
+        print("\tSystem image GUID: %s"%(dev.sys_image_guid));
     def show_port(port,offset="\t\t"):
-        print "%sState: %s"%(offset,IBA_describe.link_state(port.state));
-        print "%sPhysical state: %s"%(offset,IBA_describe.phys_link_state(port.phys_state));
-        print "%sRate: %r"%(offset,port.rate);
-        print "%sBase lid: %r"%(offset,port.lid);
-        print "%sLMC: %r"%(offset,port.lmc);
-        print "%sSM lid: %r"%(offset,port.sm_lid);
-        print "%sCapability mask: 0x%08x"%(offset,port.cap_mask);
-        print "%sPort GUID: %s"%(offset,port.port_guid);
+        print("%sState: %s"%(offset,IBA_describe.link_state(port.state)));
+        print("%sPhysical state: %s"%(offset,IBA_describe.phys_link_state(port.phys_state)));
+        print("%sRate: %r"%(offset,port.rate));
+        print("%sBase lid: %r"%(offset,port.lid));
+        print("%sLMC: %r"%(offset,port.lmc));
+        print("%sSM lid: %r"%(offset,port.sm_lid));
+        print("%sCapability mask: 0x%08x"%(offset,port.cap_mask));
+        print("%sPort GUID: %s"%(offset,port.port_guid));
 
     last_ca = None;
     if args.short:
@@ -82,8 +82,8 @@ def cmd_ibstat(argv,o):
 
     if isinstance(end_ports,tuple):
         I = end_ports[0];
-        print "CA: %r"%(I.parent.name);
-        print "Port %u:"%(I.port_id);
+        print("CA: %r"%(I.parent.name));
+        print("Port %u:"%(I.port_id));
         show_port(I,offset="");
         return True;
 
@@ -91,7 +91,7 @@ def cmd_ibstat(argv,o):
         if last_ca != I.parent:
             show_ca(I.parent);
             last_ca = I.parent;
-        print "\tPort %u:"%(I.port_id);
+        print("\tPort %u:"%(I.port_id));
         show_port(I);
     return True;
 
@@ -108,7 +108,7 @@ def cmd_ibstatus(argv,o):
         raise CmdError("Too many arguments");
 
     for I in end_ports:
-        print """Infiniband device %r port %u status:
+        print("""Infiniband device %r port %u status:
 \tdefault gid:\t %s
 \tbase lid:\t %u
 \tsm lid:\t\t %u
@@ -116,7 +116,7 @@ def cmd_ibstatus(argv,o):
 \tphys state:\t %u: %s
 \trate:\t\t %s\n"""%(I.parent.name,I.port_id,I.default_gid,I.lid,I.sm_lid,
              I.state,IBA_describe.link_state(I.state).upper(),
-             I.phys_state,IBA_describe.phys_link_state(I.phys_state),I.rate);
+             I.phys_state,IBA_describe.phys_link_state(I.phys_state),I.rate));
     return True;
 
 def cmd_ibaddr(argv,o):
@@ -146,10 +146,10 @@ def cmd_ibaddr(argv,o):
         pinf = umad.SubnGet(IBA.SMPPortInfo,path,0);
 
         if args.gid:
-            print "GID %s"%(path.DGID),
+            print("GID %s"%(path.DGID), end=' ')
         if args.lid:
-            print "LID start %u end %u"%(pinf.LID,pinf.LID + (1 << pinf.LMC)-1),
-        print
+            print("LID start %u end %u"%(pinf.LID,pinf.LID + (1 << pinf.LMC)-1), end=' ')
+        print()
     return lib.done();
 
 methods = set(('SubnGet','PerformanceGet','SubnAdmGet','SubnAdmGetTable',
@@ -181,7 +181,7 @@ def tmpl_attribute(v):
 def cmd_query_help(o,cmd,usage):
     """Generate the help text by merging in information from OPS."""
     def get_attrs():
-        for k,v in rdma.IBA.__dict__.iteritems():
+        for k,v in rdma.IBA.__dict__.items():
             if is_valid_attribute(v):
                 yield k;
 
@@ -229,7 +229,7 @@ def cmd_query(argv,o):
         if isinstance(ret,list):
             out = libibtool.saquery.Indentor(sys.stdout);
             for num,I in enumerate(ret):
-                print "Reply structure #%u"%(num);
+                print("Reply structure #%u"%(num));
                 I.printer(out,**lib.format_args);
         else:
             ret.printer(sys.stdout,**lib.format_args);
@@ -268,8 +268,8 @@ def cmd_sminfo(argv,o):
         smlid = path.DLID;
         if smlid == IBA.LID_PERMISSIVE:
             smlid = umad.SubnGet(IBA.SMPPortInfo,path).LID;
-        print "sminfo: sm lid %u sm guid %s, activity count %u priority %u state %u"%(
-            smlid,sinf.GUID,sinf.actCount,sinf.priority,sinf.SMState);
+        print("sminfo: sm lid %u sm guid %s, activity count %u priority %u state %u"%(
+            smlid,sinf.GUID,sinf.actCount,sinf.priority,sinf.SMState));
 
         if args.smkey is not None:
             sinf.SMKey = args.smkey;
@@ -280,8 +280,8 @@ def cmd_sminfo(argv,o):
                 sinf.priority = args.priority;
             amod = values[1];
             sinf = umad.SubnSet(sinf,path,amod);
-            print "sminfo: sm lid %u sm guid %s, activity count %u priority %u state %u"%(
-                smlid,sinf.GUID,sinf.actCount,sinf.priority,sinf.SMState);
+            print("sminfo: sm lid %u sm guid %s, activity count %u priority %u state %u"%(
+                smlid,sinf.GUID,sinf.actCount,sinf.priority,sinf.SMState));
     return lib.done();
 
 def cmd_smpdump(argv,o):
@@ -318,12 +318,12 @@ def cmd_smpdump(argv,o):
             assert(len(res.buf) % 4 == 0);
             ret = res.buf.encode("hex");
             for I in range(len(ret)/4):
-                print ret[I*4:I*4+4],
+                print(ret[I*4:I*4+4], end=' ')
                 if (I+1) % 8 == 0:
-                    print;
+                    print();
             if (I+1) % 8 != 0:
-                print;
-            print "SMP status: 0x%04x"%(umad.reply_fmt.status | (umad.reply_fmt.D << 15))
+                print();
+            print("SMP status: 0x%04x"%(umad.reply_fmt.status | (umad.reply_fmt.D << 15)))
     return lib.done();
 
 def cmd_ibportstate(argv,o):
@@ -370,12 +370,12 @@ def cmd_ibportstate(argv,o):
 
         if values[2] == "query":
             if peer_pinf is not None:
-                print "# Port info: Lid %u port %u (peer is Lid %u port %u)"%(
+                print("# Port info: Lid %u port %u (peer is Lid %u port %u)"%(
                     pinf.LID,pinf.localPortNum,
-                    peer_pinf.LID,peer_pinf.localPortNum)
+                    peer_pinf.LID,peer_pinf.localPortNum))
             else:
-                print "# Port info: Lid %u port %u"%(
-                    pinf.LID,pinf.localPortNum);
+                print("# Port info: Lid %u port %u"%(
+                    pinf.LID,pinf.localPortNum));
             pinf.printer(sys.stdout,**lib.format_args);
         elif values[2] == "enable" or values[2] == "reset":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_POLLING;
@@ -474,18 +474,18 @@ def cmd_decode_mad(argv,o):
     (args,values) = o.parse_args(argv,expected_values = 0);
     o.verbosity = args.verbosity;
 
-    print "Input the MAD in HEX followed by Ctrl-D";
+    print("Input the MAD in HEX followed by Ctrl-D");
     inp = "".join(sys.stdin.readlines());
     if inp[0] == '"' or inp[0] == "'":
         bytes = inp.strip()[1:-1].decode("string_escape");
     else:
         inp = inp.replace(" ","").replace("\n","").replace("\r","").replace("\t","");
         if o.verbosity >= 2:
-            print "Input HEX value is:\n  ",repr(inp);
+            print("Input HEX value is:\n  ",repr(inp));
         bytes = inp.decode("hex");
     bytes = bytes[args.offset:];
     if o.verbosity >= 2:
-        print bytes.encode("hex");
+        print(bytes.encode("hex"));
 
     if args.umad:
         bytes = decode_umad(o,bytes);
@@ -502,7 +502,7 @@ def cmd_decode_mad(argv,o):
             hdr.printer(sys.stdout);
         raise CmdError("Don't know what this mgmtClass/classVersion is.")
     fmt = kind[0](bytes);
-    print fmt.__class__.__name__,fmt.describe();
+    print(fmt.__class__.__name__,fmt.describe());
     fmt.printer(sys.stdout,header=False);
 
 def cmd_set_nodedesc(argv,o):
@@ -528,7 +528,7 @@ def cmd_set_nodedesc(argv,o):
         for I in rdma.get_devices():
             if dev is not None and I != dev:
                 continue;
-            print "%s: %s"%(I.name,IBA_describe.dstr(I.node_desc))
+            print("%s: %s"%(I.name,IBA_describe.dstr(I.node_desc)))
     else:
         name = values[0].decode();
         name = name.encode("utf-8");

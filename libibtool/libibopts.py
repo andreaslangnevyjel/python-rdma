@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import optparse;
 import os;
 import sys;
@@ -107,7 +107,7 @@ class LibIBOpts(object):
 
         self.end_port.sa_path.SMKey = getattr(args,"smkey",0);
         if self.debug >= 1:
-            print "D: Using end port %s %s"%(self.end_port,self.end_port.default_gid);
+            print("D: Using end port %s %s"%(self.end_port,self.end_port.default_gid));
 
         if "discovery" in args.__dict__:
             if (args.discovery is None and
@@ -148,8 +148,8 @@ class LibIBOpts(object):
     def debug_print_path(self,name,path):
         name = "D: "+name;
         if self.debug >= 1:
-            print name,path;
-            print " "*len(name),repr(path);
+            print(name,path);
+            print(" "*len(name),repr(path));
 
     @staticmethod
     def setup(o,address=True,discovery=False):
@@ -366,7 +366,7 @@ class LibIBOpts(object):
         import rdma.subnet;
         import rdma.discovery;
         try:
-            import cPickle as pickle
+            import pickle as pickle
         except ImportError:
             import pickle;
 
@@ -374,7 +374,7 @@ class LibIBOpts(object):
         if not self.args.drop_cache and fn is not None and os.path.exists(fn):
             with open(fn,"rb") as F:
                 if self.o.verbosity >= 1:
-                    print "D: Loading discovery cache from %r"%(fn);
+                    print("D: Loading discovery cache from %r"%(fn));
                 try:
                     sbn = pickle.load(F);
                     self.sbn_loaded = set(sbn.loaded)
@@ -389,7 +389,7 @@ class LibIBOpts(object):
 
         if stuff is not None:
             if self.o.verbosity >= 1:
-                print "D: Performing discovery using mode %r"%(self.args.discovery);
+                print("D: Performing discovery using mode %r"%(self.args.discovery));
             sbn.lid_routed = self.args.discovery != "DR";
             rdma.discovery.load(sched,sbn,stuff);
         self.sbn = sbn;
@@ -400,17 +400,17 @@ class LibIBOpts(object):
             return True;
 
         try:
-            import cPickle as pickle
+            import pickle as pickle
         except ImportError:
             import pickle;
         if self.o.verbosity >= 1:
-            print "D: Discovered: %r"%(", ".join(sorted(self.sbn.loaded)))
+            print("D: Discovered: %r"%(", ".join(sorted(self.sbn.loaded))))
         fn = self.cache_fn;
         if fn is not None and self.sbn_loaded != self.sbn.loaded:
             fn_tmp = fn + ".new";
             with open(fn_tmp,"wb") as F:
                 if self.o.verbosity >= 1:
-                    print "D: Saving discovery cache to %r"%(fn);
+                    print("D: Saving discovery cache to %r"%(fn));
                 pickle.dump(self.sbn,F,-1);
             os.rename(fn_tmp,fn);
         return True;

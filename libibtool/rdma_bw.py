@@ -78,7 +78,7 @@ class Endpoint(object):
         depth = min(self.opt.tx_depth, n, self.qp.max_send_wr)
 
         tpost = clock_monotonic()
-        for i in xrange(depth):
+        for i in range(depth):
             self.qp.post_send(swr)
 
         completions = 0
@@ -99,7 +99,7 @@ class Endpoint(object):
         tcomp = clock_monotonic()
 
         rate = self.opt.size*self.opt.iters/1e6/(tcomp-tpost)
-        print "%.1f MB/sec" % rate
+        print("%.1f MB/sec" % rate)
 
 def client_mode(hostname,opt,dev):
     with Endpoint(opt,dev) as end:
@@ -108,7 +108,7 @@ def client_mode(hostname,opt,dev):
         ret = ret[0];
         with contextlib.closing(socket.socket(ret[0],ret[1])) as sock:
             if opt.debug >= 1:
-                print "Connecting to %r %r"%(ret[4][0],ret[4][1]);
+                print("Connecting to %r %r"%(ret[4][0],ret[4][1]));
             sock.connect(ret[4]);
 
             path = rdma.path.IBPath(dev,SGID=end.ctx.end_port.default_gid);
@@ -127,10 +127,10 @@ def client_mode(hostname,opt,dev):
             end.path.reverse(for_reply=False);
             end.path.set_end_port(end.ctx.node);
 
-            print "path to peer %r\nMR peer raddr=%x peer rkey=%x"%(
-                end.path.forward_path,peerinfo.addr,peerinfo.rkey);
-            print "%u iterations of %u is %u bytes"%(opt.iters,opt.size,
-                                                     opt.iters*opt.size);
+            print("path to peer %r\nMR peer raddr=%x peer rkey=%x"%(
+                end.path.forward_path,peerinfo.addr,peerinfo.rkey));
+            print("%u iterations of %u is %u bytes"%(opt.iters,opt.size,
+                                                     opt.iters*opt.size));
 
             end.connect(peerinfo)
             # Synchronize the transition to RTS
@@ -150,7 +150,7 @@ def server_mode(opt,dev):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(ret[4]);
         if opt.debug >= 1:
-            print "Listening on %r %r"%(ret[4][0],ret[4][1]);
+            print("Listening on %r %r"%(ret[4][0],ret[4][1]));
         sock.listen(1)
 
         s,addr = sock.accept()
@@ -174,10 +174,10 @@ def server_mode(opt,dev):
                                              size=None,
                                              iters=None)))
 
-                print "path to peer %r\nMR peer raddr=%x peer rkey=%x"%(
-                    end.path.forward_path,peerinfo.addr,peerinfo.rkey);
-                print "%u iterations of %u is %u bytes"%(opt.iters,opt.size,
-                                                         opt.iters*opt.size);
+                print("path to peer %r\nMR peer raddr=%x peer rkey=%x"%(
+                    end.path.forward_path,peerinfo.addr,peerinfo.rkey));
+                print("%u iterations of %u is %u bytes"%(opt.iters,opt.size,
+                                                         opt.iters*opt.size));
 
                 end.connect(peerinfo)
                 # Synchronize the transition to RTS

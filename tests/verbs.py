@@ -24,12 +24,12 @@ class umad_self_test(unittest.TestCase):
         self.ctx = None;
 
     def test_basic(self):
-        print self.ctx.query_port();
-        print self.ctx.query_device();
+        print(self.ctx.query_port());
+        print(self.ctx.query_device());
         pd = self.ctx.pd();
-        print pd,repr(pd)
+        print(pd,repr(pd))
         cq = self.ctx.cq(100);
-        print cq,repr(cq)
+        print(cq,repr(cq))
         try:
             cq.resize(200);
         except rdma.SysError as e:
@@ -37,25 +37,25 @@ class umad_self_test(unittest.TestCase):
                 raise;
         self.assertEqual(cq.poll(),[]);
         comp = self.ctx.comp_channel();
-        print comp,repr(comp)
+        print(comp,repr(comp))
         qp = pd.qp(ibv.IBV_QPT_UD,100,cq,100,cq);
-        print qp,repr(qp)
-        print qp.query(0xFFFF);
+        print(qp,repr(qp))
+        print(qp.query(0xFFFF));
         mpath = rdma.path.IBPath(self.ctx.end_port,DLID=0xC000,
                                  DGID=IBA.GID("ff02::1"));
         qp.attach_mcast(mpath);
         qp.detach_mcast(mpath);
         buf = mmap.mmap(-1,4096);
         mr = pd.mr(buf,ibv.IBV_ACCESS_LOCAL_WRITE|ibv.IBV_ACCESS_REMOTE_WRITE);
-        print mr,repr(mr)
-        print "MR",mr.addr,mr.length,mr.lkey,mr.rkey
+        print(mr,repr(mr))
+        print("MR",mr.addr,mr.length,mr.lkey,mr.rkey)
         self.assertRaises(TypeError,pd.ah,None);
         ah = pd.ah(self.end_port.sa_path);
-        print ah,repr(ah)
+        print(ah,repr(ah))
 
         srq = pd.srq();
-        print srq,repr(srq)
-        print srq.query();
+        print(srq,repr(srq))
+        print(srq.query());
         srq.modify(100);
 
     def _get_loop(self,pd,qp_type,depth=16):
@@ -88,7 +88,7 @@ class umad_self_test(unittest.TestCase):
     def _do_loop_test(self,qp_type_name):
         """Test HCA loop back between two QPs as well as SRQ."""
         qp_type = getattr(ibv,"IBV_QPT_%s"%(qp_type_name));
-        print "Testing QP to QP loop type %u %s"%(qp_type,qp_type_name)
+        print("Testing QP to QP loop type %u %s"%(qp_type,qp_type_name))
         with self.ctx.pd() as pd:
             path_a,qp_a,path_b,qp_b,poller,srq,pool = \
                     self._get_loop(pd,qp_type);
@@ -104,13 +104,13 @@ class umad_self_test(unittest.TestCase):
                     sends = sends + 1
                 pool.finish_wcs(srq,wc);
             self.assertFalse(poller.timedout);
-            self.assertEquals(recvs,2);
-            self.assertEquals(sends,2);
+            self.assertEqual(recvs,2);
+            self.assertEqual(sends,2);
 
     def _do_loop_test_mc(self):
         """Test HCA loop back between two QPs as well as SRQ."""
         qp_type = ibv.IBV_QPT_UD;
-        print "Testing QP to QP loop type %u UD MULTICAST"%(qp_type)
+        print("Testing QP to QP loop type %u UD MULTICAST"%(qp_type))
         with self.ctx.pd() as pd:
             path_a,qp_a,path_b,qp_b,poller,srq,pool = \
                     self._get_loop(pd,qp_type);
@@ -136,17 +136,17 @@ class umad_self_test(unittest.TestCase):
                     path = ibv.WCPath(mcpath.end_port,wc,
                                       pool._mem,
                                       (wc.wr_id & pool.BUF_ID_MASK)*pool.size);
-                    self.assertEquals(path.DGID,mcpath.DGID);
-                    self.assertEquals(path.SGID,mcpath.SGID);
-                    self.assertEquals(path.flow_label,mcpath.flow_label);
-                    self.assertEquals(path.traffic_class,mcpath.traffic_class);
-                    self.assertEquals(path.hop_limit,mcpath.hop_limit);
+                    self.assertEqual(path.DGID,mcpath.DGID);
+                    self.assertEqual(path.SGID,mcpath.SGID);
+                    self.assertEqual(path.flow_label,mcpath.flow_label);
+                    self.assertEqual(path.traffic_class,mcpath.traffic_class);
+                    self.assertEqual(path.hop_limit,mcpath.hop_limit);
                 if wc.opcode == ibv.IBV_WC_SEND:
                     sends = sends + 1
                 pool.finish_wcs(srq,wc);
             self.assertFalse(poller.timedout);
-            self.assertEquals(recvs,4);
-            self.assertEquals(sends,2);
+            self.assertEqual(recvs,4);
+            self.assertEqual(sends,2);
 
     def test_ud_loop(self):
         self._do_loop_test("UD");
@@ -159,7 +159,7 @@ class umad_self_test(unittest.TestCase):
     def test_vmad(self):
         with rdma.vmad.VMAD(self.ctx,self.end_port.sa_path) as vmad:
             ret = vmad.SubnAdmGet(IBA.MADClassPortInfo);
-            print repr(vmad.reply_path);
+            print(repr(vmad.reply_path));
             ret.printer(sys.stdout);
 
             # Try sending to the SA with a GRH
@@ -168,7 +168,7 @@ class umad_self_test(unittest.TestCase):
             path.has_grh = True;
             path.hop_limit = 255;
             ret = vmad.SubnAdmGet(IBA.MADClassPortInfo,path);
-            print "SA reply path grh",repr(vmad.reply_path);
+            print("SA reply path grh",repr(vmad.reply_path));
 
             # Get a LID path to our immediate peer
             drpath = rdma.path.IBDRPath(self.end_port,
@@ -177,15 +177,15 @@ class umad_self_test(unittest.TestCase):
             peer_path = rdma.path.get_mad_path(vmad,smad.get_path_lid(drpath),
                                                dqpn=1,
                                                qkey=IBA.IB_DEFAULT_QP1_QKEY)
-            print "Got peer path",repr(peer_path)
+            print("Got peer path",repr(peer_path))
 
             # Try some GMPs to the peer
             ret = vmad.PerformanceGet(IBA.MADClassPortInfo,peer_path);
-            print "Got peer reply path",repr(vmad.reply_path);
+            print("Got peer reply path",repr(vmad.reply_path));
             ret = vmad.PerformanceGet(IBA.MADClassPortInfo,
                                       peer_path.copy(has_grh=True,
                                                      hop_limit=255));
-            print "Got peer reply path grh",repr(vmad.reply_path);
+            print("Got peer reply path grh",repr(vmad.reply_path));
 
     def test_wr_error(self):
         "Test failing post_send"
@@ -214,17 +214,17 @@ class umad_self_test(unittest.TestCase):
             for wc in poller.iterwc(count=1,timeout=0.5):
                 if wc.status != ibv.IBV_WC_SUCCESS:
                     if wc.qp_num == qp_b.qp_num:
-                        print "Expect SEND WC error",ibv.WCError(wc,poller._cq)
+                        print("Expect SEND WC error",ibv.WCError(wc,poller._cq))
                     else:
-                        print "Expect RECV WC error",ibv.WCError(wc,poller._cq)
+                        print("Expect RECV WC error",ibv.WCError(wc,poller._cq))
                     self.assertRaises(ibv.WCError,pool.finish_wcs,srq,wc);
                 else:
                     pool.finish_wcs(srq,wc);
 
     def test_async_handle(self):
         "Test async event functionality"
-        print ibv.AsyncError((ibv.IBV_EVENT_LID_CHANGE,self.end_port))
-        print ibv.AsyncError((ibv.IBV_EVENT_QP_FATAL,None))
+        print(ibv.AsyncError((ibv.IBV_EVENT_LID_CHANGE,self.end_port)))
+        print(ibv.AsyncError((ibv.IBV_EVENT_QP_FATAL,None)))
 
         self.ctx.handle_async_event((ibv.IBV_EVENT_LID_CHANGE,self.end_port))
         self.ctx.handle_async_event((ibv.IBV_EVENT_PKEY_CHANGE,self.end_port))
@@ -248,9 +248,9 @@ class umad_self_test(unittest.TestCase):
             for wc in poller.iterwc(count=6,timeout=1):
                 if wc.status != ibv.IBV_WC_SUCCESS:
                     if wc.qp_num == qp_b.qp_num:
-                        print "Expect SEND WC error",ibv.WCError(wc,poller._cq)
+                        print("Expect SEND WC error",ibv.WCError(wc,poller._cq))
                     else:
-                        print "Expect RECV WC error",ibv.WCError(wc,poller._cq)
+                        print("Expect RECV WC error",ibv.WCError(wc,poller._cq))
                     self.assertRaises(ibv.WCError,pool.finish_wcs,srq,wc);
                 else:
                     pool.finish_wcs(srq,wc);

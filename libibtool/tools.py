@@ -1,5 +1,5 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-from __future__ import with_statement;
+;
 import os;
 import sys;
 import optparse;
@@ -43,7 +43,7 @@ class MyOptParse(optparse.OptionParser):
         usage = inspect.getdoc(self.current_command);
         docer = None;
         try:
-            docer = self.current_command.func_globals[self.current_command.func_name + "_help"];
+            docer = self.current_command.__globals__[self.current_command.__name__ + "_help"];
         except KeyError:
             pass;
         if docer is not None:
@@ -110,7 +110,7 @@ def cmd_help(argv,o):
                 return MyHelpFormatter.format_option(self,option);
 
         o = MyOptParse(cmd_help,top_mod=o.top_mod);
-        for k in sorted(commands.iterkeys()):
+        for k in sorted(commands.keys()):
             if k == "help":
                 continue
             func,shown = get_cmd_func(k,o.top_mod);
@@ -121,17 +121,17 @@ def cmd_help(argv,o):
             o.add_option("--x" + k,action="store_true",help=doc[0]);
 
         prog = os.path.basename(sys.argv[0]);
-        print "%s - %s\n"%(prog,o.top_mod.banner)
-        print "Usage: %s command [args]"%(prog)
-        print
-        print o.format_option_help(Formatter());
-        print "%s help [command] shows detailed help for each command"%(prog)
+        print("%s - %s\n"%(prog,o.top_mod.banner))
+        print("Usage: %s command [args]"%(prog))
+        print()
+        print(o.format_option_help(Formatter()));
+        print("%s help [command] shows detailed help for each command"%(prog))
         return True;
 
-    if len(argv) == 1 and commands.has_key(argv[0]):
+    if len(argv) == 1 and argv[0] in commands:
         func,shown = get_cmd_func(argv[0],top_mod=o.top_mod);
         o = MyOptParse(func,top_mod=o.top_mod);
         func(["--help"],o);
     else:
-        print "No help text for %s"%(argv);
+        print("No help text for %s"%(argv));
     return True;
