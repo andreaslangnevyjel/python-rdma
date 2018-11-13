@@ -1,260 +1,267 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-import unittest;
-import mmap;
-import sys;
-import errno;
-import select;
-import rdma;
-import rdma.vmad;
-import rdma.IBA as IBA;
-import rdma.ibverbs as ibv;
-import rdma.satransactor;
-import rdma.path;
+# -*- coding: utf-8 -*-
+
+
+import errno
+import mmap
+import sys
+import unittest
+
+import rdma
+import rdma.IBA as IBA
+import rdma.ibverbs as ibv
+import rdma.path
+import rdma.satransactor
+import rdma.vmad
+
 
 class umad_self_test(unittest.TestCase):
-    umad = None;
-    tid = 0;
+    umad = None
+    tid = 0
 
     def setUp(self):
-        self.end_port = rdma.get_end_port();
-        self.ctx = rdma.get_verbs(self.end_port);
+        self.end_port = rdma.get_end_port()
+        self.ctx = rdma.get_verbs(self.end_port)
 
     def tearDown(self):
-        self.ctx.close();
-        self.ctx = None;
+        self.ctx.close()
+        self.ctx = None
 
     def test_basic(self):
-        print(self.ctx.query_port());
-        print(self.ctx.query_device());
-        pd = self.ctx.pd();
-        print(pd,repr(pd))
-        cq = self.ctx.cq(100);
-        print(cq,repr(cq))
+        print(self.ctx.query_port())
+        print(self.ctx.query_device())
+        pd = self.ctx.pd()
+        print(pd, repr(pd))
+        cq = self.ctx.cq(100)
+        print(cq, repr(cq))
         try:
-            cq.resize(200);
+            cq.resize(200)
         except rdma.SysError as e:
             if e.errno != errno.ENOSYS:
-                raise;
-        self.assertEqual(cq.poll(),[]);
-        comp = self.ctx.comp_channel();
-        print(comp,repr(comp))
-        qp = pd.qp(ibv.IBV_QPT_UD,100,cq,100,cq);
-        print(qp,repr(qp))
-        print(qp.query(0xFFFF));
-        mpath = rdma.path.IBPath(self.ctx.end_port,DLID=0xC000,
-                                 DGID=IBA.GID("ff02::1"));
-        qp.attach_mcast(mpath);
-        qp.detach_mcast(mpath);
-        buf = mmap.mmap(-1,4096);
-        mr = pd.mr(buf,ibv.IBV_ACCESS_LOCAL_WRITE|ibv.IBV_ACCESS_REMOTE_WRITE);
-        print(mr,repr(mr))
-        print("MR",mr.addr,mr.length,mr.lkey,mr.rkey)
-        self.assertRaises(TypeError,pd.ah,None);
-        ah = pd.ah(self.end_port.sa_path);
-        print(ah,repr(ah))
+                raise
+        self.assertEqual(cq.poll(), [])
+        comp = self.ctx.comp_channel()
+        print(comp, repr(comp))
+        qp = pd.qp(ibv.IBV_QPT_UD, 100, cq, 100, cq)
+        print(qp, repr(qp))
+        print(qp.query(0xFFFF))
+        mpath = rdma.path.IBPath(self.ctx.end_port, DLID=0xC000,
+                                 DGID=IBA.GID("ff02::1"))
+        qp.attach_mcast(mpath)
+        qp.detach_mcast(mpath)
+        buf = mmap.mmap(-1, 4096)
+        mr = pd.mr(buf, ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_REMOTE_WRITE)
+        print(mr, repr(mr))
+        print("MR", mr.addr, mr.length, mr.lkey, mr.rkey)
+        self.assertRaises(TypeError, pd.ah, None)
+        ah = pd.ah(self.end_port.sa_path)
+        print(ah, repr(ah))
 
-        srq = pd.srq();
-        print(srq,repr(srq))
-        print(srq.query());
-        srq.modify(100);
+        srq = pd.srq()
+        print(srq, repr(srq))
+        print(srq.query())
+        srq.modify(100)
 
-    def _get_loop(self,pd,qp_type,depth=16):
+    def _get_loop(self, pd, qp_type, depth=16):
         cc = self.ctx.comp_channel()
-        cq = self.ctx.cq(2*depth,cc);
-        poller = rdma.vtools.CQPoller(cq);
+        cq = self.ctx.cq(2 * depth, cc)
+        poller = rdma.vtools.CQPoller(cq)
         srq = pd.srq(depth)
-        pool = rdma.vtools.BufferPool(pd,2*depth,256+40);
-        pool.post_recvs(srq,depth);
+        pool = rdma.vtools.BufferPool(pd, 2 * depth, 256 + 40)
+        pool.post_recvs(srq, depth)
 
-        path_a = rdma.path.IBPath(self.end_port,qkey=999,
-                                  DGID=self.end_port.default_gid);
-        with rdma.get_gmp_mad(self.end_port,verbs=self.ctx) as vmad:
-            rdma.path.resolve_path(vmad,path_a);
-        qp_a = pd.qp(qp_type,depth,cq,depth,cq,srq=srq);
-        rdma.path.fill_path(qp_a,path_a,max_rd_atomic=0);
+        path_a = rdma.path.IBPath(self.end_port, qkey=999,
+                                  DGID=self.end_port.default_gid)
+        with rdma.get_gmp_mad(self.end_port, verbs=self.ctx) as vmad:
+            rdma.path.resolve_path(vmad, path_a)
+        qp_a = pd.qp(qp_type, depth, cq, depth, cq, srq=srq)
+        rdma.path.fill_path(qp_a, path_a, max_rd_atomic=0)
 
-        qp_b = pd.qp(qp_type,depth,cq,depth,cq,srq=srq);
-        path_b = path_a.copy().reverse(for_reply=False);
-        rdma.path.fill_path(qp_b,path_b,max_rd_atomic=0);
-        qp_b.establish(path_b);
-        #print "Path B is",repr(path_b)
+        qp_b = pd.qp(qp_type, depth, cq, depth, cq, srq=srq)
+        path_b = path_a.copy().reverse(for_reply=False)
+        rdma.path.fill_path(qp_b, path_b, max_rd_atomic=0)
+        qp_b.establish(path_b)
+        # print "Path B is",repr(path_b)
 
-        path_a = path_b.copy().reverse(for_reply=False);
-        qp_a.establish(path_a);
-        #print "Path A is",repr(path_a)
+        path_a = path_b.copy().reverse(for_reply=False)
+        qp_a.establish(path_a)
+        # print "Path A is",repr(path_a)
 
-        return (path_a,qp_a,path_b,qp_b,poller,srq,pool)
+        return (path_a, qp_a, path_b, qp_b, poller, srq, pool)
 
-    def _do_loop_test(self,qp_type_name):
+    def _do_loop_test(self, qp_type_name):
         """Test HCA loop back between two QPs as well as SRQ."""
-        qp_type = getattr(ibv,"IBV_QPT_%s"%(qp_type_name));
-        print("Testing QP to QP loop type %u %s"%(qp_type,qp_type_name))
+        qp_type = getattr(ibv, "IBV_QPT_%s" % (qp_type_name))
+        print("Testing QP to QP loop type %u %s" % (qp_type, qp_type_name))
         with self.ctx.pd() as pd:
-            path_a,qp_a,path_b,qp_b,poller,srq,pool = \
-                    self._get_loop(pd,qp_type);
-            qp_b.post_send(pool.make_send_wr(pool.pop(),256,path_b));
-            qp_a.post_send(pool.make_send_wr(pool.pop(),256,path_a));
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
+                self._get_loop(pd, qp_type)
+            qp_b.post_send(pool.make_send_wr(pool.pop(), 256, path_b))
+            qp_a.post_send(pool.make_send_wr(pool.pop(), 256, path_a))
 
-            recvs = 0;
+            recvs = 0
             sends = 0
-            for wc in poller.iterwc(count=4,timeout=0.5):
+            for wc in poller.iterwc(count=4, timeout=0.5):
                 if wc.opcode & ibv.IBV_WC_RECV:
                     recvs = recvs + 1
                 if wc.opcode == ibv.IBV_WC_SEND:
                     sends = sends + 1
-                pool.finish_wcs(srq,wc);
-            self.assertFalse(poller.timedout);
-            self.assertEqual(recvs,2);
-            self.assertEqual(sends,2);
+                pool.finish_wcs(srq, wc)
+            self.assertFalse(poller.timedout)
+            self.assertEqual(recvs, 2)
+            self.assertEqual(sends, 2)
 
     def _do_loop_test_mc(self):
         """Test HCA loop back between two QPs as well as SRQ."""
-        qp_type = ibv.IBV_QPT_UD;
-        print("Testing QP to QP loop type %u UD MULTICAST"%(qp_type))
+        qp_type = ibv.IBV_QPT_UD
+        print("Testing QP to QP loop type %u UD MULTICAST" % (qp_type))
         with self.ctx.pd() as pd:
-            path_a,qp_a,path_b,qp_b,poller,srq,pool = \
-                    self._get_loop(pd,qp_type);
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
+                self._get_loop(pd, qp_type)
 
             # Note: since both our QPs are on the same end port then the DLID
             # does not matter as far as forwarding is concerned, so the HCA
             # should replicate entirely based on the DLID.
-            mcpath = path_b.copy(DGID=IBA.GID("FF02::1"),DLID=0xC000,dqpn=0xFFFFFF,
+            mcpath = path_b.copy(DGID=IBA.GID("FF02::1"), DLID=0xC000, dqpn=0xFFFFFF,
                                  traffic_class=0x89,
                                  flow_label=0x1234,
                                  hop_limit=23,
-                                 has_grh=True);
-            qp_a.attach_mcast(mcpath);
-            qp_b.attach_mcast(mcpath);
-            qp_b.post_send(pool.make_send_wr(pool.pop(),256,mcpath));
-            qp_a.post_send(pool.make_send_wr(pool.pop(),256,mcpath));
+                                 has_grh=True)
+            qp_a.attach_mcast(mcpath)
+            qp_b.attach_mcast(mcpath)
+            qp_b.post_send(pool.make_send_wr(pool.pop(), 256, mcpath))
+            qp_a.post_send(pool.make_send_wr(pool.pop(), 256, mcpath))
 
-            recvs = 0;
+            recvs = 0
             sends = 0
-            for wc in poller.iterwc(count=6,timeout=0.5):
+            for wc in poller.iterwc(count=6, timeout=0.5):
                 if wc.opcode & ibv.IBV_WC_RECV:
                     recvs = recvs + 1
-                    path = ibv.WCPath(mcpath.end_port,wc,
+                    path = ibv.WCPath(mcpath.end_port, wc,
                                       pool._mem,
-                                      (wc.wr_id & pool.BUF_ID_MASK)*pool.size);
-                    self.assertEqual(path.DGID,mcpath.DGID);
-                    self.assertEqual(path.SGID,mcpath.SGID);
-                    self.assertEqual(path.flow_label,mcpath.flow_label);
-                    self.assertEqual(path.traffic_class,mcpath.traffic_class);
-                    self.assertEqual(path.hop_limit,mcpath.hop_limit);
+                                      (wc.wr_id & pool.BUF_ID_MASK) * pool.size)
+                    self.assertEqual(path.DGID, mcpath.DGID)
+                    self.assertEqual(path.SGID, mcpath.SGID)
+                    self.assertEqual(path.flow_label, mcpath.flow_label)
+                    self.assertEqual(path.traffic_class, mcpath.traffic_class)
+                    self.assertEqual(path.hop_limit, mcpath.hop_limit)
                 if wc.opcode == ibv.IBV_WC_SEND:
                     sends = sends + 1
-                pool.finish_wcs(srq,wc);
-            self.assertFalse(poller.timedout);
-            self.assertEqual(recvs,4);
-            self.assertEqual(sends,2);
+                pool.finish_wcs(srq, wc)
+            self.assertFalse(poller.timedout)
+            self.assertEqual(recvs, 4)
+            self.assertEqual(sends, 2)
 
     def test_ud_loop(self):
-        self._do_loop_test("UD");
-        self._do_loop_test_mc();
+        self._do_loop_test("UD")
+        self._do_loop_test_mc()
+
     def test_rc_loop(self):
-        self._do_loop_test("RC");
+        self._do_loop_test("RC")
+
     def test_uc_loop(self):
-        self._do_loop_test("UC");
+        self._do_loop_test("UC")
 
     def test_vmad(self):
-        with rdma.vmad.VMAD(self.ctx,self.end_port.sa_path) as vmad:
-            ret = vmad.SubnAdmGet(IBA.MADClassPortInfo);
-            print(repr(vmad.reply_path));
-            ret.printer(sys.stdout);
+        with rdma.vmad.VMAD(self.ctx, self.end_port.sa_path) as vmad:
+            ret = vmad.SubnAdmGet(IBA.MADClassPortInfo)
+            print(repr(vmad.reply_path))
+            ret.printer(sys.stdout)
 
             # Try sending to the SA with a GRH
-            path = self.end_port.sa_path.copy();
-            rdma.path.resolve_path(vmad,path,True);
-            path.has_grh = True;
-            path.hop_limit = 255;
-            ret = vmad.SubnAdmGet(IBA.MADClassPortInfo,path);
-            print("SA reply path grh",repr(vmad.reply_path));
+            path = self.end_port.sa_path.copy()
+            rdma.path.resolve_path(vmad, path, True)
+            path.has_grh = True
+            path.hop_limit = 255
+            ret = vmad.SubnAdmGet(IBA.MADClassPortInfo, path)
+            print("SA reply path grh", repr(vmad.reply_path))
 
             # Get a LID path to our immediate peer
             drpath = rdma.path.IBDRPath(self.end_port,
-                                        drPath="\0%c"%(self.end_port.port_id));
-            smad = rdma.satransactor.SATransactor(vmad);
-            peer_path = rdma.path.get_mad_path(vmad,smad.get_path_lid(drpath),
+                                        drPath="\0%c" % (self.end_port.port_id))
+            smad = rdma.satransactor.SATransactor(vmad)
+            peer_path = rdma.path.get_mad_path(vmad, smad.get_path_lid(drpath),
                                                dqpn=1,
                                                qkey=IBA.IB_DEFAULT_QP1_QKEY)
-            print("Got peer path",repr(peer_path))
+            print("Got peer path", repr(peer_path))
 
             # Try some GMPs to the peer
-            ret = vmad.PerformanceGet(IBA.MADClassPortInfo,peer_path);
-            print("Got peer reply path",repr(vmad.reply_path));
+            ret = vmad.PerformanceGet(IBA.MADClassPortInfo, peer_path)
+            print("Got peer reply path", repr(vmad.reply_path))
             ret = vmad.PerformanceGet(IBA.MADClassPortInfo,
                                       peer_path.copy(has_grh=True,
-                                                     hop_limit=255));
-            print("Got peer reply path grh",repr(vmad.reply_path));
+                                                     hop_limit=255))
+            print("Got peer reply path grh", repr(vmad.reply_path))
 
     def test_wr_error(self):
         "Test failing post_send"
         with self.ctx.pd() as pd:
             depth = 16
-            path_a,qp_a,path_b,qp_b,poller,srq,pool = \
-                    self._get_loop(pd,ibv.IBV_QPT_UD,depth);
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
+                self._get_loop(pd, ibv.IBV_QPT_UD, depth)
 
             # Overflow the send q
-            wr = pool.make_send_wr(pool.pop(),256,path_b);
-            self.assertRaises(ibv.WRError,qp_b.post_send,
-                              [wr for I in range(0,depth*1024)]);
+            wr = pool.make_send_wr(pool.pop(), 256, path_b)
+            self.assertRaises(ibv.WRError, qp_b.post_send,
+                              [wr for I in range(0, depth * 1024)])
 
     def test_wc_raise(self):
         "Test raising a WCError exception"
         with self.ctx.pd() as pd:
             depth = 16
-            path_a,qp_a,path_b,qp_b,poller,srq,pool = \
-                    self._get_loop(pd,ibv.IBV_QPT_UD,depth);
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
+                self._get_loop(pd, ibv.IBV_QPT_UD, depth)
 
             # Go past the end of our MR during send
-            wr = pool.make_send_wr(pool.pop(),256,path_b);
-            wr.sg_list.length = 1024*1024;
-            qp_b.post_send(wr);
+            wr = pool.make_send_wr(pool.pop(), 256, path_b)
+            wr.sg_list.length = 1024 * 1024
+            qp_b.post_send(wr)
 
-            for wc in poller.iterwc(count=1,timeout=0.5):
+            for wc in poller.iterwc(count=1, timeout=0.5):
                 if wc.status != ibv.IBV_WC_SUCCESS:
                     if wc.qp_num == qp_b.qp_num:
-                        print("Expect SEND WC error",ibv.WCError(wc,poller._cq))
+                        print("Expect SEND WC error", ibv.WCError(wc, poller._cq))
                     else:
-                        print("Expect RECV WC error",ibv.WCError(wc,poller._cq))
-                    self.assertRaises(ibv.WCError,pool.finish_wcs,srq,wc);
+                        print("Expect RECV WC error", ibv.WCError(wc, poller._cq))
+                    self.assertRaises(ibv.WCError, pool.finish_wcs, srq, wc)
                 else:
-                    pool.finish_wcs(srq,wc);
+                    pool.finish_wcs(srq, wc)
 
     def test_async_handle(self):
         "Test async event functionality"
-        print(ibv.AsyncError((ibv.IBV_EVENT_LID_CHANGE,self.end_port)))
-        print(ibv.AsyncError((ibv.IBV_EVENT_QP_FATAL,None)))
+        print(ibv.AsyncError((ibv.IBV_EVENT_LID_CHANGE, self.end_port)))
+        print(ibv.AsyncError((ibv.IBV_EVENT_QP_FATAL, None)))
 
-        self.ctx.handle_async_event((ibv.IBV_EVENT_LID_CHANGE,self.end_port))
-        self.ctx.handle_async_event((ibv.IBV_EVENT_PKEY_CHANGE,self.end_port))
-        self.ctx.handle_async_event((ibv.IBV_EVENT_SM_CHANGE,self.end_port))
-        self.assertRaises(ibv.AsyncError,self.ctx.handle_async_event,
-                          (ibv.IBV_EVENT_SRQ_ERR,None))
+        self.ctx.handle_async_event((ibv.IBV_EVENT_LID_CHANGE, self.end_port))
+        self.ctx.handle_async_event((ibv.IBV_EVENT_PKEY_CHANGE, self.end_port))
+        self.ctx.handle_async_event((ibv.IBV_EVENT_SM_CHANGE, self.end_port))
+        self.assertRaises(ibv.AsyncError, self.ctx.handle_async_event,
+                          (ibv.IBV_EVENT_SRQ_ERR, None))
 
     def test_remote_caused_wc_err(self):
         with self.ctx.pd() as pd:
             depth = 16
-            path_a,qp_a,path_b,qp_b,poller,srq,pool = \
-                    self._get_loop(pd,ibv.IBV_QPT_UD,depth);
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
+                self._get_loop(pd, ibv.IBV_QPT_UD, depth)
 
             # Send a packet larger than we can receive
-            qp_b.post_send(pool.make_send_wr(0,256,path_b));
-            wr = pool.make_send_wr(0,pool.size,path_b);
-            wr.sg_list.length = 1000;
-            qp_b.post_send(wr);
-            qp_b.post_send(pool.make_send_wr(0,256,path_b));
+            qp_b.post_send(pool.make_send_wr(0, 256, path_b))
+            wr = pool.make_send_wr(0, pool.size, path_b)
+            wr.sg_list.length = 1000
+            qp_b.post_send(wr)
+            qp_b.post_send(pool.make_send_wr(0, 256, path_b))
 
-            for wc in poller.iterwc(count=6,timeout=1):
+            for wc in poller.iterwc(count=6, timeout=1):
                 if wc.status != ibv.IBV_WC_SUCCESS:
                     if wc.qp_num == qp_b.qp_num:
-                        print("Expect SEND WC error",ibv.WCError(wc,poller._cq))
+                        print("Expect SEND WC error", ibv.WCError(wc, poller._cq))
                     else:
-                        print("Expect RECV WC error",ibv.WCError(wc,poller._cq))
-                    self.assertRaises(ibv.WCError,pool.finish_wcs,srq,wc);
+                        print("Expect RECV WC error", ibv.WCError(wc, poller._cq))
+                    self.assertRaises(ibv.WCError, pool.finish_wcs, srq, wc)
                 else:
-                    pool.finish_wcs(srq,wc);
-            self.assertFalse(poller.timedout);
+                    pool.finish_wcs(srq, wc)
+            self.assertFalse(poller.timedout)
+
 
 if __name__ == '__main__':
     unittest.main()
