@@ -128,7 +128,7 @@ class IbtoolCmdsTest(unittest.TestCase):
         ]:
             with self.ignore_mad_unsupported():
                 self.cmd("perfquery", _cmd)
-        self.cmd("query", "PerformanceGet", "MADClassPortInfo")
+        self.cmd("query", "performance_get", "MADClassPortInfo")
         self.cmd("set_nodedesc")
         self.cmd("vendstat", "-N", self.end_port.lid)
 

@@ -20,7 +20,7 @@
           sect="16.1.3.2"
           attributeID="0x10"
           attributeName="PM_PORT_SAMPLES_CTL"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]">opCode<!--OpCode--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="8" off="0[16]">tick<!--Tick--></mb>
@@ -77,7 +77,7 @@
           sect="16.1.3.4"
           attributeID="0x11"
           attributeName="PM_PORT_SAMPLES_RES"
-          methods="PerformanceGet">
+          methods="performance_get">
     <mb bits="16" off="0[0]">tag<!--Tag--></mb>
     <mb bits="14" off="0[16]"><!--Reserved--></mb>
     <mb bits="2" off="0[30]">sampleStatus<!--SampleStatus--></mb>
@@ -90,7 +90,7 @@
           sect="16.1.3.5"
           attributeID="0x12"
           attributeName="PM_PORT_COUNTERS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -121,7 +121,7 @@
           sect="16.1.4.1"
           attributeID="0x15"
           attributeName="PM_PORT_RCV_ERROR_DETAILS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -139,7 +139,7 @@
           sect="16.1.4.2"
           attributeID="0x16"
           attributeName="PM_PORT_XMIT_DISCARD_DETAILS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -155,7 +155,7 @@
           sect="16.1.4.3"
           attributeID="0x17"
           attributeName="PM_PORT_OP_RCV_COUNTERS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]">opCode<!--OpCode--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -169,7 +169,7 @@
           sect="16.1.4.4"
           attributeID="0x18"
           attributeName="PM_PORT_FLOW_CTL_COUNTERS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -183,7 +183,7 @@
           sect="16.1.4.5"
           attributeID="0x19"
           attributeName="PM_PORT_VL_OP_PACKETS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]">opCode<!--OpCode--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -196,7 +196,7 @@
           sect="16.1.4.6"
           attributeID="0x1A"
           attributeName="PM_PORT_VL_OP_DATA"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]">opCode<!--OpCode--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -209,7 +209,7 @@
           sect="16.1.4.7"
           attributeID="0x1B"
           attributeName="PM_PORT_VL_XMIT_FLOW_CTL_UPDATE_ERRORS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -222,7 +222,7 @@
           sect="16.1.4.8"
           attributeID="0x1C"
           attributeName="PM_PORT_VL_XMIT_WAIT_COUNTERS"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -235,7 +235,7 @@
           sect="16.1.4.9"
           attributeID="0x30"
           attributeName="PM_SW_PORT_VL_CONGESTION"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--PortSelect--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -248,7 +248,7 @@
           sect="16.1.4.10"
           attributeID="0x1E"
           attributeName="PM_PORT_SAMPLES_RES_EXT"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="16" off="0[0]">tag<!--Tag--></mb>
     <mb bits="14" off="0[16]"><!--Reserved--></mb>
     <mb bits="2" off="0[30]">sampleStatus<!--SampleStatus--></mb>
@@ -263,7 +263,7 @@
           sect="16.1.4.11"
           attributeID="0x1D"
           attributeName="PM_PORT_COUNTERS_EXT"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--Reserved--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -284,7 +284,7 @@
           sect="A13.6.5"
           attributeID="0x36"
           attributeName="PM_PORT_XMIT_DATA_SL"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--Reserved--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>
@@ -297,7 +297,7 @@
           sect="A13.6.5"
           attributeID="0x37"
           attributeName="PM_PORT_RCV_DATA_SL"
-          methods="PerformanceGet PerformanceSet">
+          methods="performance_get PerformanceSet">
     <mb bits="8" off="0[0]"><!--Reserved--></mb>
     <mb bits="8" off="0[8]">portSelect<!--Reserved--></mb>
     <mb bits="16" off="0[16]" display="hex">counterSelect<!--CounterSelect--></mb>

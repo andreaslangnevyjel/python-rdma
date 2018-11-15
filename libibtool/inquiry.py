@@ -194,7 +194,7 @@ def cmd_ibaddr(argv, o):
 
 methods = {
     "subn_get",
-    "PerformanceGet",
+    "performance_get",
     "subn_adm_get",
     "subn_adm_get_table",
     "bm_get",
@@ -259,7 +259,7 @@ def cmd_query(argv, o):
        Usage: %prog METHOD ATTRIBUTE [TARGET]
 
        Eg:
-          %prog PerformanceGet PMPortCounters -f portSelect=1
+          %prog performance_get PMPortCounters -f portSelect=1
           %prog SubnAdmGet SAPathRecord -f SGID=fe80::0002:c903:0000:1491 -f DGID=fe80::0002:c903:0000:1492
           """
     import libibtool.saquery

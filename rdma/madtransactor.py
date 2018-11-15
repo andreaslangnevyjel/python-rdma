@@ -375,7 +375,7 @@ class MADTransactor(object):
             payload.MAD_SUBNSET,
         )
 
-    def PerformanceGet(self, payload, path, attribute_modifier=0):
+    def performance_get(self, payload, path, attribute_modifier=0):
         return self._do_mad(
             IBA.PMFormat(),
             payload,
