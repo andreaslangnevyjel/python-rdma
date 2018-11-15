@@ -152,7 +152,7 @@ class IbtoolCmdsTest(unittest.TestCase):
         for I in ["-x", "-X", "-S", "-D", "-E", "-F", "--vl-xmit-errs", "--vl-xmit-wait",
                   "--vl-congestion"]:
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID, self.peer_ninf.localPortNum)
+                self.cmd("perfquery", I, self.peer_pinf.LID, self.peer_ninf.local_port_num)
             with self.ignore_mad_unsupported():
                 self.cmd("perfquery", I, self.peer_pinf.LID)
             with self.ignore_mad_unsupported():
@@ -167,7 +167,7 @@ class IbtoolCmdsTest(unittest.TestCase):
                 self.cmd("perfquery", I, self.peer_dr)
 
             with self.ignore_mad_unsupported():
-                self.cmd("ibswportwatch", "-n2", "-p0.05", I, self.peer_pinf.LID, self.peer_ninf.localPortNum)
+                self.cmd("ibswportwatch", "-n2", "-p0.05", I, self.peer_pinf.LID, self.peer_ninf.local_port_num)
             with self.ignore_mad_unsupported():
                 self.cmd("ibswportwatch", "-n2", "-p0.05", I, self.peer_pinf.LID)
 
@@ -185,8 +185,8 @@ class IbtoolCmdsTest(unittest.TestCase):
             self.cmd(I, self.peer_pinf.LID, "-v")
         for I in ("ibcheckport", "ibcheckportstate", "ibcheckportwidth", "ibcheckerrs",
                   "ibdatacounts"):
-            self.cmd(I, self.peer_pinf.LID, self.peer_pinf.localPortNum)
-            self.cmd(I, self.peer_pinf.LID, self.peer_pinf.localPortNum, "-v")
+            self.cmd(I, self.peer_pinf.LID, self.peer_pinf.local_port_num)
+            self.cmd(I, self.peer_pinf.LID, self.peer_pinf.local_port_num, "-v")
 
     def test_discovery(self):
         self.assertEqual(self.end_port.state, IBA.PORT_STATE_ACTIVE)
@@ -196,7 +196,7 @@ class IbtoolCmdsTest(unittest.TestCase):
         self.cmd("ibrouters")
         self.cmd("ibnodes")
         self.cmd("ibnetdiscover")
-        self.cmd("ibfindnodesusing", self.peer_dr, self.peer_ninf.localPortNum)
+        self.cmd("ibfindnodesusing", self.peer_dr, self.peer_ninf.local_port_num)
 
         self.cmd("ibprintca", self.end_port.parent.node_guid)
         self.cmd("ibprintswitch", self.peer_ninf.nodeGUID)

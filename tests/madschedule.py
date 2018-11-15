@@ -94,8 +94,12 @@ class madschedule_test(unittest.TestCase):
                          for I in range(1, ninf.numPorts + 1))
             pinf = yield sched.SubnGet(IBA.SMPPortInfo, path, 0)
         else:
-            yield self.get_port_info(sched, path, ninf.localPortNum,
-                                     len(path.drPath) == 1)
+            yield self.get_port_info(
+                sched,
+                path,
+                ninf.local_port_num,
+                len(path.drPath) == 1,
+            )
 
     def test_sched(self):
         """Do a simple directed route discovery of the subnet"""

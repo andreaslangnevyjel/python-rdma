@@ -108,8 +108,8 @@ class Querier(object):
             # for HCAs, and something random for switches. I think this is
             # better than returning an invalid port select error code.
             # ninf = umad.SubnGet(IBA.SMPNodeInfo,path.copy(dqpn=0,sqpn=0))
-            # cnts.portSelect = ninf.localPortNum
-            cnts.portSelect = self.ninf.nodeInfo.localPortNum
+            # cnts.portSelect = ninf.local_port_num
+            cnts.portSelect = self.ninf.nodeInfo.local_port_num
             if self.ninf.nodeInfo.nodeType == IBA.NODE_SWITCH and cnts.portSelect == 0:
                 cnts.portSelect = 1
 

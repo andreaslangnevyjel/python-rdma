@@ -394,11 +394,11 @@ def cmd_ibportstate(argv, o):
         if values[2] == "query":
             if peer_pinf is not None:
                 print("# Port info: Lid %u port %u (peer is Lid %u port %u)" % (
-                    pinf.LID, pinf.localPortNum,
-                    peer_pinf.LID, peer_pinf.localPortNum))
+                    pinf.LID, pinf.local_port_num,
+                    peer_pinf.LID, peer_pinf.local_port_num))
             else:
                 print("# Port info: Lid %u port %u" % (
-                    pinf.LID, pinf.localPortNum))
+                    pinf.LID, pinf.local_port_num))
             pinf.printer(sys.stdout, **lib.format_args)
         elif values[2] == "enable" or values[2] == "reset":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_POLLING
