@@ -205,7 +205,6 @@ methods = {
 
 methods.intersection_update(dir(rdma.madtransactor.MADTransactor))
 
-print(methods)
 
 def is_valid_attribute(attr) -> bool:
     if getattr(attr, "MAD_LENGTH", None) is None or getattr(attr, "MAD_ATTRIBUTE_ID", None) is None:
@@ -213,6 +212,7 @@ def is_valid_attribute(attr) -> bool:
     for meth in methods:
         if getattr(attr, "MAD_{}".format(meth.upper()), None) is not None:
             return True
+    print("*", methods)
     return False
 
 
