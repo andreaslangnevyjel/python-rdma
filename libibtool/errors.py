@@ -223,7 +223,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
 
 
 @node_check
-def do_check_node(sched, path, port_guid, ninf, **kwargs):
+def do_check_node(sched, path, port_guid, ninf, **_kwargs):
     """Coroutine to do the checknode action"""
     req = IBA.ComponentMask(IBA.SANodeRecord())
     if isinstance(path, rdma.path.IBDRPath):
@@ -259,7 +259,7 @@ def do_check_node(sched, path, port_guid, ninf, **kwargs):
 
 
 @port_check
-def do_check_port(sched, path, desc, ninf, pinf, port_idx, port, sbn, **kwargs):
+def do_check_port(sched, path, desc, ninf, pinf, port_idx, port, sbn, **_kwargs):
     """Coroutine to do the checkport action"""
     # Figure out the max speed of both sides of the link if we have topology.
     max_speed = get_max(pinf.linkSpeedSupported)
@@ -300,7 +300,7 @@ def do_check_port(sched, path, desc, ninf, pinf, port_idx, port, sbn, **kwargs):
 
 
 @port_check
-def do_check_portstate(sched, path, desc, pinf, **kwargs):
+def do_check_portstate(sched, path, desc, pinf, **_kwargs):
     """Coroutine to do the checkportstate action"""
     check_eq(
         pinf,
@@ -356,8 +356,13 @@ def do_check_duplicates(sched, path, desc, pinf, port, sbn, **kwargs):
             all_lids[I] = port
         else:
             if tport != port:
-                raise CheckError("Duplicate LIDs found, %s %s, at %s" % (
-                    tport.portGUID, port.portGUID, desc))
+                raise CheckError(
+                    "Duplicate LIDs found, {} {}, at {}".format(
+                        tport.portGUID,
+                        port.portGUID,
+                        desc,
+                    ),
+                )
 
     # Discovery will explode before it causes either of these..
     ng = port.parent.ninf.nodeGUID
@@ -366,15 +371,23 @@ def do_check_duplicates(sched, path, desc, pinf, port, sbn, **kwargs):
         all_nguids[ng] = port.parent
     else:
         if tnode != port.parent:
-            raise CheckError("Duplicate node GUIDs found, GUID %s at %s" % (
-                ng, desc))
+            raise CheckError(
+                "Duplicate node GUIDs found, GUID {} at {}".format(
+                    ng,
+                    desc,
+                ),
+            )
     tport = all_pguids.get(port.portGUID)
     if tport is None:
         all_pguids[port.portGUID] = port
     else:
         if tport != port:
-            raise CheckError("Duplicate port GUIDs found, GUID %s at %s" % (
-                port.portGUID, desc))
+            raise CheckError(
+                "Duplicate port GUIDs found, GUID {} at {}".format(
+                    port.portGUID,
+                    desc,
+                ),
+            )
 
 
 @perf_check
@@ -396,7 +409,7 @@ def do_check_errors(sched, path, gpath, ninf, pinf, port_guid, port_idx, **kwarg
 
 
 @perf_check
-def do_show_counts(sched, path, gpath, ninf, pinf, portGUID, port_idx, **kwargs):
+def do_show_counts(sched, path, gpath, ninf, pinf, port_guid, port_idx, **kwargs):
     """Coroutine to display the performance counters for a port."""
     ret = yield get_perf(sched, gpath, ninf, port_idx)
 
@@ -466,19 +479,34 @@ def print_header(ninf, pinf, desc, port_idx, failed, kind):
 
 
 def perform_single_check(argv, o, funcs):
-    o.add_option("-N", "--nocolor", action="store_false", dest="colour",
-                 default=True,
-                 help="Do not colorize the output")
+    o.add_option(
+        "-N",
+        "--nocolor",
+        action="store_false",
+        dest="colour",
+        default=True,
+        help="Do not colorize the output",
+    )
     if not isinstance(funcs, list):
         funcs = [funcs]
     funcs.sort(key=lambda x: x.kind)
     kinds = reduce(lambda x, y: x | y, (I.kind for I in funcs))
     if kinds & KIND_PERF:
-        o.add_option("-s", "--show_thresholds", action="store_true", dest="show_thresh",
-                     default=False,
-                     help="Only show the thresholds in use.")
-        o.add_option("-T", action="store", dest="load_thresh", metavar="FILE",
-                     help="Load threshold values from this file.")
+        o.add_option(
+            "-s",
+            "--show_thresholds",
+            action="store_true",
+            dest="show_thresh",
+            default=False,
+            help="Only show the thresholds in use.",
+        )
+        o.add_option(
+            "-T",
+            action="store",
+            dest="load_thresh",
+            metavar="FILE",
+            help="Load threshold values from this file.",
+        )
     LibIBOpts.setup(o)
     global lib
     if kinds & KIND_PERF:
@@ -487,8 +515,8 @@ def perform_single_check(argv, o, funcs):
         global thresh
         thresh = load_thresholds(args.load_thresh)
         if args.show_thresh:
-            for I in sorted(thresh.items()):
-                print("%s=%u" % I)
+            for item in sorted(thresh.items()):
+                print("{}={:d}".format(item))
             return True
         if len(values) < 1:
             raise CmdError("Got %u arguments but expected at least 1" % (len(values)))
@@ -522,32 +550,43 @@ def perform_single_check(argv, o, funcs):
             kwargs["desc"] = "lid %u port %u" % (ep_pinf.LID, values[1])
         else:
             kwargs["pinf"] = ep_pinf = pinf = umad.subn_get(IBA.SMPPortInfo, path)
-        kwargs["portGUID"] = portGUID = kwargs["ninf"].portGUID
-        nodeDesc = None
+        kwargs["port_guid"] = port_guid = kwargs["ninf"].portGUID
+        node_desc = None
         if kinds & KIND_PERF:
-            nodeDesc = IBA_describe.description(umad.subn_get(IBA.SMPNodeDescription, path).nodeString)
+            node_desc = IBA_describe.description(umad.subn_get(IBA.SMPNodeDescription, path).nodeString)
 
         def done_checks(kind, failed=False):
             if kind & KIND_PERF and warnings:
                 failed = True
             if lib.args.verbosity >= 1:
-                print((red("FAILED") if failed else
-                       blue("WARNING") if warnings else
-                       green("OK")))
-                for I in warnings:
-                    print(blue("#warn: %s" % (I)))
+                print(
+                    red("FAILED") if failed else blue("WARNING") if warnings else green("OK"),
+                )
+                for warn in warnings:
+                    print(blue("#warn: {}".format(warn)))
             else:
-                print_header(ninf, ep_pinf, nodeDesc, port_idx, failed,
-                             kind)
+                print_header(
+                    ninf,
+                    ep_pinf,
+                    node_desc,
+                    port_idx,
+                    failed,
+                    kind,
+                )
 
         try:
             printed = 0
             last_kind = 0
             for func in funcs:
                 if lib.args.verbosity >= 1 and not (printed & func.kind):
-                    print_header(ninf, ep_pinf, nodeDesc, port_idx, None,
-                                 func.kind)
-
+                    print_header(
+                        ninf,
+                        ep_pinf,
+                        node_desc,
+                        port_idx,
+                        None,
+                        func.kind,
+                    )
                 if printed != 0 and last_kind != func.kind:
                     done_checks(last_kind)
                 printed = printed | func.kind
@@ -556,9 +595,12 @@ def perform_single_check(argv, o, funcs):
                 if func.kind & (KIND_PERF | KIND_CLEAR) and "gpath" not in kwargs:
                     kwargs["gpath"] = gpath = getattr(path, "_cached_gmp_path", None)
                     if gpath is None:
-                        gpath = rdma.path.get_mad_path(umad, portGUID,
-                                                       dqpn=1,
-                                                       qkey=IBA.IB_DEFAULT_QP1_QKEY)
+                        gpath = rdma.path.get_mad_path(
+                            umad,
+                            port_guid,
+                            dqpn=1,
+                            qkey=IBA.IB_DEFAULT_QP1_QKEY,
+                        )
                         path._cached_gmp_path = gpath
                         kwargs["gpath"] = gpath
 
