@@ -212,7 +212,6 @@ def is_valid_attribute(attr) -> bool:
     for meth in methods:
         if getattr(attr, "MAD_{}".format(meth.upper()), None) is not None:
             return True
-    print("*", methods)
     return False
 
 
