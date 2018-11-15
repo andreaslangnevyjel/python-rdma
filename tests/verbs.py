@@ -122,11 +122,13 @@ class umad_self_test(unittest.TestCase):
             # Note: since both our QPs are on the same end port then the DLID
             # does not matter as far as forwarding is concerned, so the HCA
             # should replicate entirely based on the DLID.
-            mcpath = path_b.copy(DGID=IBA.GID("FF02::1"), DLID=0xC000, dqpn=0xFFFFFF,
-                                 traffic_class=0x89,
-                                 flow_label=0x1234,
-                                 hop_limit=23,
-                                 has_grh=True)
+            mcpath = path_b.copy(
+                DGID=IBA.GID("FF02::1"), DLID=0xC000, dqpn=0xFFFFFF,
+                traffic_class=0x89,
+                flow_label=0x1234,
+                hop_limit=23,
+                has_grh=True,
+            )
             qp_a.attach_mcast(mcpath)
             qp_b.attach_mcast(mcpath)
             qp_b.post_send(pool.make_send_wr(pool.pop(), 256, mcpath))
@@ -177,12 +179,17 @@ class umad_self_test(unittest.TestCase):
             print("SA reply path grh", repr(vmad.reply_path))
 
             # Get a LID path to our immediate peer
-            drpath = rdma.path.IBDRPath(self.end_port,
-                                        drPath="\0%c" % (self.end_port.port_id))
+            drpath = rdma.path.IBDRPath(
+                self.end_port,
+                drPath=b"\0%c" % (self.end_port.port_id),
+            )
             smad = rdma.satransactor.SATransactor(vmad)
-            peer_path = rdma.path.get_mad_path(vmad, smad.get_path_lid(drpath),
-                                               dqpn=1,
-                                               qkey=IBA.IB_DEFAULT_QP1_QKEY)
+            peer_path = rdma.path.get_mad_path(
+                vmad,
+                smad.get_path_lid(drpath),
+                dqpn=1,
+                qkey=IBA.IB_DEFAULT_QP1_QKEY,
+            )
             print("Got peer path", repr(peer_path))
 
             # Try some GMPs to the peer
@@ -252,16 +259,20 @@ class umad_self_test(unittest.TestCase):
             qp_b.post_send(pool.make_send_wr(0, 256, path_b))
 
             for wc in poller.iterwc(count=6, timeout=1):
+                # print("loop", wc.status)
                 if wc.status != ibv.IBV_WC_SUCCESS:
+                    # print(wc.status, wc.qp_num, qp_b.qp_num, ibv.IBV_WC_LOC_LEN_ERR)
                     if wc.qp_num == qp_b.qp_num:
                         print("Expect SEND WC error", ibv.WCError(wc, poller._cq))
                     else:
                         print("Expect RECV WC error", ibv.WCError(wc, poller._cq))
                     self.assertRaises(ibv.WCError, pool.finish_wcs, srq, wc)
                 else:
+                    # print(srq, wc)
                     pool.finish_wcs(srq, wc)
+                # print("*" * 10)
             self.assertFalse(poller.timedout)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

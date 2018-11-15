@@ -153,15 +153,15 @@ def clear_check(func):
     return func
 
 
-def get_perf(sched, path, ninf, portIdx, reset=False, select=0xFFFF):
+def get_perf(sched, path, ninf, port_idx, reset=False, select=0xFFFF):
     """Coroutine to get port counters."""
     cnts = IBA.PMPortCounters()
-    if portIdx is None:
+    if port_idx is None:
         cnts.portSelect = ninf.localPortNum
         if ninf.nodeType == IBA.NODE_SWITCH and cnts.portSelect == 0:
             cnts.portSelect = 1
     else:
-        cnts.portSelect = portIdx
+        cnts.portSelect = port_idx
 
     accumulate = False
     if cnts.portSelect == 0xFF:
@@ -225,7 +225,7 @@ def do_check_node(sched, path, portGUID, ninf, **kwargs):
 
 
 @port_check
-def do_check_port(sched, path, desc, ninf, pinf, portIdx, port, sbn, **kwargs):
+def do_check_port(sched, path, desc, ninf, pinf, port_idx, port, sbn, **kwargs):
     """Coroutine to do the checkport action"""
     # Figure out the max speed of both sides of the link if we have topology.
     max_speed = get_max(pinf.linkSpeedSupported)
@@ -243,7 +243,7 @@ def do_check_port(sched, path, desc, ninf, pinf, portIdx, port, sbn, **kwargs):
     checkNEQ(pinf, "LID", 0, desc=desc)
     checkNEQ(pinf, "masterSMLID", 0, desc=desc)
     if ninf.nodeType != IBA.NODE_SWITCH:
-        checkEQ(pinf, "localPortNum", portIdx, desc=desc)
+        checkEQ(pinf, "localPortNum", port_idx, desc=desc)
 
 
 @port_check
@@ -311,11 +311,11 @@ def do_check_duplicates(sched, path, desc, pinf, port, sbn, **kwargs):
 
 
 @perf_check
-def do_check_errors(sched, path, gpath, ninf, pinf, portGUID, portIdx, **kwargs):
+def do_check_errors(sched, path, gpath, ninf, pinf, portGUID, port_idx, **kwargs):
     """Coroutine to check the performance counters for a port."""
-    ret = yield get_perf(sched, gpath, ninf, portIdx)
+    ret = yield get_perf(sched, gpath, ninf, port_idx)
 
-    if portIdx == 255:
+    if port_idx == 255:
         desc = "lid %u all ports" % (pinf.LID)
     else:
         desc = "lid %u port %u" % (pinf.LID, ret.portSelect)
@@ -326,9 +326,9 @@ def do_check_errors(sched, path, gpath, ninf, pinf, portGUID, portIdx, **kwargs)
 
 
 @perf_check
-def do_show_counts(sched, path, gpath, ninf, pinf, portGUID, portIdx, **kwargs):
+def do_show_counts(sched, path, gpath, ninf, pinf, portGUID, port_idx, **kwargs):
     """Coroutine to display the performance counters for a port."""
-    ret = yield get_perf(sched, gpath, ninf, portIdx)
+    ret = yield get_perf(sched, gpath, ninf, port_idx)
 
     def do_print(field):
         n = field[0].upper() + field[1:]
@@ -336,7 +336,7 @@ def do_show_counts(sched, path, gpath, ninf, pinf, portGUID, portIdx, **kwargs):
             n = libib_name_map_perfquery.get(n, n)
         print("%s:%s%u" % (n, "." * (33 - len(n)), getattr(ret, field)))
 
-    if portIdx == 255:
+    if port_idx == 255:
         print("# Port counters: Lid %u all ports" % (pinf.LID))
     else:
         print("# Port counters: Lid %u port %u" % (pinf.LID, ret.portSelect))
@@ -347,35 +347,35 @@ def do_show_counts(sched, path, gpath, ninf, pinf, portGUID, portIdx, **kwargs):
 
 
 @clear_check
-def do_clear_counters(sched, path, gpath, ninf, pinf, portIdx, **kwargs):
+def do_clear_counters(sched, path, gpath, ninf, pinf, port_idx, **kwargs):
     """Coroutine to clear the performance counters for a port."""
-    yield get_perf(sched, gpath, ninf, portIdx, True)
+    yield get_perf(sched, gpath, ninf, port_idx, True)
 
 
 @clear_check
-def do_clear_error_counters(sched, path, gpath, ninf, portIdx, **kwargs):
+def do_clear_error_counters(sched, path, gpath, ninf, port_idx, **kwargs):
     """Coroutine to clear the error performance counters for a port."""
-    yield get_perf(sched, gpath, ninf, portIdx, True, 0xFFF)
+    yield get_perf(sched, gpath, ninf, port_idx, True, 0xFFF)
 
 
-def print_header(ninf, pinf, desc, portIdx, failed, kind):
+def print_header(ninf, pinf, desc, port_idx, failed, kind):
     if lib.args.verbosity >= 1 or failed or warnings:
         if desc:
             desc = " (%s) " % (IBA_describe.dstr(desc))
         else:
             desc = ' '
         if kind & KIND_PORT:
-            print("Port check lid %u%sport %u:" % (pinf.LID, desc, portIdx), end=' ')
+            print("Port check lid %u%sport %u:" % (pinf.LID, desc, port_idx), end=' ')
         if kind & KIND_PERF:
-            if portIdx == 0xFF:
+            if port_idx == 0xFF:
                 print("Error check lid %u%sall ports:" % (pinf.LID, desc), end=' ')
             else:
-                print("Error check lid %u%sport %u:" % (pinf.LID, desc, portIdx), end=' ')
+                print("Error check lid %u%sport %u:" % (pinf.LID, desc, port_idx), end=' ')
         if kind & KIND_CLEAR:
-            if portIdx == 0xFF:
+            if port_idx == 0xFF:
                 print("Clear counters lid %u%sall ports:" % (pinf.LID, desc), end=' ')
             else:
-                print("Clear counters lid %u%sport %u:" % (pinf.LID, desc, portIdx), end=' ')
+                print("Clear counters lid %u%sport %u:" % (pinf.LID, desc, port_idx), end=' ')
         if kind & KIND_NODE:
             if ninf.nodeType == IBA.NODE_SWITCH:
                 print("# Checking %s: nodeguid %s lid %s" % (
@@ -384,7 +384,7 @@ def print_header(ninf, pinf, desc, portIdx, failed, kind):
             else:
                 print("# Checking %s: nodeguid %s lid %s port %u" % (
                     IBA_describe.node_type(ninf.nodeType),
-                    ninf.nodeGUID, pinf.LID, portIdx))
+                    ninf.nodeGUID, pinf.LID, port_idx))
             print("Node check lid %u:" % (pinf.LID), end=' ')
         if failed is not None:
             print((red("FAILED") if failed else
@@ -439,9 +439,9 @@ def perform_single_check(argv, o, funcs):
         kwargs["port"] = None
         kwargs["ninf"] = ninf = umad.SubnGet(IBA.SMPNodeInfo, path)
         if kinds & (KIND_PERF | KIND_PORT):
-            kwargs["portIdx"] = portIdx = values[1]
+            kwargs["port_idx"] = port_idx = values[1]
         else:
-            portIdx = ninf.localPortNum
+            port_idx = ninf.localPortNum
 
         if kinds & KIND_PORT:
             kwargs["pinf"] = pinf = umad.SubnGet(IBA.SMPPortInfo, path, values[1])
@@ -467,7 +467,7 @@ def perform_single_check(argv, o, funcs):
                 for I in warnings:
                     print(blue("#warn: %s" % (I)))
             else:
-                print_header(ninf, ep_pinf, nodeDesc, portIdx, failed,
+                print_header(ninf, ep_pinf, nodeDesc, port_idx, failed,
                              kind)
 
         try:
@@ -475,7 +475,7 @@ def perform_single_check(argv, o, funcs):
             last_kind = 0
             for func in funcs:
                 if lib.args.verbosity >= 1 and not (printed & func.kind):
-                    print_header(ninf, ep_pinf, nodeDesc, portIdx, None,
+                    print_header(ninf, ep_pinf, nodeDesc, port_idx, None,
                                  func.kind)
 
                 if printed != 0 and last_kind != func.kind:
@@ -561,7 +561,7 @@ def perform_topo_check(argv, o, funcs):
         global thresh
         thresh = load_thresholds(args.load_thresh)
 
-    def run(path, port, portIdx, kind):
+    def run(path, port, port_idx, kind):
         node = port.parent
         ep = port.to_end_port()
         failed = False
@@ -575,8 +575,8 @@ def perform_topo_check(argv, o, funcs):
         kwargs["pinf"] = port.pinf
         kwargs["port"] = port
         kwargs["sbn"] = sbn
-        kwargs["portIdx"] = portIdx
-        kwargs["desc"] = "lid %u port %s" % (ep.LID, portIdx)
+        kwargs["port_idx"] = port_idx
+        kwargs["desc"] = "lid %u port %s" % (ep.LID, port_idx)
         kwargs["portGUID"] = portGUID = ep.portGUID
 
         if (args.only_up and
@@ -601,15 +601,15 @@ def perform_topo_check(argv, o, funcs):
                     yield func(sched, path, **kwargs)
         except (CmdError, rdma.RDMAError) as e:
             counts[cidx + 1] = counts[cidx + 1] + 1
-            sched.result = print_header(node.ninf, ep.pinf, node.desc, portIdx, True, kind)
+            sched.result = print_header(node.ninf, ep.pinf, node.desc, port_idx, True, kind)
             print(red("#error: %s" % (e)))
         else:
             failed = False
             if kind & KIND_PERF and warnings:
-                if portIdx != 0xFF:
+                if port_idx != 0xFF:
                     counts[cidx + 1] = counts[cidx + 1] + 1
                 failed = True
-            sched.result = print_header(node.ninf, ep.pinf, node.desc, portIdx, failed, kind)
+            sched.result = print_header(node.ninf, ep.pinf, node.desc, port_idx, failed, kind)
 
     counts = [0] * 8
     with lib.get_umad() as umad:

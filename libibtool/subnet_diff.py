@@ -126,8 +126,8 @@ def cmd_subnet_diff(argv, o):
     same_links = df[2].intersection(df[3])
 
     def link_prop(x, link):
-        portGUID, portIdx = link[0]
-        pinf = x.ports[portGUID].parent.ports[portIdx].pinf
+        portGUID, port_idx = link[0]
+        pinf = x.ports[portGUID].parent.ports[port_idx].pinf
         return (portGUID, (pinf.linkSpeedActive, pinf.linkWidthActive, link))
 
     df = diff_map(lambda x: (link_prop(x, I)

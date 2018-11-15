@@ -5,6 +5,7 @@ import collections
 import math
 import mmap
 import select
+from typing import Union
 
 import rdma.ibverbs as ibv
 import rdma.tools
@@ -32,14 +33,16 @@ class BufferPool(object):
     #: Number of buffers.
     count = 0
 
-    def __init__(self, pd, count, size):
+    def __init__(self, pd, count: int, size: int):
         """A :class:`rdma.ibverbs.MR` is created in *pd* with *count* buffers of
         *size* bytes."""
         self.count = count
         self.size = size
         self._mem = mmap.mmap(-1, count * size)
-        self._mr = pd.mr(self._mem, ibv.IBV_ACCESS_LOCAL_WRITE |
-                         ibv.IBV_ACCESS_LOCAL_WRITE)
+        self._mr = pd.mr(
+            self._mem,
+            ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_LOCAL_WRITE,
+        )
         self._buffers = collections.deque(range(count), count)
         self.RECV_FLAG = 1 << (int(math.log(count, 2)) + 1)
         self.BUF_ID_MASK = self.RECV_FLAG - 1
@@ -57,7 +60,7 @@ class BufferPool(object):
         """Return a new buffer index."""
         return self._buffers.pop()
 
-    def post_recvs(self, qp, count):
+    def post_recvs(self, qp, count: int):
         """Post *count* buffers for receive to *qp*, which may be any object
         with a `post_recv` method."""
         if count == 0:
@@ -104,29 +107,33 @@ class BufferPool(object):
                 rq = wc.wr_id & self.RECV_FLAG
             raise ibv.WCError(err, None, obj=qp, is_rq=rq)
 
-    def make_send_wr(self, buf_idx, buf_len, path=None):
+    def make_send_wr(self, buf_idx: int, buf_len: int, path=None):
         """Return a :class:`rdma.ibverbs.send_wr` for *buf_idx* and path.
         If *path* is `None` then the wr does not contain path information
         (eg for connected QPs)"""
         if path is not None:
-            return ibv.send_wr(wr_id=buf_idx,
-                               sg_list=self.make_sge(buf_idx, buf_len),
-                               opcode=ibv.IBV_WR_SEND,
-                               send_flags=ibv.IBV_SEND_SIGNALED,
-                               ah=self._mr.pd.ah(path),
-                               remote_qpn=path.dqpn,
-                               remote_qkey=path.qkey)
+            return ibv.send_wr(
+                wr_id=buf_idx,
+                sg_list=self.make_sge(buf_idx, buf_len),
+                opcode=ibv.IBV_WR_SEND,
+                send_flags=ibv.IBV_SEND_SIGNALED,
+                ah=self._mr.pd.ah(path),
+                remote_qpn=path.dqpn,
+                remote_qkey=path.qkey,
+            )
         else:
-            return ibv.send_wr(wr_id=buf_idx,
-                               sg_list=self.make_sge(buf_idx, buf_len),
-                               opcode=ibv.IBV_WR_SEND,
-                               send_flags=ibv.IBV_SEND_SIGNALED)
+            return ibv.send_wr(
+                wr_id=buf_idx,
+                sg_list=self.make_sge(buf_idx, buf_len),
+                opcode=ibv.IBV_WR_SEND,
+                send_flags=ibv.IBV_SEND_SIGNALED,
+            )
 
     def make_sge(self, buf_idx, buf_len):
         """Return a :class:`rdma.ibverbs.SGE` for *buf_idx*."""
         return self._mr.sge(buf_len, buf_idx * self.size)
 
-    def copy_from(self, buf_idx, offset=0, length=0xFFFFFFFF):
+    def copy_from(self, buf_idx: int, offset: int=0, length=0xFFFFFFFF):
         """Return a copy of buffer *buf_idx*. *buf_idx* may be a *wr_id*.
 
         :rtype: :class:`bytearray`"""
@@ -163,7 +170,7 @@ class CQPoller(object):
     #: be altered while iterating.
     wakeat = None
 
-    def __init__(self, cq, async_events=True, solicited_only=False):
+    def __init__(self, cq, async_events: bool=True, solicited_only: bool=False):
         """*cq* is the completion queue to read work completions from.
         If the *cq* does not have a completion channel then this will
         spin loop on *cq* otherwise it sleeps on the completion channel.
@@ -184,7 +191,7 @@ class CQPoller(object):
     def __iter__(self):
         return self.iterwc(self)
 
-    def sleep(self, wakeat):
+    def sleep(self, wakeat: float):
         """Go to sleep until the cq gets a completion. *wakeat* is the
         value of :func:`rdma.tools.clock_monotonic` after which the function
         returns `None`. Returns `True` if the completion channel triggered.
@@ -218,7 +225,7 @@ class CQPoller(object):
                     ev = self._ctx.get_async_event()
                     self._ctx.handle_async_event(ev)
 
-    def iterwc(self, count=None, timeout=None, wakeat=None):
+    def iterwc(self, count: int=None, timeout: Union[float, int]=None, wakeat=None):
         """Generator that returns work completions from the CQ. If not `None`
         at most *count* wcs will be returned. *timeout* is the number of
         seconds this function can run for, and *wakeat* is the value of
@@ -226,14 +233,16 @@ class CQPoller(object):
 
         :rtype: :class:`rdma.ibverbs.wc`"""
         self.timedout = False
-        self.wakeat = wakeat
         if timeout is not None:
             self.wakeat = rdma.tools.clock_monotonic() + timeout
-        limit = -1
+        else:
+            self.wakeat = wakeat
         if count is not None:
             limit = count
+        else:
+            limit = -1
         while True:
-            if limit == 0:
+            if not limit:
                 return
             ret = self._cq.poll(1)
             while not ret:
@@ -242,7 +251,7 @@ class CQPoller(object):
                 if not ret and self.sleep(self.wakeat) is None:
                     self.timedout = True
                     return
-            for I in ret:
-                yield I
+            for r_val in ret:
+                yield r_val
                 if limit > 0:
                     limit = limit - 1

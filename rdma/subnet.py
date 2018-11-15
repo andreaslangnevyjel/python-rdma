@@ -27,7 +27,7 @@ class Node(object):
 
     def get_port_nc(self, port_idx: int):
         """
-        Return the port for index *portIdx*, or `None` if it does not
+        Return the port for index *port_idx*, or `None` if it does not
         exist.
         """
         try:
@@ -40,7 +40,7 @@ class Node(object):
         return None
 
     def get_port(self, port_idx: int):
-        """Return the port for index *portIdx*."""
+        """Return the port for index *port_idx*."""
         try:
             port = self.ports[port_idx]
             if port is None:
@@ -57,7 +57,7 @@ class Node(object):
         return port
 
     def set_port(self, port_idx: int, port):
-        """Store *port* in *portIdx* for :attr:`ports`."""
+        """Store *port* in *port_idx* for :attr:`ports`."""
         try:
             self.ports[port_idx] = port
         except TypeError:
@@ -86,7 +86,7 @@ class Node(object):
         """Iterate over all ports. This only returns ports that are in the
         network, ie ports on a CA that are not reachable are not returned.
 
-        :rtype: generator of tuple(:class:`Port`,portIdx)"""
+        :rtype: generator of tuple(:class:`Port`,port_idx)"""
         if self.ninf is None:
             num = len(self.ports)
         else:
@@ -176,7 +176,7 @@ class Switch(Node):
         network, ie ports on a CA that are not reachable are not returned.  For
         switches all ports are always in the network.
 
-        :rtype: generator of tuple(:class:`Port`,portIdx)"""
+        :rtype: generator of tuple(:class:`Port`,port_idx)"""
         if self.ninf is None:
             return ((self.get_port(I), I) for I in range(0, len(self.ports)))
         else:
@@ -211,7 +211,7 @@ class Switch(Node):
             if isinstance(sched, rdma.satransactor.SATransactor):
                 yield self._get_LFDB_SA(sched, path)
             else:
-                for idx in range(len(self.lfdb) / 64):
+                for idx in range(int(len(self.lfdb) / 64)):
                     yield self._get_LFDB(sched, idx, path)
         if do_mfdb:
             self.mfdb = [0] * ((self.swinf.multicastFDBCap + 31) // 32 * 32)
@@ -219,7 +219,7 @@ class Switch(Node):
                 yield self._get_MFDB_SA(sched, path)
             else:
                 positions = (len(self.ports) + 15) // 16
-                for idx in range(len(self.mfdb) / 32):
+                for idx in range(int(len(self.mfdb) / 32)):
                     for pos in range(0, positions):
                         yield self._get_MFDB(sched, idx, pos, path)
 
@@ -391,13 +391,13 @@ class Subnet(object):
             self.paths[end_port] = path
         return path
 
-    def advance_dr(self, path, portIdx):
+    def advance_dr(self, path, port_idx):
         """Create a new :class:`~rdma.path.IBDRPath` that goes to the
         device connected to *port_idx* of *path*."""
         # LID route to a HCA followed by DR route after does not work, in the local
         # host case I think this is a kernel bug, but other cases seem to be as the
         # spec intends.
-        drPath = getattr(path, "drPath", b"\0") + chr(portIdx).encode("ascii")
+        drPath = getattr(path, "drPath", b"\0") + chr(port_idx).encode("ascii")
         if len(drPath) > 64:
             raise rdma.RDMAError("DR path length limit exceeded, %r" % (drPath))
         if (path.DLID == path.end_port.lid and
@@ -423,12 +423,12 @@ class Subnet(object):
                 # If we are DR'ing from a non-CA then the only possible legal
                 # thing is to go back out the same port. Dropping the last entry
                 # from the DR list is the same thing.
-                if len(drPath) >= 3 and ep.port_id == portIdx:
+                if len(drPath) >= 3 and ep.port_id == port_idx:
                     ret.drPath = drPath[:-2]
                 else:
                     # Hum, we know this will fail, try and fix it up with our topology
                     # database..
-                    np = self.topology.get(ep.parent.get_port(portIdx))
+                    np = self.topology.get(ep.parent.get_port(port_idx))
                     if np is not None:
                         ret = self.get_path_smp(path, np.to_end_port())
 
@@ -443,7 +443,7 @@ class Subnet(object):
     def link_end_port(
         self,
         port,
-        portIdx=None,
+        port_idx: int=None,
         nodeGUID=None,
         portGUID=None,
         path=None,
@@ -452,7 +452,7 @@ class Subnet(object):
     ):
         """Use the provided information about *port* to update the database.
 
-        Note: For switches *portIdx* must be 0."""
+        Note: For switches *port_idx* must be 0."""
         assert (port == port.to_end_port())
         if (LID is None and path is not None and
             not isinstance(path, rdma.path.IBDRPath)):
@@ -460,8 +460,8 @@ class Subnet(object):
 
         node = port.parent
 
-        if portIdx is not None:
-            node.set_port(portIdx, port)
+        if port_idx is not None:
+            node.set_port(port_idx, port)
         if portGUID is not None and port.portGUID is None:
             port.portGUID = portGUID
             self.ports[portGUID] = port
@@ -485,7 +485,7 @@ class Subnet(object):
 
     def search_end_port(
         self,
-        portIdx=None,
+        port_idx: int=None,
         portGUID=None,
         nodeGUID=None,
         path=None,
@@ -495,7 +495,7 @@ class Subnet(object):
         """Return a :class:`Port` instance associated with the supplied
         information if it exists or `None`.
 
-        Note: For switches *portIdx* must be 0."""
+        Note: For switches *port_idx* must be 0."""
         # Note: This is in order of accuracy, LID matching is only accurate
         # if the subnet is properly configured and LIDs assigned correctly.
         port = None
@@ -515,8 +515,8 @@ class Subnet(object):
         if node is not None:
             if isinstance(node, Switch):
                 return node.get_port(0)
-            if portIdx is not None:
-                return node.get_port(portIdx)
+            if port_idx is not None:
+                return node.get_port(port_idx)
 
         if (LID is None and path is not None and
             not isinstance(path, rdma.path.IBDRPath)):
@@ -533,7 +533,7 @@ class Subnet(object):
         and switch node ports before we know they are switches. If this happens the
         database needs updating so that :attr:`lids` and :attr:`ports` refer to
         switch port 0, not arbitrary switch ports. NOTE: The rule is that all
-        calls everywhere must use accurate *portIdx* values!. Doing this should be
+        calls everywhere must use accurate *port_idx* values!. Doing this should be
         avoided.. """
         if node.ports[0] is None:
             node.ports[0] = Port(node)
@@ -588,7 +588,7 @@ class Subnet(object):
                 # better message.
                 raise rdma.RDMAError("Node changed type.")
         if isinstance(node, Switch):
-            kwargs["portIdx"] = 0
+            kwargs["port_idx"] = 0
             port = node.get_port(0)
         if port is None:
             port = Port(node)
@@ -602,10 +602,10 @@ class Subnet(object):
         the appropriate information from both is integrated into the database.
 
         :rtype: tuple(:class:`Node`, :class:`Port`)"""
-        portIdx = ninf.localPortNum
+        port_idx = ninf.localPortNum
         if ninf.nodeType == IBA.NODE_SWITCH:
             type_ = Switch
-            portIdx = 0
+            port_idx = 0
         elif ninf.nodeType == IBA.NODE_CA:
             type_ = CA
         elif ninf.nodeType == IBA.NODE_ROUTER:
@@ -615,7 +615,7 @@ class Subnet(object):
 
         np = self.get_node(
             type_,
-            portIdx=portIdx,
+            port_idx=port_idx,
             nodeGUID=ninf.nodeGUID,
             portGUID=ninf.portGUID,
             path=path,
@@ -629,7 +629,7 @@ class Subnet(object):
         self,
         port_select=None,
         localPortNum=None,
-        portIdx=None,
+        port_idx=None,
         **kwargs,
     ):
         """Return the :class:`Port` object for an arbitrary port (ie a non-end
@@ -637,21 +637,21 @@ class Subnet(object):
         available during MAD processing, the main purpose of this function is
         to disambiguate what requested port 0 means.
 
-        If at all possible call this with *portIdx* set correctly and nothing
+        If at all possible call this with *port_idx* set correctly and nothing
         else. Otherwise set *localPortNum* to the value returned by the MAD.
 
         :rtype: :class:`Port`
         :raises ValueError: If the node type is needed but not known."""
-        if portIdx is None and port_select != 0:
-            portIdx = port_select
+        if port_idx is None and port_select != 0:
+            port_idx = port_select
 
-        if portIdx is not None:
-            if portIdx == 0:
-                # A portIdx of 0 unambiguously refers to a switch end port, but callers
+        if port_idx is not None:
+            if port_idx == 0:
+                # A port_idx of 0 unambiguously refers to a switch end port, but callers
                 # should not rely on this..
-                node, port = self.get_node(Switch, portIdx=portIdx, **kwargs)
+                node, port = self.get_node(Switch, port_idx=port_idx, **kwargs)
             else:
-                node, port = self.get_node(Node, portIdx=portIdx, **kwargs)
+                node, port = self.get_node(Node, port_idx=port_idx, **kwargs)
         else:
             # Okay, requesting port 0.. This is either localPortNum or switch port 0,
             # or unknowable.
@@ -662,19 +662,19 @@ class Subnet(object):
             node = port.parent
 
             if isinstance(node, Switch):
-                portIdx = 0
+                port_idx = 0
             else:
-                portIdx = localPortNum
-            if portIdx is None:
+                port_idx = localPortNum
+            if port_idx is None:
                 self.link_end_port(port, **kwargs)
                 return port
 
         self.link_end_port(port, **kwargs)
-        return node.get_port(portIdx)
+        return node.get_port(port_idx)
 
-    def get_port_pinf(self, pinf, port_select=None, portIdx=None, path=None, LID=None):
+    def get_port_pinf(self, pinf, port_select=None, port_idx=None, path=None, LID=None):
         """Return the :class:`Port` object that holds the associated *pinf*. This
-        function requires a correct *portIdx* if the node type is not known.
+        function requires a correct *port_idx* if the node type is not known.
 
         :rtype: :class:`Port`"""
         # Note, pinf.LID is not strongly defined by IBA for external switch
@@ -688,7 +688,7 @@ class Subnet(object):
         port = self.get_port(
             port_select=port_select,
             localPortNum=pinf.localPortNum,
-            portIdx=portIdx, path=path,
+            port_idx=port_idx, path=path,
             LID=LID,
             LMC=LMC,
         )
@@ -711,7 +711,7 @@ class Subnet(object):
         """Iterate over all ports. This only returns ports that are in the network,
         ie ports on a CA that are not reachable are not returned.
 
-        :rtype: generator of tuple(:class:`Port`,portIdx)"""
+        :rtype: generator of tuple(:class:`Port`,port_idx)"""
         for I in self.all_nodes:
             for J in I.iterports():
                 yield J

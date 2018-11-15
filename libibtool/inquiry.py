@@ -4,6 +4,7 @@
 
 import copy
 import struct
+import codecs
 
 import rdma.IBA as IBA
 import rdma.IBA_describe as IBA_describe
@@ -334,14 +335,17 @@ def cmd_smpdump(argv, o):
             umad.reply_fmt.printer(sys.stdout)
         else:
             assert (len(res.buf) % 4 == 0)
-            ret = res.buf.encode("hex")
-            for I in range(len(ret) / 4):
-                print(ret[I * 4:I * 4 + 4], end=' ')
-                if (I + 1) % 8 == 0:
+            ret = codecs.encode(res.buf, "hex")
+
+            for entry in range(int(len(ret) / 4)):
+                print(ret[entry * 4:entry * 4 + 4], end=' ')
+                if (entry + 1) % 8 == 0:
                     print()
-            if (I + 1) % 8 != 0:
+            if (entry + 1) % 8 != 0:
                 print()
-            print("SMP status: 0x%04x" % (umad.reply_fmt.status | (umad.reply_fmt.D << 15)))
+            print("SMP status: 0x{:04x}".format(
+                umad.reply_fmt.status | (umad.reply_fmt.D << 15)),
+            )
     return lib.done()
 
 
@@ -360,23 +364,23 @@ def cmd_ibportstate(argv, o):
     with lib.get_umad_for_target(values[0]) as umad:
         path = lib.path
 
-        portIdx = values[1]
+        port_idx = values[1]
         if isinstance(umad, rdma.satransactor.SATransactor):
-            pinf = umad._parent.SubnGet(IBA.SMPPortInfo, path, portIdx)
+            pinf = umad._parent.SubnGet(IBA.SMPPortInfo, path, port_idx)
         else:
-            pinf = umad.SubnGet(IBA.SMPPortInfo, path, portIdx)
+            pinf = umad.SubnGet(IBA.SMPPortInfo, path, port_idx)
 
         if isinstance(path, rdma.path.IBDRPath):
             peer_path = path.copy()
-            peer_path.drPath += chr(portIdx)
+            peer_path.drPath += chr(port_idx)
         else:
             peer_path = rdma.path.IBDRPath(path.end_port,
                                            SLID=path.SLID,
                                            drSLID=path.SLID,
                                            DLID=path.DLID,
-                                           drPath="\0" + chr(portIdx))
+                                           drPath="\0" + chr(port_idx))
         if pinf.portState != IBA.PORT_STATE_DOWN:
-            peer_pinf = umad.SubnGet(IBA.SMPPortInfo, peer_path, portIdx)
+            peer_pinf = umad.SubnGet(IBA.SMPPortInfo, peer_path, port_idx)
         else:
             peer_pinf = None
 
@@ -398,16 +402,16 @@ def cmd_ibportstate(argv, o):
             pinf.printer(sys.stdout, **lib.format_args)
         elif values[2] == "enable" or values[2] == "reset":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_POLLING
-            umad.SubnSet(mpinf, path, portIdx)
+            umad.SubnSet(mpinf, path, port_idx)
         elif values[2] == "disable":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_DISABLED
-            umad.SubnSet(mpinf, path, portIdx)
+            umad.SubnSet(mpinf, path, port_idx)
         elif values[2] == "speed":
             mpinf.linkSpeedEnabled = values[3]
-            umad.SubnSet(mpinf, path, portIdx)
+            umad.SubnSet(mpinf, path, port_idx)
         elif values[2] == "width":
             mpinf.linkWidthEnabled = values[3]
-            umad.SubnSet(mpinf, path, portIdx)
+            umad.SubnSet(mpinf, path, port_idx)
         else:
             raise CmdError("Operation %r is not known" % (values[3]))
     return lib.done()
@@ -505,10 +509,10 @@ def cmd_decode_mad(argv, o):
         inp = inp.replace(" ", "").replace("\n", "").replace("\r", "").replace("\t", "")
         if o.verbosity >= 2:
             print("Input HEX value is:\n  ", repr(inp))
-        bytes = inp.decode("hex")
+        bytes = codecs.decode(inp, "hex")
     bytes = bytes[args.offset:]
     if o.verbosity >= 2:
-        print(bytes.encode("hex"))
+        print(codecs.encode(bytes, "hex"))
 
     if args.umad:
         bytes = decode_umad(o, bytes)

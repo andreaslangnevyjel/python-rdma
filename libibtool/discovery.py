@@ -41,7 +41,7 @@ def summary(sched, sbn, node):
         if pinf is None:
             path = sbn.get_path_smp(sched, zport)
             pinf = yield sched.SubnGet(IBA.SMPPortInfo, path)
-            sbn.get_port_pinf(pinf, path=path, portIdx=0)
+            sbn.get_port_pinf(pinf, path=path, port_idx=0)
         print('%-8s: %s ports %u "%s" base port 0 lid %u lmc %u' % (
             "Switch", node.ninf.nodeGUID, node.ninf.numPorts,
             IBA_describe.dstr(node.desc),

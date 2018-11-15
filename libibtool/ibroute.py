@@ -272,9 +272,9 @@ def cmd_ibfindnodesusing(argv, o):
             ppath = sbn.get_path_smp(sched, pport.to_end_port())
             sched.run(queue=pnode.get_switch_inf(sched, ppath))
             sched.run(queue=pnode.get_switch_fdb(sched, True, False, ppath))
-            pportIdx = pnode.ports.index(pport)
+            pport_idx = pnode.ports.index(pport)
             LIDs.update(LID for LID, port in enumerate(pnode.lfdb)
-                        if port == pportIdx)
+                        if port == pport_idx)
 
         sched.run(queue=rdma.discovery.subnet_ninf_LIDS_SMP(sched, sbn, list(LIDs),
                                                             True))
@@ -296,6 +296,6 @@ def cmd_ibfindnodesusing(argv, o):
         if not isinstance(pnode, rdma.subnet.Switch):
             print(" ** Not a switch **")
         else:
-            display_nodes(LID for LID, port in enumerate(pnode.lfdb) if port == pportIdx)
+            display_nodes(LID for LID, port in enumerate(pnode.lfdb) if port == pport_idx)
 
     return lib.done()

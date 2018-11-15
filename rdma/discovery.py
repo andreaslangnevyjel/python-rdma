@@ -51,7 +51,7 @@ def subnet_swinf_SA(sched, sbn):
     if res:
         sbn.set_max_lid(max(I.LID for I in res))
     for I in res:
-        np = sbn.get_node(type_=rdma.subnet.Switch, portIdx=0, LID=I.LID)
+        np = sbn.get_node(type_=rdma.subnet.Switch, port_idx=0, LID=I.LID)
         np[0].swinf = I.switchInfo
     sbn.loaded.add("all_SwitchInfo")
 
@@ -65,7 +65,7 @@ def _subnet_fill_LIDs_SA(sched, sbn, LMC):
         sbn.set_max_lid(max(I.endportLID for I in res))
     for I in res:
         assert I.endportLID == I.portInfo.LID
-        sbn.get_port_pinf(pinf, portIdx=I.portNum)
+        sbn.get_port_pinf(pinf, port_idx=I.portNum)
 
 
 def subnet_fill_LIDs_SA(sched, sbn):
@@ -108,7 +108,7 @@ def subnet_pinf_SA(sched, sbn):
 
     res = yield sched.SubnAdmGetTable(IBA.SAPortInfoRecord)
     for I in res:
-        sbn.get_port_pinf(I.portInfo, portIdx=I.portNum, LID=I.endportLID)
+        sbn.get_port_pinf(I.portInfo, port_idx=I.portNum, LID=I.endportLID)
     sbn.loaded.add("all_PortInfo")
     sbn.loaded.add("all_LIDs")
 
@@ -236,19 +236,19 @@ class _SubnetTopo(object):
         if get_desc:
             self.done_desc = set()
 
-    def sched_node(self, aport, path, portIdx, depth):
+    def sched_node(self, aport, path, port_idx, depth):
         """Queue reading the node attached to *aport*."""
         bucket = self.todo[depth]
-        bucket.todo_nodes.append((aport, path, portIdx))
+        bucket.todo_nodes.append((aport, path, port_idx))
         if not bucket.running:
             bucket.running = True
             bucket.ctx = self.sched.mqueue(self.do_todo(bucket.ctx, bucket,
                                                         depth))
 
-    def sched_ports(self, node, path, portIdx, depth):
+    def sched_ports(self, node, path, port_idx, depth):
         """Queue reading the PortInfos attached to node."""
         bucket = self.todo[depth]
-        bucket.todo_ports.append((node, path, portIdx, depth))
+        bucket.todo_ports.append((node, path, port_idx, depth))
         if not bucket.running:
             bucket.running = True
             bucket.ctx = self.sched.mqueue(self.do_todo(bucket.ctx, bucket,
@@ -271,7 +271,7 @@ class _SubnetTopo(object):
             last = None
             while bucket.todo_nodes or bucket.todo_ports:
                 if bucket.todo_nodes:
-                    aport, path, portIdx = bucket.todo_nodes.pop()
+                    aport, path, port_idx = bucket.todo_nodes.pop()
                     peer = self.sbn.topology.get(aport)
                     if (peer is not None and peer.parent is not None and
                         peer.parent.ninf is not None):
@@ -280,18 +280,18 @@ class _SubnetTopo(object):
                     # Defer computing the next hop path for as long as
                     # possible to give the best chance of becoming a LID
                     # routed path.
-                    npath = self.sbn.advance_dr(path, portIdx)
+                    npath = self.sbn.advance_dr(path, port_idx)
                     last = yield self.do_node(npath, depth, aport)
 
                 if bucket.todo_ports:
-                    node, path, portIdx, depth = bucket.todo_ports.pop()
-                    r = ((portIdx,) if portIdx is not None else
+                    node, path, port_idx, depth = bucket.todo_ports.pop()
+                    r = ((port_idx,) if port_idx is not None else
                          list(range(0, node.ninf.numPorts + 1)))
-                    for portIdx in r:
-                        aport = node.get_port(portIdx)
+                    for port_idx in r:
+                        aport = node.get_port(port_idx)
                         if aport.pinf is not None:
                             continue
-                        yield self.do_port(path, node, aport, portIdx, depth)
+                        yield self.do_port(path, node, aport, port_idx, depth)
 
                     # Get the description too, we do this after
                     # the ports so it has a better chance of being LID
@@ -308,11 +308,11 @@ class _SubnetTopo(object):
         # finish.
         yield old_ctx
 
-    def do_port(self, path, node, aport, portIdx, depth):
+    def do_port(self, path, node, aport, port_idx, depth):
         """Coroutine to get a :class:`~rdma.IBA.SMPPortInfo` and schedule
         scanning the attached node, if applicable."""
-        pinf = yield self.sched.SubnGet(IBA.SMPPortInfo, path, portIdx)
-        aport = self.sbn.get_port_pinf(pinf, path=path, portIdx=portIdx)
+        pinf = yield self.sched.SubnGet(IBA.SMPPortInfo, path, port_idx)
+        aport = self.sbn.get_port_pinf(pinf, path=path, port_idx=port_idx)
 
         if self.lid_route and isinstance(path, rdma.path.IBDRPath):
             # The first pinf we get for the path with a LID transforms it into
@@ -327,10 +327,10 @@ class _SubnetTopo(object):
                 path._cached_subnet_end_port = tmp
                 delattr(path, "drPath")
 
-        if pinf.portState == IBA.PORT_STATE_DOWN or portIdx == 0 or aport in self.sbn.topology:
+        if pinf.portState == IBA.PORT_STATE_DOWN or port_idx == 0 or aport in self.sbn.topology:
             return
 
-        self.sched_node(aport, path, portIdx, depth + 1)
+        self.sched_node(aport, path, port_idx, depth + 1)
 
     def do_node(self, path, depth: int=0, peer=None):
         """Coroutine to get the :class:`~rdma.IBA.SMPNodeInfo` and scan all the

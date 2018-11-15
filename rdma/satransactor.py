@@ -68,9 +68,11 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         *path* is directed route. This must be performed when using directed
         route paths with asynchronous MAD transactors.
         """
-        if (not isinstance(path, rdma.path.IBDRPath) or
+        if (
+            not isinstance(path, rdma.path.IBDRPath) or
             path.drDLID != IBA.LID_PERMISSIVE or
-            getattr(path, "_cached_resolved_dlid", None) is not None):
+            getattr(path, "_cached_resolved_dlid", None) is not None
+        ):
             self._parent.result = self.get_path_lid(path)
             return
 
@@ -80,9 +82,9 @@ class SATransactor(rdma.madtransactor.MADTransactor):
 
         # Use the SA to resolve the DR path to a LID.
         req = IBA.ComponentMask(IBA.SALinkRecord())
-        for I in path.drPath[1:]:
+        for _part in path.drPath[1:]:
             req.fromLID = start_lid
-            req.fromPort = I
+            req.fromPort = _part
             rep = yield self._parent.SubnAdmGet(req)
             start_lid = rep.toLID
         path._cached_resolved_dlid = start_lid

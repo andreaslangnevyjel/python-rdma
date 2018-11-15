@@ -298,10 +298,11 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
             try:
                 rc = self.dev.readinto(buf)
             except IOError as err:
+                print(buf, type(buf), len(buf))
                 if err.errno == errno.ENOSPC:
                     # Hmm.. Must be RMPP.. Resize the buffer accordingly.
                     rmpp_data2 = struct.unpack_from(">L", bytes(buf), 32)
-                    buf = bytearray(min(len(buf) * 2, rmpp_data2))
+                    buf = bytearray(min(len(buf) * 2, rmpp_data2[0]))
                     continue
                 raise
 

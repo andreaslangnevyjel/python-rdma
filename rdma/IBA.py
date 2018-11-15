@@ -254,7 +254,8 @@ class GUID(bytes):
             s = codecs.decode(("%016x" % (s)), "hex")
             raw = True
         if raw:
-            print(len(s))
+            if len(s) != 8:
+                print(len(s), s, type(s))
             assert (len(s) == 8)
             # print(cls, s, type(s), len(s), "*", s, "*", [ord(x) for x in s])
             if isinstance(s, str):
@@ -263,7 +264,7 @@ class GUID(bytes):
                 return bytes.__new__(cls, s)
         else:
 
-            v = ''.join(I.zfill(4) for I in s.strip().split(':'))
+            v = "".join(_part.zfill(4) for _part in s.strip().split(':'))
             if len(v) != 16:
                 raise ValueError("%r is not a valid GUID" % (s))
             try:
@@ -293,7 +294,7 @@ class GUID(bytes):
         return int(bytes.__str__(self).encode("hex"), 16)
 
     def __reduce__(self) -> Tuple:
-        return GUID, (bytes.__str__(self), True)
+        return GUID, ([x for x in self], True)
 
 
 #: All zeros GUID value.
@@ -501,8 +502,10 @@ class ComponentMask(object):
 
 
 def const_str(prefix, value, with_int: int=False, me=sys.modules[__name__]) -> str:
-    """Generalized constant integer to string that uses introspection
-    to figure it out."""
+    """
+    Generalized constant integer to string that uses introspection
+    to figure it out.
+    """
     for k, v in me.__dict__.items():
         if k.startswith(prefix):
             try:

@@ -3007,13 +3007,27 @@ class SAInformInfoRecord(rdma.binstruct.BinStruct):
 
 class SALinkRecord(rdma.binstruct.BinStruct):
     """Inter-node linkage information (section 15.2.5.13)"""
-    __slots__ = ('fromLID', 'fromPort', 'toPort', 'toLID', 'reserved_48')
+    __slots__ = (
+        "fromLID", "fromPort", "toPort", "toLID", "reserved_48",
+    )
     MAD_LENGTH = 8
     MAD_ATTRIBUTE_ID = 0x20
     MAD_SUBNADMGET = 0x1  # MAD_METHOD_GET
     MAD_SUBNADMGETTABLE = 0x12  # MAD_METHOD_GET_TABLE
-    COMPONENT_MASK = {'fromLID': 0, 'fromPort': 1, 'toPort': 2, 'toLID': 3, 'reserved_48': 4}
-    MEMBERS = [('fromLID', 16, 1), ('fromPort', 8, 1), ('toPort', 8, 1), ('toLID', 16, 1), ('reserved_48', 16, 1)]
+    COMPONENT_MASK = {
+        "fromLID": 0,
+        "fromPort": 1,
+        "toPort": 2,
+        "toLID": 3,
+        "reserved_48": 4,
+    }
+    MEMBERS = [
+        ("fromLID", 16, 1),
+        ("fromPort", 8, 1),
+        ("toPort", 8, 1),
+        ("toLID", 16, 1),
+        ("reserved_48", 16, 1),
+    ]
 
     def zero(self):
         self.fromLID = 0
@@ -3022,13 +3036,26 @@ class SALinkRecord(rdma.binstruct.BinStruct):
         self.toLID = 0
         self.reserved_48 = 0
 
-    def pack_into(self, buffer, offset=0):
-        struct.pack_into('>HBBHH', buffer, offset + 0, self.fromLID, self.fromPort, self.toPort, self.toLID,
-                         self.reserved_48)
+    def pack_into(self, buffer, offset: int=0):
+        # print(self.toPort, self.toLID, self.reserved_48, self.fromLID, self.fromPort)
+        # print(type(self.toPort), type(self.toLID), type(self.reserved_48), type(self.fromLID), type(self.fromPort))
+        struct.pack_into(
+            ">HBBHH",
+            buffer,
+            offset + 0,
+            self.fromLID,
+            self.fromPort,
+            self.toPort,
+            self.toLID,
+            self.reserved_48,
+        )
 
-    def unpack_from(self, buffer, offset=0):
-        (self.fromLID, self.fromPort, self.toPort, self.toLID, self.reserved_48,) = struct.unpack_from('>HBBHH', buffer,
-                                                                                                       offset + 0)
+    def unpack_from(self, buffer, offset: int=0):
+        self.fromLID, self.fromPort, self.toPort, self.toLID, self.reserved_48 = struct.unpack_from(
+            ">HBBHH",
+            buffer,
+            offset + 0,
+        )
 
 
 class SAGUIDInfoRecord(rdma.binstruct.BinStruct):

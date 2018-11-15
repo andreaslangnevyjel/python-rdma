@@ -4,6 +4,7 @@
 
 import abc
 import struct
+import codecs
 from typing import Tuple
 
 uint32_t = struct.Struct('>L')
@@ -32,7 +33,7 @@ def unpack_array8(buf, offset: int, mlen: int, count: int, inp):
     """Starting at *offset* in *buf* assign *count* entries each *mlen* bits
     wide to indexes in *inp*."""
     # Sigh, so much overhead..
-    val = int(buf[offset:offset + (mlen * count) / 8].encode("hex"), 16)
+    val = int(codecs.encode(buf[offset:offset + int((mlen * count) / 8)], "hex"), 16)
     for idx in range(count):
         inp[idx] = (val >> ((count - 1 - idx) * mlen)) & ((1 << mlen) - 1)
     return
@@ -117,7 +118,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def pack_into(self, buf, offset: inta=0):
+    def pack_into(self, buf, offset: int=0):
         """Overridden in derived classes. Compact this instance into the
         :class:`bytearray` *buf* starting at *offset*."""
         pass

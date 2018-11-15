@@ -28,12 +28,12 @@ def cmd_init_all_ports(argv, o):
         # We borrow the internal topology scanner to make this go
         # appropriately.
         class MyTopo(rdma.discovery._SubnetTopo):
-            def do_port(self, path, node, aport, portIdx, depth):
+            def do_port(self, path, node, aport, port_idx, depth):
                 yield rdma.discovery._SubnetTopo.do_port(self, path, node,
-                                                         aport, portIdx, depth)
+                                                         aport, port_idx, depth)
                 try:
                     pinf = copy.copy(aport.pinf)
-                    if (pinf is None or portIdx == 0 or
+                    if (pinf is None or port_idx == 0 or
                         pinf.portState == IBA.PORT_STATE_DOWN or
                         pinf.portState == IBA.PORT_STATE_INIT):
                         return
@@ -41,7 +41,7 @@ def cmd_init_all_ports(argv, o):
                     pinf.linkSpeedEnabled = 0
                     pinf.linkWidthEnabled = 0
                     pinf.portState = IBA.PORT_STATE_DOWN
-                    yield self.sched.SubnSet(pinf, path, portIdx)
+                    yield self.sched.SubnSet(pinf, path, port_idx)
                 except rdma.MADError as e:
                     print("Failed to set port state on %s via %s" % (aport, path))
                     print("   ", e)
@@ -78,14 +78,14 @@ def cmd_set_port_state(argv, o):
 
     # Strip off the @ index
     nvalues = []
-    portIdxs = []
+    port_idxs = []
     for I in range(len(values)):
         s = values[I].partition('@')
         nvalues.append(s[0])
         if s[2] == '':
-            portIdxs.append(None)
+            port_idxs.append(None)
         else:
-            portIdxs.append(int(s[2]))
+            port_idxs.append(int(s[2]))
     values = nvalues
 
     tmpl = tuple(tmpl_target for I in values)
@@ -108,16 +108,16 @@ def cmd_set_port_state(argv, o):
             if port is None:
                 raise CmdError("Could not find path %s in the subnet" % (path))
             eps.append(port)
-            portIdx = portIdxs[I]
-            if portIdx is None:
+            port_idx = port_idxs[I]
+            if port_idx is None:
                 if not isinstance(port.parent, rdma.subnet.Switch):
-                    portIdxs[I] = portIdx = port.port_id
+                    port_idxs[I] = port_idx = port.port_id
                 else:
                     raise CmdError("Need to have a port index for switch %s" % (
                         port.portGUID))
 
             # Remove the links we are going to affect from the topology
-            port = port.parent.get_port(portIdx)
+            port = port.parent.get_port(port_idx)
             peer = sbn.topology.get(port)
             try:
                 del sbn.topology[path]
@@ -128,7 +128,7 @@ def cmd_set_port_state(argv, o):
             except KeyError:
                 pass
 
-        def get_path(ep, portIdx):
+        def get_path(ep, port_idx):
             try:
                 return dr.get_path(ep)
             except ValueError:
@@ -136,24 +136,24 @@ def cmd_set_port_state(argv, o):
 
             # Hmm, the user picked the wrong port somehow, try to help the
             # user.
-            peer = otopology.get(ep.parent.get_port(portIdx))
+            peer = otopology.get(ep.parent.get_port(port_idx))
             try:
                 dr.get_path(peer.to_end_port())
             except ValueError:
                 raise CmdError("No DR path exists to %s port %u" % (
-                    ep.portGUID, portIdx))
+                    ep.portGUID, port_idx))
             raise CmdError("No DR path exists to %s port %u - try using the peer %s port %u" % (
-                ep.portGUID, portIdx, peer.to_end_port().portGUID,
+                ep.portGUID, port_idx, peer.to_end_port().portGUID,
                 peer.port_id))
 
         dr = sbn.get_dr_cache(umad.parent)
-        dpath = [get_path(port, portIdx) for port, portIdx in zip(eps, portIdxs)]
+        dpath = [get_path(port, port_idx) for port, port_idx in zip(eps, port_idxs)]
 
-        pinfs = [umad.SubnGet(IBA.SMPPortInfo, path, portIdx)
-                 for path, portIdx in zip(dpath, portIdxs)]
+        pinfs = [umad.SubnGet(IBA.SMPPortInfo, path, port_idx)
+                 for path, port_idx in zip(dpath, port_idxs)]
 
         # Do all the sets at once, at the end.
-        for pinf, path, portIdx, port in zip(pinfs, dpath, portIdxs, eps):
+        for pinf, path, port_idx, port in zip(pinfs, dpath, port_idxs, eps):
             # NOP the modification pinf.
             mpinf = copy.copy(pinf)
             mpinf.portState = args.port_state
@@ -162,8 +162,8 @@ def cmd_set_port_state(argv, o):
             mpinf.linkWidthEnabled = 0
 
             if args.phys_state != 0:
-                umad.SubnSet(mpinf, path, portIdx)
+                umad.SubnSet(mpinf, path, port_idx)
             else:
                 print("Would have changed %s@%u on %s" % (
-                    port.portGUID, portIdx, path))
+                    port.portGUID, port_idx, path))
     return lib.done()

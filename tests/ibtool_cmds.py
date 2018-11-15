@@ -11,7 +11,7 @@ import rdma
 import rdma.IBA as IBA
 
 
-class ibtool_cmds_test(unittest.TestCase):
+class IbtoolCmdsTest(unittest.TestCase):
     cmd_mod = None
 
     @contextmanager
@@ -33,8 +33,10 @@ class ibtool_cmds_test(unittest.TestCase):
         try:
             yield
         except rdma.MADError as err:
-            if (err.status != IBA.MAD_STATUS_UNSUP_METHOD_ATTR_COMBO and
-                err.status != IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER):
+            if (
+                err.status != IBA.MAD_STATUS_UNSUP_METHOD_ATTR_COMBO and
+                err.status != IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER
+            ):
                 raise
 
     def setUp(self):

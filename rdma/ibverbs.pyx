@@ -13,7 +13,7 @@ import rdma.path
 import collections
 import rdma.tools as tools
 
-from cpython.unicode cimport PyUnicode_AsEncodedString
+from cpython.bytes cimport PyBytes_AsString
 from libc.stdint cimport uint8_t
 
 cimport rdma.libibverbs as c
@@ -81,19 +81,24 @@ cdef QP get_qp(c.ibv_qp *v):
 class _my_weakset(weakref.WeakKeyDictionary):
     def add(self,v):
         self[v] = None
+
     def pop(self):
         return weakref.WeakKeyDictionary.popitem(self)[0]
 WeakSet = weakref.__dict__.get("WeakSet",_my_weakset)
 
 class WRError(rdma.SysError):
-    """Raised when an error occurs posting work requests. :attr:`bad_index`
-    is the index into the work request list what failed to post."""
+    """
+    Raised when an error occurs posting work requests. :attr:`bad_index`
+    is the index into the work request list what failed to post.
+    """
     def __init__(self,int errno,char *func,char *msg,int bad_index):
         rdma.SysError.__init__(self,errno,func,msg)
         self.bad_index = bad_index
 
 def wc_status_str(int status):
-    """Convert a :attr:`rdma.ibverbs.wc.status` value into a string."""
+    """
+    Convert a :attr:`rdma.ibverbs.wc.status` value into a string.
+    """
     return c.ibv_wc_status_str(status)
 
 cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
@@ -114,9 +119,9 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
                 raise TypeError("attr.grh must be a global_route")
             if not isinstance(attr.grh.dgid, IBA.GID):
                 raise TypeError("attr.grh.dgid must be an IBA.GID")
-            tmp2 = PyUnicode_AsEncodedString(attr.DGID, "utf-8", "ignore")
-            for 0 <= i < 16:
-                cattr.grh.dgid.raw[i] = tmp2[i]
+            tmp = <uint8_t *>PyBytes_AsString(attr.DGID)
+            for i in range(16):
+                cattr.grh.dgid.raw[i] = tmp[i]
             cattr.grh.flow_label = attr.grh.flow_label
             cattr.grh.sgid_index = attr.grh.sgid_index
             cattr.grh.hop_limit = attr.grh.hop_limit
@@ -130,9 +135,9 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
     elif isinstance(attr, rdma.path.IBPath):
         cattr.is_global = attr.has_grh
         if attr.DGID is not None:
-            tmp2 = PyUnicode_AsEncodedString(attr.DGID, "utf-8", "ignore")
-            for 0 <= i < 16:
-                cattr.grh.dgid.raw[i] = tmp2[i]
+            tmp = <uint8_t *>PyBytes_AsString(attr.DGID)
+            for i in range(16):
+                cattr.grh.dgid.raw[i] = tmp[i]
         if cattr.is_global:
             cattr.grh.sgid_index = attr.SGID_index
 
@@ -149,24 +154,38 @@ cdef to_ah_attr(c.ibv_ah_attr *cattr, object attr):
         raise TypeError("attr must be an rdma.ibverbs.ah_attr or rdma.path.IBPath.")
 
 cdef object from_ah_attr(c.ibv_ah_attr *cattr):
-    """Return a :class:`rdma.ibverbs.ah_attr` filled in from *cattr."""
-    return ah_attr(grh=global_route(dgid=IBA.GID(PyBytes_FromStringAndSize(<char *>cattr.grh.dgid.raw,16),True),
-                                    flow_label=cattr.grh.flow_label,
-                                    sgid_index=cattr.grh.sgid_index,
-                                    hop_limit=cattr.grh.hop_limit,
-                                    traffic_class=cattr.grh.traffic_class),
-                   dlid=cattr.dlid,
-                   sl=cattr.sl,
-                   src_path_bits=cattr.src_path_bits,
-                   static_rate=cattr.static_rate,
-                   is_global=cattr.is_global,
-                   port_num=cattr.port_num)
+    """
+    Return a :class:`rdma.ibverbs.ah_attr` filled in from *cattr.
+    """
+    return ah_attr(
+        grh=global_route(
+            dgid=IBA.GID(
+                PyBytes_FromStringAndSize(
+                    <char *>cattr.grh.dgid.raw,
+                    16,
+                ),
+                True,
+            ),
+            flow_label=cattr.grh.flow_label,
+            sgid_index=cattr.grh.sgid_index,
+            hop_limit=cattr.grh.hop_limit,
+            traffic_class=cattr.grh.traffic_class,
+        ),
+        dlid=cattr.dlid,
+        sl=cattr.sl,
+        src_path_bits=cattr.src_path_bits,
+        static_rate=cattr.static_rate,
+        is_global=cattr.is_global,
+        port_num=cattr.port_num,
+    )
 
 cdef _post_check(object arg, object wrtype, int max_sge, int *numsge):
-    """Validate wrs for posting. *arg* can be a single wr or a list. *wrtype*
+    """
+    Validate wrs for posting. *arg* can be a single wr or a list. *wrtype*
     is the expected type of the wr, *max_sge* is the maximum number of SGEs
     that can be in each WR, and *numsge* is the total number of SGEs.
-    Returns *arg* or *arg* stuffed into a list."""
+    Returns *arg* or *arg* stuffed into a list.
+    """
     cdef list wrlist
     cdef int i, n
     cdef int sgec
@@ -190,7 +209,7 @@ cdef _post_check(object arg, object wrtype, int max_sge, int *numsge):
             sgec = sgec + n
             if n > max_sge:
                 raise ValueError("Too many scatter/gather entries in work request")
-            for i in range(0, n): #  0 <= i < n:
+            for i in range(n): #  0 <= i < n:
                 if not isinstance(sglist[i], sge):
                     raise TypeError("sg_list entries must be of type ibv_sge")
         elif wr.sg_list is not None:
@@ -199,22 +218,32 @@ cdef _post_check(object arg, object wrtype, int max_sge, int *numsge):
     return wrlist
 
 class WCError(rdma.RDMAError):
-    """Raised when a WC is completed with error. Note: Not all adaptors
+    """
+    Raised when a WC is completed with error. Note: Not all adaptors
     support returning the `opcode` and `qp_num` in an error WC. For those that
-    do the values are decoded."""
+    do the values are decoded.
+    """
     is_rq = None
     cq = None
     qp = None
     srq = None
 
-    def __init__(self,wc,cq,char * msg="Error work completion",
-                 obj=None,is_rq=None):
-        """*wc* is the error wc, *msg* is an additional descriptive message,
+    def __init__(
+        self,
+        wc,
+        cq,
+        char * msg="Error work completion",
+        obj=None,
+        is_rq=None,
+    ):
+        """
+        *wc* is the error wc, *msg* is an additional descriptive message,
         *cq* is the CQ the error WC was received on and *obj* is a
         :class:`rdma.ibverbs.SRQ` or :class:`rdma.ibverbs.QP` if one is
         known. *is_rq* is `True` if the WC is known to apply to the receive of
         the QP, and `False` if the WC is known the apply to the send queue of
-        the QP. `None` if unknown"""
+        the QP. `None` if unknown
+        """
         cdef QP qp
 
         if obj is not None:
@@ -228,9 +257,17 @@ class WCError(rdma.RDMAError):
             qp = None
             sqp = None
 
-        info = ["op=%s"%(IBA.const_str("IBV_WC_",wc.opcode,True,
-                                       sys.modules["rdma.ibverbs"])),
-                "vend=0x%x"%(wc.vendor_err)]
+        info = [
+            "op={}".format(
+                IBA.const_str(
+                    "IBV_WC_",
+                    wc.opcode,
+                    True,
+                    sys.modules["rdma.ibverbs"],
+                ),
+            ),
+            "vend=0x{:x}".format(wc.vendor_err),
+        ]
 
         if cq is not None:
             self.cq = cq
@@ -250,42 +287,63 @@ class WCError(rdma.RDMAError):
         if self.srq is not None:
             info.append(str(self.srq))
 
-        s = "%s - %d %s (%s)"%(msg,wc.status,c.ibv_wc_status_str(wc.status),
-                               " ".join(info))
+        s = "{} - {:d} {} ({})".format(
+            msg.decode("ascii"),
+            wc.status,
+            c.ibv_wc_status_str(wc.status).decode("ascii"),
+            " ".join(info),
+        )
         rdma.RDMAError.__init__(self,s)
         self.wc = wc
 
+
 class AsyncError(rdma.RDMAError):
     """Raised when an asynchronous error event is received."""
-    def __init__(self,event,char *msg="Asynchronous error event"):
-        s = "%s - %s for %r"%(
-            msg,IBA.const_str("IBV_EVENT_",event[0],True,
-                             sys.modules["rdma.ibverbs"]),
-            event[1])
+    def __init__(
+        self,
+        event,
+        char *msg="Asynchronous error event",
+    ):
+        s = "{} - {} for {}".format(
+            msg.decode("ascii"),
+            IBA.const_str(
+                "IBV_EVENT_",
+                event[0],
+                True,
+                sys.modules["rdma.ibverbs"],
+            ),
+            str(event[1]),
+        )
         rdma.RDMAError.__init__(self,s)
         self.event = event
 
-def WCPath(end_port,wc,buf=None,int off=0,**kwargs):
-    """Create a :class:`rdma.path.IBPath` from a work completion. *buf* should
+
+def WCPath(end_port, wc, buf=None, int off=0, **kwargs):
+    """
+    Create a :class:`rdma.path.IBPath` from a work completion. *buf* should
     be the receive buffer when this is used with a UD QP, the first 40 bytes
     of that buffer could be a GRH. *off* is the offset into *buf*. *kwargs*
     are applied to :class:`rdma.path.IBPath`
 
     Note: wc.pkey_index is not used, if the WC is associated witha GSI QP
     (unlikely) then the caller can pass `pkey_index=wc.pkey_index` as an
-    argument."""
+    argument.
+    """
     cdef c.ibv_grh *grh
     cdef void *tmp
     cdef Py_ssize_t length
     cdef int flow_class
     cdef object path
 
-    path = rdma.path.IBPath(end_port,sqpn=wc.src_qp,
-                            dqpn=wc.qp_num,
-                            SLID=wc.slid,
-                            SL=wc.sl,
-                            DLID_bits=wc.dlid_path_bits,
-                            **kwargs)
+    path = rdma.path.IBPath(
+        end_port,
+        sqpn=wc.src_qp,
+        dqpn=wc.qp_num,
+        SLID=wc.slid,
+        SL=wc.sl,
+        DLID_bits=wc.dlid_path_bits,
+        **kwargs,
+    )
     if wc.wc_flags & IBV_WC_GRH and buf is not None:
         path.has_grh = True
         flow_class = off
@@ -303,8 +361,10 @@ def WCPath(end_port,wc,buf=None,int off=0,**kwargs):
     return path
 
 cdef class Context:
-    """Verbs context handle, this is a context manager. Call :func:`rdma.get_verbs` to get
-    an instance of this."""
+    """
+    Verbs context handle, this is a context manager. Call :func:`rdma.get_verbs` to get
+    an instance of this.
+    """
     cdef c.ibv_context *_ctx
     cdef public object node
     cdef public object end_port
@@ -330,20 +390,30 @@ cdef class Context:
 
         dev_list = c.ibv_get_device_list(&count)
         if dev_list == NULL:
-            raise rdma.SysError(errno,"ibv_get_device_list",
-                                "Failed to get device list")
+            raise rdma.SysError(
+                errno,
+                "ibv_get_device_list",
+                "Failed to get device list",
+            )
 
         try:
-            for i in range(0, count + 1):  #  0 <= i < count:
+            for i in range(count + 1):  #  0 <= i < count:
                 if dev_list[i].name.decode("ascii") == self.node.name:
                     break
             else:
-                raise rdma.RDMAError("RDMA verbs device %r not found."%(self.node))
+                raise rdma.RDMAError(
+                    "RDMA verbs device {!r} not found.".format(
+                        self.node,
+                    ),
+                )
 
             self._ctx = c.ibv_open_device(dev_list[i])
             if self._ctx == NULL:
-                raise rdma.SysError(errno,"ibv_open_device",
-                                    "Failed to get device list")
+                raise rdma.SysError(
+                    errno,
+                    "ibv_open_device",
+                    "Failed to get device list",
+                )
         finally:
             c.ibv_free_device_list(dev_list)
 
@@ -379,8 +449,13 @@ cdef class Context:
         if self._ctx != NULL:
             e = c.ibv_close_device(self._ctx)
             if e != 0:
-                raise rdma.SysError(e,"ibv_close_device",
-                                    "Failed to close device %s"%self._ctx.device.name)
+                raise rdma.SysError(
+                    e,
+                    "ibv_close_device",
+                    "Failed to close device {}".format(
+                        self._ctx.device.name,
+                    ),
+                )
             self._ctx = NULL
 
     def query_device(self):
@@ -392,48 +467,53 @@ cdef class Context:
 
         e = c.ibv_query_device(self._ctx, &dattr)
         if e != 0:
-            raise rdma.SysError(e,"ibv_query_device",
-                                "Failed to query port")
-        return device_attr(fw_ver = dattr.fw_ver,
-                           node_guid = IBA.GUID(struct.pack("=Q",dattr.node_guid),True),
-                           sys_image_guid = IBA.GUID(struct.pack("=Q",dattr.sys_image_guid),True),
-                           max_mr_size = dattr.max_mr_size,
-                           page_size_cap = dattr.page_size_cap,
-                           vendor_id = dattr.vendor_id,
-                           vendor_part_id = dattr.vendor_part_id,
-                           hw_ver = dattr.hw_ver,
-                           max_qp = dattr.max_qp,
-                           max_qp_wr = dattr.max_qp_wr,
-                           device_cap_flags = dattr.device_cap_flags,
-                           max_sge = dattr.max_sge,
-                           max_sge_rd = dattr.max_sge_rd,
-                           max_cq = dattr.max_cq,
-                           max_cqe = dattr.max_cqe,
-                           max_mr = dattr.max_mr,
-                           max_pd = dattr.max_pd,
-                           max_qp_rd_atom = dattr.max_qp_rd_atom,
-                           max_ee_rd_atom = dattr.max_ee_rd_atom,
-                           max_res_rd_atom = dattr.max_res_rd_atom,
-                           max_qp_init_rd_atom = dattr.max_qp_init_rd_atom,
-                           max_ee_init_rd_atom = dattr.max_ee_init_rd_atom,
-                           atomic_cap = dattr.atomic_cap,
-                           max_ee = dattr.max_ee,
-                           max_rdd = dattr.max_rdd,
-                           max_mw = dattr.max_mw,
-                           max_raw_ipv6_qp = dattr.max_raw_ipv6_qp,
-                           max_raw_ethy_qp = dattr.max_raw_ethy_qp,
-                           max_mcast_grp = dattr.max_mcast_grp,
-                           max_mcast_qp_attach = dattr.max_mcast_qp_attach,
-                           max_total_mcast_qp_attach = dattr.max_total_mcast_qp_attach,
-                           max_ah = dattr.max_ah,
-                           max_fmr = dattr.max_fmr,
-                           max_map_per_fmr = dattr.max_map_per_fmr,
-                           max_srq = dattr.max_srq,
-                           max_srq_wr = dattr.max_srq_wr,
-                           max_srq_sge = dattr.max_srq_sge,
-                           max_pkeys = dattr.max_pkeys,
-                           local_ca_ack_delay = dattr.local_ca_ack_delay,
-                           phys_port_cnt = dattr.phys_port_cnt)
+            raise rdma.SysError(
+                e,
+                "ibv_query_device",
+                "Failed to query port",
+            )
+        return device_attr(
+            fw_ver=dattr.fw_ver,
+            node_guid=IBA.GUID(struct.pack("=Q",dattr.node_guid),True),
+            sys_image_guid=IBA.GUID(struct.pack("=Q",dattr.sys_image_guid),True),
+            max_mr_size=dattr.max_mr_size,
+            page_size_cap=dattr.page_size_cap,
+            vendor_id=dattr.vendor_id,
+            vendor_part_id=dattr.vendor_part_id,
+            hw_ver=dattr.hw_ver,
+            max_qp=dattr.max_qp,
+            max_qp_wr=dattr.max_qp_wr,
+            device_cap_flags=dattr.device_cap_flags,
+            max_sge=dattr.max_sge,
+            max_sge_rd=dattr.max_sge_rd,
+            max_cq=dattr.max_cq,
+            max_cqe=dattr.max_cqe,
+            max_mr=dattr.max_mr,
+            max_pd=dattr.max_pd,
+            max_qp_rd_atom=dattr.max_qp_rd_atom,
+            max_ee_rd_atom=dattr.max_ee_rd_atom,
+            max_res_rd_atom=dattr.max_res_rd_atom,
+            max_qp_init_rd_atom=dattr.max_qp_init_rd_atom,
+            max_ee_init_rd_atom=dattr.max_ee_init_rd_atom,
+            atomic_cap=dattr.atomic_cap,
+            max_ee=dattr.max_ee,
+            max_rdd=dattr.max_rdd,
+            max_mw=dattr.max_mw,
+            max_raw_ipv6_qp=dattr.max_raw_ipv6_qp,
+            max_raw_ethy_qp=dattr.max_raw_ethy_qp,
+            max_mcast_grp=dattr.max_mcast_grp,
+            max_mcast_qp_attach=dattr.max_mcast_qp_attach,
+            max_total_mcast_qp_attach=dattr.max_total_mcast_qp_attach,
+            max_ah=dattr.max_ah,
+            max_fmr=dattr.max_fmr,
+            max_map_per_fmr=dattr.max_map_per_fmr,
+            max_srq=dattr.max_srq,
+            max_srq_wr=dattr.max_srq_wr,
+            max_srq_sge=dattr.max_srq_sge,
+            max_pkeys=dattr.max_pkeys,
+            local_ca_ack_delay=dattr.local_ca_ack_delay,
+            phys_port_cnt=dattr.phys_port_cnt,
+        )
 
     def query_port(self,port_id=None):
         """Return a :class:`rdma.ibverbs.port_attr` for the *port_id*. If
@@ -448,31 +528,36 @@ cdef class Context:
 
         e = c.ibv_query_port(self._ctx, port_id, &cattr)
         if e != 0:
-            raise rdma.SysError(e,"ibv_query_port",
-                                "Failed to query port %r"%(port_id))
+            raise rdma.SysError(
+                e,
+                "ibv_query_port",
+                "Failed to query port {!r}".format(port_id),
+            )
 
         # Update the end_port's subnet timeout..
         self.node.end_ports[port_id]._cached_subnet_timeout = cattr.subnet_timeout
 
-        return port_attr(state = cattr.state,
-                         max_mtu = cattr.max_mtu,
-                         active_mtu = cattr.active_mtu,
-                         gid_tbl_len = cattr.gid_tbl_len,
-                         port_cap_flags = cattr.port_cap_flags,
-                         max_msg_sz = cattr.max_msg_sz,
-                         bad_pkey_cntr = cattr.bad_pkey_cntr,
-                         qkey_viol_cntr = cattr.qkey_viol_cntr,
-                         pkey_tbl_len = cattr.pkey_tbl_len,
-                         lid = cattr.lid,
-                         sm_lid = cattr.sm_lid,
-                         lmc = cattr.lmc,
-                         max_vl_num = cattr.max_vl_num,
-                         sm_sl = cattr.sm_sl,
-                         subnet_timeout = cattr.subnet_timeout,
-                         init_type_reply = cattr.init_type_reply,
-                         active_width = cattr.active_width,
-                         active_speed = cattr.active_speed,
-                         phys_state = cattr.phys_state)
+        return port_attr(
+            state=cattr.state,
+            max_mtu=cattr.max_mtu,
+            active_mtu=cattr.active_mtu,
+            gid_tbl_len=cattr.gid_tbl_len,
+            port_cap_flags=cattr.port_cap_flags,
+            max_msg_sz=cattr.max_msg_sz,
+            bad_pkey_cntr=cattr.bad_pkey_cntr,
+            qkey_viol_cntr=cattr.qkey_viol_cntr,
+            pkey_tbl_len=cattr.pkey_tbl_len,
+            lid=cattr.lid,
+            sm_lid=cattr.sm_lid,
+            lmc=cattr.lmc,
+            max_vl_num=cattr.max_vl_num,
+            sm_sl=cattr.sm_sl,
+            subnet_timeout=cattr.subnet_timeout,
+            init_type_reply=cattr.init_type_reply,
+            active_width=cattr.active_width,
+            active_speed=cattr.active_speed,
+            phys_state=cattr.phys_state,
+        )
 
     def from_qp_num(self,int num):
         """Return a :class:`rdma.ibverbs.QP` for the qp number *num* or `None`
@@ -516,8 +601,11 @@ cdef class Context:
         if rc != 0:
             if rc == mod_errno.EAGAIN:
                 return None
-            raise rdma.SysError(rc,"ibv_get_async_event",
-                                "Failed to get an asynchronous event")
+            raise rdma.SysError(
+                rc,
+                "ibv_get_async_event",
+                "Failed to get an asynchronous event",
+            )
 
         if event.event_type == c.IBV_EVENT_DEVICE_FATAL:
             ret = async_event(event.event_type,self.node)
@@ -621,13 +709,16 @@ cdef class PD:
         self._context = ctx
         self._pd = c.ibv_alloc_pd(ctx._ctx)
         if self._pd == NULL:
-            raise rdma.SysError(errno,"ibv_alloc_pd",
-                                "Failed to allocate protection domain")
+            raise rdma.SysError(
+                errno,
+                "ibv_alloc_pd",
+                "Failed to allocate protection domain",
+            )
         self._children_qp = WeakSet()
         self._children_srq = WeakSet()
         self._children_mr = WeakSet()
         self._children_ah = WeakSet()
-        self._path_ah = "_cached_pd%x_ah"%(id(self))
+        self._path_ah = "_cached_pd{:x}_ah".format(id(self))
 
     def __dealloc__(self):
         self._close()
@@ -654,11 +745,16 @@ cdef class PD:
             self._children_mr.pop().close()
         if self._pd != NULL:
             if self._context._ctx == NULL:
-                raise rdma.RDMAError("Context closed before owned object")
+                raise rdma.RDMAError(
+                    "Context closed before owned object",
+                )
             rc = c.ibv_dealloc_pd(self._pd)
             if rc != 0:
-                raise rdma.SysError(rc,"ibv_dealloc_pd",
-                                    "Failed to deallocate protection domain")
+                raise rdma.SysError(
+                    rc,
+                    "ibv_dealloc_pd",
+                    "Failed to deallocate protection domain",
+                )
             self._pd = NULL
             self._context = None
 
@@ -693,17 +789,21 @@ cdef class PD:
         """Create a new :class:`rdma.ibverbs.QP` for this protection domain.
         This version expresses the QP creation attributes as keyword
         arguments."""
-        cap = qp_cap(max_send_wr=max_send_wr,
-                     max_recv_wr=max_recv_wr,
-                     max_send_sge=max_send_sge,
-                     max_recv_sge=max_recv_sge,
-                     max_inline_data=max_inline_data)
-        init = qp_init_attr(send_cq=send_cq,
-                            recv_cq=recv_cq,
-                            srq=srq,
-                            cap=cap,
-                            qp_type=qp_type,
-                            sq_sig_all=sq_sig_all)
+        cap = qp_cap(
+            max_send_wr=max_send_wr,
+            max_recv_wr=max_recv_wr,
+            max_send_sge=max_send_sge,
+            max_recv_sge=max_recv_sge,
+            max_inline_data=max_inline_data,
+        )
+        init = qp_init_attr(
+            send_cq=send_cq,
+            recv_cq=recv_cq,
+            srq=srq,
+            cap=cap,
+            qp_type=qp_type,
+            sq_sig_all=sq_sig_all,
+        )
         ret = QP(self,init)
         self._children_qp.add(ret)
         return ret
@@ -760,8 +860,11 @@ cdef class AH:
         to_ah_attr(&cattr, attr)
         self._ah = c.ibv_create_ah(pd._pd, &cattr)
         if self._ah == NULL:
-            raise rdma.SysError(errno,"ibv_create_ah",
-                                "Failed to create address handle")
+            raise rdma.SysError(
+                errno,
+                "ibv_create_ah",
+                "Failed to create address handle",
+            )
 
     def __dealloc__(self):
         self._close()
@@ -781,8 +884,11 @@ cdef class AH:
         if self._ah != NULL:
             rc = c.ibv_destroy_ah(self._ah)
             if rc != 0:
-                raise rdma.SysError(rc,"ibv_destroy_ah",
-                                    "Failed to destroy address handle")
+                raise rdma.SysError(
+                    rc,
+                    "ibv_destroy_ah",
+                    "Failed to destroy address handle",
+                )
             self._ah = NULL
 
     def __str__(self):
@@ -804,8 +910,11 @@ cdef class CompChannel:
         self._context = ctx
         self._chan = c.ibv_create_comp_channel(ctx._ctx)
         if self._chan == NULL:
-            raise rdma.SysError(errno,"ibv_create_comp_channel",
-                                "Failed to create completion channel")
+            raise rdma.SysError(
+                errno,
+                "ibv_create_comp_channel",
+                "Failed to create completion channel",
+            )
 
     def __dealloc__(self):
         self._close()
@@ -824,11 +933,16 @@ cdef class CompChannel:
         cdef int rc
         if self._chan != NULL:
             if self._context._ctx == NULL:
-                raise rdma.RDMAError("Context closed before owned object")
+                raise rdma.RDMAError(
+                    "Context closed before owned object",
+                )
             rc = c.ibv_destroy_comp_channel(self._chan)
             if rc != 0:
-                raise rdma.SysError(rc,"ibv_destroy_comp_channel",
-                                    "Failed to destroy completion channel")
+                raise rdma.SysError(
+                    rc,
+                    "ibv_destroy_comp_channel",
+                    "Failed to destroy completion channel",
+                )
             self._chan = NULL
             self._context = None
 
@@ -867,10 +981,11 @@ cdef class CompChannel:
             cq.comp_events = 0
         return cq
 
-    def __str__(self):
-        return "comp_channel:%u:%s"%(self._chan.fd,self.ctx.node)
-    def __repr__(self):
-        return "CompChannel(%r,%u)"%(self._context,self._chan.fd)
+    def __str__(self) -> str:
+        return "comp_channel:{:d}:{}".format(self._chan.fd,self.ctx.node)
+
+    def __repr__(self) -> str:
+        return "CompChannel({!r},{:d})".format(self._context,self._chan.fd)
 
 cdef class CQ:
     """Completion queue, this is a context manager."""
@@ -900,8 +1015,11 @@ cdef class CQ:
         self.comp_events = 0
         self._cq = c.ibv_create_cq(ctx._ctx, nelems, <void*>self, c_chan, vec)
         if self._cq == NULL:
-            raise rdma.SysError(errno,"ibv_create_cq",
-                                "Failed to create completion queue")
+            raise rdma.SysError(
+                errno,
+                "ibv_create_cq",
+                "Failed to create completion queue",
+            )
 
     def __dealloc__(self):
         self._close()
@@ -926,8 +1044,11 @@ cdef class CQ:
                 self.comp_events = 0
             rc = c.ibv_destroy_cq(self._cq)
             if rc != 0:
-                raise rdma.SysError(rc,"ibv_destroy_cq",
-                                    "Failed to destroy completion queue")
+                raise rdma.SysError(
+                    rc,
+                    "ibv_destroy_cq",
+                    "Failed to destroy completion queue",
+                )
             self._cq = NULL
             self._context = None
             self._chan = None
@@ -937,16 +1058,22 @@ cdef class CQ:
         cdef int rc
         rc = c.ibv_req_notify_cq(self._cq,solicited_only)
         if rc != 0:
-            raise rdma.SysError(rc,"ibv_req_notify_cq",
-                                "Failed to request notification")
+            raise rdma.SysError(
+                rc,
+                "ibv_req_notify_cq",
+                "Failed to request notification",
+            )
 
     def resize(self,int cqes):
         """Resize the CQ to have at least *cqes* entries."""
         cdef int rc
         rc = c.ibv_resize_cq(self._cq,cqes)
         if rc != 0:
-            raise rdma.SysError(rc,"ibv_resize_cq",
-                                "Failed to resize the CQ")
+            raise rdma.SysError(
+                rc,
+                "ibv_resize_cq",
+                "Failed to resize the CQ",
+            )
 
     def poll(self,int limit=-1):
         """Perform the poll_cq operation, return a list of work requests."""
@@ -961,19 +1088,23 @@ cdef class CQ:
             elif n < 0:
                 raise rdma.SysError(errno,"ibv_poll_cq")
             else:
-                L.append(wc(wr_id = lwc.wr_id,
-                            status = lwc.status,
-                            opcode = lwc.opcode,
-                            vendor_err = lwc.vendor_err,
-                            byte_len = lwc.byte_len,
-                            imm_data = lwc.imm_data,
-                            qp_num = lwc.qp_num,
-                            src_qp = lwc.src_qp,
-                            wc_flags = lwc.wc_flags,
-                            pkey_index = lwc.pkey_index,
-                            slid = lwc.slid,
-                            sl = lwc.sl,
-                            dlid_path_bits = lwc.dlid_path_bits))
+                L.append(
+                    wc(
+                        wr_id=lwc.wr_id,
+                        status=lwc.status,
+                        opcode=lwc.opcode,
+                        vendor_err=lwc.vendor_err,
+                        byte_len=lwc.byte_len,
+                        imm_data=lwc.imm_data,
+                        qp_num=lwc.qp_num,
+                        src_qp=lwc.src_qp,
+                        wc_flags=lwc.wc_flags,
+                        pkey_index=lwc.pkey_index,
+                        slid=lwc.slid,
+                        sl=lwc.sl,
+                        dlid_path_bits=lwc.dlid_path_bits,
+                    )
+                )
                 if limit > 0:
                     limit = limit - 1
         return L
@@ -1009,8 +1140,11 @@ cdef class SRQ:
         self._max_sge = max_sge
         self._srq = c.ibv_create_srq(pd._pd,&attr)
         if self._srq == NULL:
-            raise rdma.SysError(errno,"ibv_create_srq",
-                                "Failed to create SRQ")
+            raise rdma.SysError(
+                errno,
+                "ibv_create_srq",
+                "Failed to create SRQ",
+            )
 
     def __dealloc__(self):
         self._close()
@@ -1030,8 +1164,11 @@ cdef class SRQ:
         if self._srq != NULL:
             rc = c.ibv_destroy_srq(self._srq)
             if rc != 0:
-                raise rdma.SysError(errno,"ibv_destroy_srq",
-                                    "Failed to destroy SRQ")
+                raise rdma.SysError(
+                    errno,
+                    "ibv_destroy_srq",
+                    "Failed to destroy SRQ",
+                )
             self._srq = NULL
 
     def modify(self,srq_limit=None,max_wr=None):
@@ -1051,8 +1188,11 @@ cdef class SRQ:
 
         rc = c.ibv_modify_srq(self._srq, &cattr, cmask)
         if rc != 0:
-            raise rdma.SysError(errno,"ibv_modify_srq",
-                                "Failed to modify a SRQ")
+            raise rdma.SysError(
+                errno,
+                "ibv_modify_srq",
+                "Failed to modify a SRQ",
+            )
 
     def query(self):
         """Return a :class:`rdma.ibverbs.srq_attr`."""
@@ -1060,13 +1200,18 @@ cdef class SRQ:
 
         rc = c.ibv_query_srq(self._srq, &cattr)
         if rc != 0:
-            raise rdma.SysError(errno,"ibv_query_srq",
-                                "Failed to query a SRQ")
+            raise rdma.SysError(
+                errno,
+                "ibv_query_srq",
+                "Failed to query a SRQ",
+            )
 
         self._max_sge = cattr.max_sge
-        return srq_attr(max_wr=cattr.max_wr,
-                        max_sge=cattr.max_sge,
-                        srq_limit=cattr.srq_limit)
+        return srq_attr(
+            max_wr=cattr.max_wr,
+            max_sge=cattr.max_sge,
+            srq_limit=cattr.srq_limit,
+        )
 
     def post_recv(self, arg):
         """*wrlist* may be a single :class:`rdma.ibverbs.recv_wr` or
@@ -1092,7 +1237,7 @@ cdef class SRQ:
         try:
             cwr = <c.ibv_recv_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for i in range(0, n):  #  0 <= i < n:
+            for i in range(n):  #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
@@ -1104,7 +1249,7 @@ cdef class SRQ:
                 cwr.sg_list = csge
                 if isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
                     cwr.num_sge = len(wr.sg_list)
-                    for j in range(0, cwr.num_sge): #  0 <= j < cwr.num_sge:
+                    for j in range(cwr.num_sge): #  0 <= j < cwr.num_sge:
                         sge = wr.sg_list[j]
                         csge.addr = sge.addr
                         csge.length = sge.length
@@ -1123,7 +1268,7 @@ cdef class SRQ:
             rc = c.ibv_post_srq_recv(self._srq, <c.ibv_recv_wr *>mem, &cbad_wr)
             if rc != 0:
                 cwr = <c.ibv_recv_wr *>(mem)
-                for i in range(0, n): #  0 <= i < n:
+                for i in range(n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
                 raise WRError(rc,"ibv_post_srq_recv","Failed to post work request",n)
@@ -1184,8 +1329,11 @@ cdef class MR:
         self._buf = buf
         self._mr = c.ibv_reg_mr(pd._pd, addr, length, access)
         if self._mr == NULL:
-            raise rdma.SysError(errno,"ibv_reg_mr",
-                                "Failed to register memory region")
+            raise rdma.SysError(
+                errno,
+                "ibv_reg_mr",
+                "Failed to register memory region",
+            )
 
     def __dealloc__(self):
         self._close()
@@ -1205,8 +1353,11 @@ cdef class MR:
         if self._mr != NULL:
             rc = c.ibv_dereg_mr(self._mr)
             if rc != 0:
-                raise rdma.SysError(errno,"ibv_dereg_mr",
-                                    "Failed to deregister memory region")
+                raise rdma.SysError(
+                    errno,
+                    "ibv_dereg_mr",
+                    "Failed to deregister memory region",
+                )
             self._mr = NULL
 
     def sge(self,int length=-1,int off=0):
@@ -1223,18 +1374,28 @@ cdef class MR:
         if _length == -1:
             _length = self._mr.length - _off
         if _length + _off > self._mr.length:
-            raise ValueError("Length is too long %u > %u"%(_length + _off,
-                                                           self._mr.length))
+            raise ValueError(
+                "Length is too long {:d} > {:d}".format(
+                    _length + _off,
+                    self._mr.length,
+                ),
+            )
         return sge(addr=<uintptr_t>(self._mr.addr + _off),
                    lkey=self._mr.lkey,
                    length=_length)
 
-    def __str__(self):
-        return "mr:%X:%s"%(self._mr.handle,self._pd)
-    def __repr__(self):
-        return "MR(%r,0x%x,0x%x,%u,lkey=0x%x,rkey=0x%x)"%(
-            self._pd,self._mr.handle,self.addr,self.length,
-            self.lkey,self.rkey)
+    def __str__(self) -> str:
+        return "mr:{:x}:{}".format(self._mr.handle,self._pd)
+
+    def __repr__(self) -> str:
+        return "MR({},0x{:x},0x{:x},{:d},lkey=0x{:x},rkey=0x{:x})".format(
+            self._pd,
+            self._mr.handle,
+            self.addr,
+            self.length,
+            self.lkey,
+            self.rkey,
+        )
 
 cdef class QP:
     """Queue pair, this is a context manager."""
@@ -1440,7 +1601,7 @@ cdef class QP:
         try:
             cwr = <c.ibv_send_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for i in range(0, n): #  0 <= i < n:
+            for i in range(n): #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
@@ -1452,7 +1613,7 @@ cdef class QP:
                 cwr.sg_list = csge
                 if isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
                     cwr.num_sge = len(wr.sg_list)
-                    for j in range(0, cwr.num_sge): #  0 <= j < cwr.num_sge:
+                    for j in range(cwr.num_sge): #  0 <= j < cwr.num_sge:
                         sge = wr.sg_list[j]
                         csge.addr = sge.addr
                         csge.length = sge.length
@@ -1492,7 +1653,7 @@ cdef class QP:
             rc = c.ibv_post_send(self._qp, <c.ibv_send_wr *>mem, &cbad_wr)
             if rc != 0:
                 cwr = <c.ibv_send_wr *>(mem)
-                for i in range(0, n): #  0 <= i < n:
+                for i in range(n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
                 raise WRError(rc,"ibv_post_send","Failed to post work request",n)
@@ -1523,7 +1684,7 @@ cdef class QP:
         try:
             cwr = <c.ibv_recv_wr *>(mem)
             csge = <c.ibv_sge *>(cwr + n)
-            for i in range(0, n): #  0 <= i < n:
+            for i in range(n): #  0 <= i < n:
                 wr = wrlist[i]
                 wr_id = wr.wr_id
                 cwr.wr_id = <uintptr_t>wr_id
@@ -1535,7 +1696,7 @@ cdef class QP:
                 cwr.sg_list = csge
                 if isinstance(wr.sg_list, list) or isinstance(wr.sg_list, tuple):
                     cwr.num_sge = len(wr.sg_list)
-                    for j in range(0, cwr.num_sge): #  0 <= j < cwr.num_sge:
+                    for j in range(cwr.num_sge): #  0 <= j < cwr.num_sge:
                         sge = wr.sg_list[j]
                         csge.addr = sge.addr
                         csge.length = sge.length
@@ -1553,7 +1714,7 @@ cdef class QP:
             rc = c.ibv_post_recv(self._qp, <c.ibv_recv_wr *>mem, &cbad_wr)
             if rc != 0:
                 cwr = <c.ibv_recv_wr *>(mem)
-                for i in range(0, n): #  0 <= i < n:
+                for i in range(n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
                 raise WRError(rc,"ibv_post_recv","Failed to post work request",n)

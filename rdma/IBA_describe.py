@@ -366,7 +366,7 @@ def struct_dump(f_obj, s, offset: int=0, name_prefix: str=""):
             if aligned:
                 # Not much sense in printing bytes we can see in hex.
                 if isinstance(attr, bytearray):
-                    mb.append("{}=<{:d} bytes>".format(name, bits / 8))
+                    mb.append("{}=<{:d} bytes>".format(name, int(bits / 8)))
                     continue
             mb.append("{}={}".format(name, getattr(s, name)))
 
@@ -439,9 +439,9 @@ def struct_dotted(
 
         conv = None
         if isinstance(ref, IBA.GID) or isinstance(ref, IBA.GUID):
-            fmt = "%s"
+            fmt = "{}"
         else:
-            fmt = IBA.MEMBER_FORMATS.get(name, "%r")
+            fmt = IBA.MEMBER_FORMATS.get(name, "{!r}")
             if fmt == "hex":
                 fmt = "{0:0x}{{}}0{0:d}x".format(
                     (mbits + 3) // 4,

@@ -107,3 +107,7 @@ class madschedule_test(unittest.TestCase):
             print(err)
             err.req.printer(sys.stdout)
             raise
+
+
+if __name__ == "__main__":
+    unittest.main()
