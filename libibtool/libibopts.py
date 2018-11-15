@@ -28,7 +28,7 @@ def tmpl_port_guid(s):
     return IBA.GUID(s)
 
 
-def _set_sa_path(option, opt, value, parser):
+def _set_sa_path(_option, _opt, value, parser):
     try:
         path = rdma.path.from_string(value)
         path.dqpn = 1
@@ -37,7 +37,7 @@ def _set_sa_path(option, opt, value, parser):
         parser.values.sa_path = path
         parser.values.use_sa = True
     except ValueError:
-        parser.error("invalid path: %s" % value)
+        parser.error("invalid path: {}".format(value))
 
 
 class LibIBOpts(object):
@@ -72,16 +72,16 @@ class LibIBOpts(object):
             elif self.args.CA is not None:
                 require_dev = default_end_port.parent
 
-            for I in range(len(values)):
+            for c_idx in range(len(values)):
                 try:
-                    tmpl = template[I]
-                    v = values[I]
+                    tmpl = template[c_idx]
+                    v = values[c_idx]
                     if tmpl == tmpl_target:
                         if self.args.addr_direct:
                             # -D 0 is the same as our 0,
                             try:
                                 desc = int(v, 0)
-                                v = "%u," % (int(v, 0))
+                                v = "{:d},".format(desc)
                             except ValueError:
                                 pass
                         if self.args.addr_guid:
@@ -102,21 +102,31 @@ class LibIBOpts(object):
                         if self.args.addr_lid and path.DLID == 0:
                             raise ValueError("Not a LID")
 
-                        values[I] = path
+                        values[c_idx] = path
                         if path.end_port is not None:
                             require_ep = path.end_port
                             require_dev = None
                             default_end_port = require_ep
                     else:
-                        values[I] = tmpl(v)
+                        values[c_idx] = tmpl(v)
                 except ValueError as err:
-                    raise CmdError("Invalid command line argument #%u %r - %s" % (
-                        I + 1, values[I], err))
+                    raise CmdError(
+                        "Invalid command line argument #{:d} {!r} - {}".format(
+                            c_idx + 1,
+                            values[c_idx],
+                            err,
+                        ),
+                    )
             self.end_port = default_end_port
 
         self.end_port.sa_path.SMKey = getattr(args, "smkey", 0)
         if self.debug >= 1:
-            print("D: Using end port %s %s" % (self.end_port, self.end_port.default_gid))
+            print(
+                "D: Using end port {} {}".format(
+                    self.end_port,
+                    self.end_port.default_gid,
+                ),
+            )
 
         if "discovery" in args.__dict__:
             if (args.discovery is None and
@@ -124,7 +134,11 @@ class LibIBOpts(object):
                  not 0 < self.end_port.lid < IBA.LID_MULTICAST)):
                 args.discovery = "DR"
             if args.use_sa and args.discovery is not None and args.discovery != "SA":
-                raise CmdError("Can't combine --sa with discovery mode %r" % (args.discovery))
+                raise CmdError(
+                    "Can't combine --sa with discovery mode {!r}".format(
+                        args.discovery,
+                    ),
+                )
             if args.use_sa:
                 args.discovery = "SA"
             if args.discovery == "SA":
@@ -136,8 +150,7 @@ class LibIBOpts(object):
             self.format_args = {"format": "dump"}
         else:
             cmd = str(getattr(o, "current_command", ""))
-            if (cmd.find("saquery") != -1 or
-                cmd.find("ibportstate") != -1):
+            if cmd.find("saquery") != -1 or cmd.find("ibportstate") != -1:
                 self.format_args = {
                     "header": False, "colon": False, "format": "dotted",
                     "name_map": libib_name_map_saquery, "column": 25,
@@ -152,7 +165,7 @@ class LibIBOpts(object):
             elif cmd.find("smpquery") != -1:
                 self.format_args = {
                     "header": False, "colon": True, "format": "dotted",
-                    "name_map": libib_name_map_smpquery
+                    "name_map": libib_name_map_smpquery,
                 }
             else:
                 self.format_args = {"header": False, "colon": False, "format": "dotted"}
@@ -167,50 +180,128 @@ class LibIBOpts(object):
             print(" " * len(name), repr(path))
 
     @staticmethod
-    def setup(o, address=True, discovery=False):
-        o.add_option("-C", "--Ca", dest="CA",
-                     help="RDMA device to use. Specify a device name or node GUID")
-        o.add_option("-P", "--Port", dest="port",
-                     help="RDMA end port to use. Specify a GID, port GUID, DEVICE/PORT or port number.")
-        o.add_option("-d", "--debug", dest="debug", action="count", default=0,
-                     help="Increase the debug level, each -d increases by 1.")
-        o.add_option("-v", "--verbosity", dest="verbosity", action="count", default=0,
-                     help="Increase the verbosity level of diagnostic messages, each -v increases by 1.")
-        o.add_option("--smkey", dest="smkey", action="store", default=1, type=int,
-                     help="Use this as the SAFormat.SMKey value.")
-        o.add_option("--int-names", dest="int_names", action="store_true",
-                     help="Use internal names for all the fields instead of libib compatible names.")
-        o.add_option("--sa", dest="use_sa", action="store_true",
-                     help="Instead of issuing SMPs, use corresponding record queries to the SA.")
-        o.add_option("--sa-path", action="callback", callback=_set_sa_path, type=str, dest="sa_path",
-                     help="Specify the path to the SA, implies --sa.")
+    def setup(o, address: bool=True, discovery: bool=False):
+        o.add_option(
+            "-C", 
+            "--Ca", 
+            dest="CA",
+            help="RDMA device to use. Specify a device name or node GUID",
+        )
+        o.add_option(
+            "-P", 
+            "--Port", 
+            dest="port",
+            help="RDMA end port to use. Specify a GID, port GUID, DEVICE/PORT or port number.",
+        )
+        o.add_option(
+            "-d", 
+            "--debug", 
+            dest="debug", 
+            action="count",
+            default=0,
+            help="Increase the debug level, each -d increases by 1.",
+        )
+        o.add_option(
+            "-v", 
+            "--verbosity", 
+            dest="verbosity", 
+            action="count", 
+            default=0,
+            help="Increase the verbosity level of diagnostic messages, each -v increases by 1.",
+        )
+        o.add_option(
+            "--smkey", 
+            dest="smkey", 
+            action="store", 
+            default=1, 
+            type=int,
+            help="Use this as the SAFormat.SMKey value.",
+        )
+        o.add_option(
+            "--int-names", 
+            dest="int_names", 
+            action="store_true",
+            help="Use internal names for all the fields instead of libib compatible names.",
+        )
+        o.add_option(
+            "--sa", 
+            dest="use_sa", 
+            action="store_true",
+            help="Instead of issuing SMPs, use corresponding record queries to the SA.",
+        )
+        o.add_option(
+            "--sa-path", 
+            action="callback", 
+            callback=_set_sa_path, 
+            type=str, 
+            dest="sa_path",
+            help="Specify the path to the SA, implies --sa.",
+        )
 
         if address:
             try:
-                o.add_option("-D", "--Direct", action="store_true", dest="addr_direct",
-                             help="The address is a directed route path. A comma separated list of port numbers starting with 0.")
+                o.add_option(
+                    "-D", 
+                    "--Direct", 
+                    action="store_true", 
+                    dest="addr_direct",
+                    help="The address is a directed route path. A comma separated "
+                         "list of port numbers starting with 0.",
+                )
             except optparse.OptionConflictError:
-                o.add_option("--Direct", action="store_true", dest="addr_direct",
-                             help="The address is a directed route path. A comma separated list of port numbers starting with 0.")
+                o.add_option(
+                    "--Direct", 
+                    action="store_true", 
+                    dest="addr_direct",
+                    help="The address is a directed route path. A comma separated "
+                         "list of port numbers starting with 0.",
+                )
             try:
-                o.add_option("-L", "--Lid", action="store_true", dest="addr_lid",
-                             help="The address is a LID integer.")
+                o.add_option(
+                    "-L", 
+                    "--Lid", 
+                    action="store_true", 
+                    dest="addr_lid",
+                    help="The address is a LID integer.",
+                )
             except optparse.OptionConflictError:
-                o.add_option("--Lid", action="store_true", dest="addr_lid",
-                             help="The address is a LID integer.")
-            o.add_option("-G", "--Guid", action="store_true", dest="addr_guid",
-                         help="The address is a GUID hex integer.")
+                o.add_option(
+                    "--Lid", 
+                    action="store_true", 
+                    dest="addr_lid",
+                    help="The address is a LID integer.",
+                )
+            o.add_option(
+                "-G", 
+                "--Guid", 
+                action="store_true", 
+                dest="addr_guid",
+                help="The address is a GUID hex integer.",
+            )
 
         if discovery:
-            o.add_option("--discovery", action="store", dest="discovery",
-                         metavar="{LID|DR|SA}",
-                         default=None, choices=("LID", "DR", "SA"),
-                         help="Method to use for discovering the subnet")
-            o.add_option("--refresh-cache", action="store_true", dest="drop_cache",
-                         help="Don't load data from the discovery cache.")
-            o.add_option("--cache", action="store", dest="cache",
-                         default=None,
-                         help="File to save/restore cached discovery data.")
+            o.add_option(
+                "--discovery", 
+                action="store", 
+                dest="discovery",
+                metavar="{LID|DR|SA}",
+                default=None, 
+                choices=("LID", "DR", "SA"),
+                help="Method to use for discovering the subnet",
+            )
+            o.add_option(
+                "--refresh-cache", 
+                action="store_true", 
+                dest="drop_cache",
+                help="Don't load data from the discovery cache.",
+            )
+            o.add_option(
+                "--cache", 
+                action="store", 
+                dest="cache",
+                default=None,
+                help="File to save/restore cached discovery data.",
+            )
 
     def get_path(self, umad, path, smp=False):
         """Check *path* for correctness and return it."""
@@ -226,7 +317,7 @@ class LibIBOpts(object):
             return path
 
         self.debug_print_path("SA", self.end_port.sa_path)
-        if umad == None:
+        if umad is None:
             with self.get_umad() as umad:
                 return rdma.path.resolve_path(umad, path)
         return rdma.path.resolve_path(umad, path)
@@ -264,8 +355,12 @@ class LibIBOpts(object):
                     __import__("rdma.satransactor")
                     import sys
                     sat = sys.modules["rdma.satransactor"].SATransactor(umad)
-                path = rdma.path.get_mad_path(umad, sat.get_path_lid(path),
-                                              dqpn=1, qkey=IBA.IB_DEFAULT_QP1_QKEY)
+                path = rdma.path.get_mad_path(
+                    umad, 
+                    sat.get_path_lid(path),
+                    dqpn=1, 
+                    qkey=IBA.IB_DEFAULT_QP1_QKEY,
+                )
         else:
             path = rdma.path.IBPath(
                 umad.end_port,
@@ -273,7 +368,8 @@ class LibIBOpts(object):
                 DLID=self.end_port.lid,
                 DGID=self.end_port.default_gid,
                 qkey=IBA.IB_DEFAULT_QP1_QKEY,
-                dqpn=1)
+                dqpn=1,
+            )
         self.debug_print_path("GMP", path)
         return path
 
@@ -312,7 +408,7 @@ class LibIBOpts(object):
             else:
                 self.path = self.get_smp_path(path, umad)
             return umad
-        except:
+        except Exception:
             umad.close()
             raise
 
@@ -345,7 +441,7 @@ class LibIBOpts(object):
             dev = rdma.get_device(self.args.CA)
         if self.args.port is None:
             return dev.end_ports.first()
-        return rdma.get_end_port("%s/%s" % (dev.name, self.args.port))
+        return rdma.get_end_port("{}/{}".format(dev.name, self.args.port))
 
     def compute_cache_fn(self, fn):
         from string import Template
@@ -356,7 +452,11 @@ class LibIBOpts(object):
             CA=str(self.end_port.parent),
             P=str(self.end_port.port_id),
             PORT=str(self.end_port.port_id),
-            A="%s-%s" % (str(self.end_port.parent), self.end_port.port_id))
+            A="{}-{}".format(
+                str(self.end_port.parent), 
+                self.end_port.port_id,
+            ),
+        )
 
     @property
     def cache_fn(self):
@@ -367,7 +467,7 @@ class LibIBOpts(object):
         - $A is $C-$P.
         """
         try:
-            return self.__dict_ - ["cache_fn"]
+            return self.__dict__["cache_fn"]
         except AttributeError:
             pass
         ret = self.__dict__["cache_fn"] = self.compute_cache_fn(self.args.cache)
@@ -389,22 +489,32 @@ class LibIBOpts(object):
         if not self.args.drop_cache and fn is not None and os.path.exists(fn):
             with open(fn, "rb") as F:
                 if self.o.verbosity >= 1:
-                    print("D: Loading discovery cache from %r" % (fn))
+                    print("D: Loading discovery cache from {!r}".format(fn))
                 try:
                     sbn = pickle.load(F)
                     self.sbn_loaded = set(sbn.loaded)
-                except:
+                except Exception:
                     e = sys.exc_info()[1]
-                    raise CmdError("The file %r is not a valid cache file, could not unpickle - %s: %s" % (
-                        fn, type(e).__name__, e))
+                    raise CmdError(
+                        "The file {!r} is not a valid cache file, could not unpickle - {}: {}".format(
+                            fn,
+                            type(e).__name__,
+                            e,
+                        ),
+                    )
             if not isinstance(sbn, rdma.subnet.Subnet):
-                raise CmdError("The file %r is not a valid cache file, wrong object returned: %r" % (fn, sbn))
+                raise CmdError(
+                    "The file {!r} is not a valid cache file, wrong object returned: {!r}".format(
+                        fn,
+                        sbn,
+                    ),
+                )
         else:
             sbn = rdma.subnet.Subnet()
 
         if stuff is not None:
             if self.o.verbosity >= 1:
-                print("D: Performing discovery using mode %r" % (self.args.discovery))
+                print("D: Performing discovery using mode {!r}".format(self.args.discovery))
             sbn.lid_routed = self.args.discovery != "DR"
             rdma.discovery.load(sched, sbn, stuff)
         self.sbn = sbn
@@ -425,7 +535,7 @@ class LibIBOpts(object):
             fn_tmp = fn + ".new"
             with open(fn_tmp, "wb") as F:
                 if self.o.verbosity >= 1:
-                    print("D: Saving discovery cache to %r" % (fn))
+                    print("D: Saving discovery cache to {!r}".format(fn))
                 pickle.dump(self.sbn, F, -1)
             os.rename(fn_tmp, fn)
         return True
@@ -436,152 +546,151 @@ class LibIBOpts(object):
 # is somewhat context sensitive to how it chooses a name. :(
 libib_name_map_saquery = {
     # saquery
-    'nodeDescription': 'NodeDescription',
-    'RespTimeValue': 'Response time value',
-    'SGID': 'sgid',
-    'ClassVersion': 'Class version',
-    'CapabilityMask2': 'Capability mask 2',
-    'DGID': 'dgid',
-    'SLID': 'slid',
-    'CapabilityMask': 'Capability mask',
-    'ServiceID': 'service_id',
-    'DLID': 'dlid',
-    'SL': 'sl',
-    'PKey': 'pkey',
-    'TClass': 'tclass',
-    'BaseVersion': 'Base version',
-    'PortGID': 'PortGid',
-    'BlockNum': 'Block',
-    'nodeDescription': 'NodeDescription',
-    'InputPortNum': 'InPort',
-    'OutputPortNum': 'OutPort',
-    'RedirectGID': 'Redirect GID',
-    'RedirectLID': 'Redirect LID',
-    'RedirectQP': 'Redirect QP',
-    'RedirectQKey': 'Redirect QKey',
-    'RedirectPKey': 'Redirect PKey',
-    'MLID': 'mlid',
-    'MTU': 'mtu',
-    'PacketLifeTime': 'pkt_life',
-    'Preference': 'preference',
-    'Rate': 'rate',
-    'QKey': 'qkey',
-    'QOSClass': 'qos_class',
-    'OutPort': 'Port',
-    'EndportLID': 'EndPortLid',
-    'TrapPKey': 'Trap PKey',
-    'TrapQKey': 'Trap QKey',
-    'TrapGID': 'Trap GID',
-    'TrapLID': 'Trap LID',
-    'PortNum': 'Port',
+    "nodeDescription": "NodeDescription",
+    "RespTimeValue": "Response time value",
+    "SGID": "sgid",
+    "ClassVersion": "Class version",
+    "CapabilityMask2": "Capability mask 2",
+    "DGID": "dgid",
+    "SLID": "slid",
+    "CapabilityMask": "Capability mask",
+    "ServiceID": "service_id",
+    "DLID": "dlid",
+    "SL": "sl",
+    "PKey": "pkey",
+    "TClass": "tclass",
+    "BaseVersion": "Base version",
+    "PortGID": "PortGid",
+    "BlockNum": "Block",
+    "InputPortNum": "InPort",
+    "OutputPortNum": "OutPort",
+    "RedirectGID": "Redirect GID",
+    "RedirectLID": "Redirect LID",
+    "RedirectQP": "Redirect QP",
+    "RedirectQKey": "Redirect QKey",
+    "RedirectPKey": "Redirect PKey",
+    "MLID": "mlid",
+    "MTU": "mtu",
+    "PacketLifeTime": "pkt_life",
+    "Preference": "preference",
+    "Rate": "rate",
+    "QKey": "qkey",
+    "QOSClass": "qos_class",
+    "OutPort": "Port",
+    "EndportLID": "EndPortLid",
+    "TrapPKey": "Trap PKey",
+    "TrapQKey": "Trap QKey",
+    "TrapGID": "Trap GID",
+    "TrapLID": "Trap LID",
+    "PortNum": "Port",
 
     # Structure names.
-    'SAServiceRecord': 'ServiceRecord',
-    'SALinkRecord': 'LinkRecord',
-    'SASMInfoRecord': 'SMInfoRecord',
-    'SANodeRecord': 'NodeRecord',
-    'SAPortInfoRecord': 'PortInfoRecord',
-    'SASwitchInfoRecord': 'SwitchInfoRecord',
-    'SAPathRecord': 'PathRecord',
-    'MADClassPortInfo': 'SA ClassPortInfo',
-    'SAMCMemberRecord': 'MCMember Record',
-    'SAServiceAssociationRecord': 'ServiceAssociationRecord',
-    'SAGUIDInfoRecord': 'GUIDInfoRecord',
-    'SAVLArbitrationTableRecord': 'VLArbTableRecord',
-    'SASLToVLMappingTableRecord': 'SL2VLTableRecord',
-    'SAPKeyTableRecord': 'PKeyTableRecord',
-    'SARandomForwardingTableRecord': 'RandomForwardingTableRecord',
-    'SALinearForwardingTableRecord': 'LFT Record',
-    'SAMulticastForwardingTableRecord': 'MFT Record',
-    'SAInformInfoRecord': 'InformInfoRecord',
+    "SAServiceRecord": "ServiceRecord",
+    "SALinkRecord": "LinkRecord",
+    "SASMInfoRecord": "SMInfoRecord",
+    "SANodeRecord": "NodeRecord",
+    "SAPortInfoRecord": "PortInfoRecord",
+    "SASwitchInfoRecord": "SwitchInfoRecord",
+    "SAPathRecord": "PathRecord",
+    "MADClassPortInfo": "SA ClassPortInfo",
+    "SAMCMemberRecord": "MCMember Record",
+    "SAServiceAssociationRecord": "ServiceAssociationRecord",
+    "SAGUIDInfoRecord": "GUIDInfoRecord",
+    "SAVLArbitrationTableRecord": "VLArbTableRecord",
+    "SASLToVLMappingTableRecord": "SL2VLTableRecord",
+    "SAPKeyTableRecord": "PKeyTableRecord",
+    "SARandomForwardingTableRecord": "RandomForwardingTableRecord",
+    "SALinearForwardingTableRecord": "LFT Record",
+    "SAMulticastForwardingTableRecord": "MFT Record",
+    "SAInformInfoRecord": "InformInfoRecord",
 
-    'NodeType': 'node_type',
-    'NumPorts': 'num_ports',
-    'SystemImageGUID': 'sys_guid',
-    'NodeGUID': 'node_guid',
-    'PortGUID': 'port_guid',
-    'PartitionCap': 'partition_cap',
-    'LocalPortNum': 'port_num',
-    'VendorID': 'vendor_id',
-    'DeviceID': 'device_id',
-    'revision': 'revision',
+    "NodeType": "node_type",
+    "NumPorts": "num_ports",
+    "SystemImageGUID": "sys_guid",
+    "NodeGUID": "node_guid",
+    "PortGUID": "port_guid",
+    "PartitionCap": "partition_cap",
+    "LocalPortNum": "port_num",
+    "VendorID": "vendor_id",
+    "DeviceID": "device_id",
+    "revision": "revision",
 }
 
 # FIXME: I think Ira fixed libib to be more sane, so these are old.
 libib_name_map_perfquery = {
-    'PortRcvErrors': 'RcvErrors',
-    'PortXmitConstraintErrors': 'XmtConstraintErrors',
-    'SymbolErrorCounter': 'SymbolErrors',
-    'PortXmitDiscards': 'XmtDiscards',
-    'PortRcvRemotePhysicalErrors': 'RcvRemotePhysErrors',
-    'ExcessiveBufferOverrunErrors': 'ExcBufOverrunErrors',
-    'PortXmitData': 'XmtData',
-    'LinkErrorRecoveryCounter': 'LinkRecovers',
-    'PortRcvSwitchRelayErrors': 'RcvSwRelayErrors',
-    'PortXmitWait': 'XmtWait',
-    'LocalLinkIntegrityErrors': 'LinkIntegrityErrors',
-    'PortRcvData': 'RcvData',
-    'PortRcvConstraintErrors': 'RcvConstraintErrors',
-    'LinkDownedCounter': 'LinkDowned',
-    'PortXmitPkts': 'XmtPkts',
-    'PortSwHOQLimitDiscards': 'PortSwHOQLifetimeLimitDiscards',
-    'PortRcvPkts': 'RcvPkts',
+    "PortRcvErrors": "RcvErrors",
+    "PortXmitConstraintErrors": "XmtConstraintErrors",
+    "SymbolErrorCounter": "SymbolErrors",
+    "PortXmitDiscards": "XmtDiscards",
+    "PortRcvRemotePhysicalErrors": "RcvRemotePhysErrors",
+    "ExcessiveBufferOverrunErrors": "ExcBufOverrunErrors",
+    "PortXmitData": "XmtData",
+    "LinkErrorRecoveryCounter": "LinkRecovers",
+    "PortRcvSwitchRelayErrors": "RcvSwRelayErrors",
+    "PortXmitWait": "XmtWait",
+    "LocalLinkIntegrityErrors": "LinkIntegrityErrors",
+    "PortRcvData": "RcvData",
+    "PortRcvConstraintErrors": "RcvConstraintErrors",
+    "LinkDownedCounter": "LinkDowned",
+    "PortXmitPkts": "XmtPkts",
+    "PortSwHOQLimitDiscards": "PortSwHOQLifetimeLimitDiscards",
+    "PortRcvPkts": "RcvPkts",
 }
 
 libib_name_map_smpquery = {
-    'PartitionEnforcementCap': 'PartEnforceCap',
-    'VendorID': 'VendorId',
-    'LinkDownDefaultState': 'LinkDownDefState',
-    'InitTypeReply': 'InitReply',
-    'MTUCap': 'MtuCap',
-    'PortPhysicalState': 'PhysLinkState',
-    'DefaultPort': 'DefPort',
-    'PKeyViolations': 'PkeyViolations',
-    'RespTimeValue': 'RespTimeVal',
-    'OverrunErrors': 'OverrunErr',
-    'LinkRoundTripLatency': 'RoundTrip',
-    'SubnetTimeOut': 'SubnetTimeout',
-    'MasterSMSL': 'SMSL',
-    'MKeyViolations': 'MkeyViolations',
-    'MulticastFDBCap': 'McastFdbCap',
-    'VLArbitrationHighCap': 'VLArbHighCap',
-    'MKeyProtectBits': 'ProtectBits',
-    'LifeTimeValue': 'LifeTime',
-    'ClassVersion': 'ClassVers',
-    'DefaultMulticastPrimaryPort': 'DefMcastPrimPort',
-    'LinearFDBTop': 'LinearFdbTop',
-    'PortState': 'LinkState',
-    'BaseVersion': 'BaseVers',
-    'DefaultMulticastNotPrimaryPort': 'DefMcastNotPrimPort',
-    'QKeyViolations': 'QkeyViolations',
-    'FilterRawOutbound': 'FilterRawOutb',
-    'OperationalVLs': 'OperVLs',
-    'LocalPortNum': 'LocalPort',
-    'FilterRawInbound': 'FilterRawInb',
-    'CapabilityMask': 'CapMask',
-    'HOQLife': 'HoqLife',
-    'GUIDCap': 'GuidCap',
-    'MKeyLeasePeriod': 'MkeyLeasePeriod',
-    'PartitionEnforcementOutbound': 'PartEnforceOutb',
-    'LocalPhyErrors': 'LocalPhysErr',
-    'NodeGUID': 'Guid',
-    'DeviceID': 'DevId',
-    'LID': 'Lid',
-    'LinearFDBCap': 'LinearFdbCap',
-    'SystemImageGUID': 'SystemGuid',
-    'MKey': 'Mkey',
-    'VLArbitrationLowCap': 'VLArbLowCap',
-    'PortGUID': 'PortGuid',
-    'RandomFDBCap': 'RandomFdbCap',
-    'PortStateChange': 'StateChange',
-    'PartitionEnforcementInbound': 'PartEnforceInb',
-    'GIDPrefix': 'GidPrefix',
-    'FilterRawInboundCap': 'FilterRawInbound',
-    'FilterRawOutboundCap': 'FilterRawOutbound',
-    'OutboundEnforcementCap': 'OutboundPartEnf',
-    'InboundEnforcementCap': 'InboundPartEnf',
-    'PartitionCap': 'PartCap',
-    'MasterSMLID': 'SMLid',
-    'OptimizedSLtoVLMappingProgramming': 'OptSLtoVLMapping',
-    'LIDsPerPort': 'LidsPerPort',
+    "PartitionEnforcementCap": "PartEnforceCap",
+    "VendorID": "VendorId",
+    "LinkDownDefaultState": "LinkDownDefState",
+    "InitTypeReply": "InitReply",
+    "MTUCap": "MtuCap",
+    "PortPhysicalState": "PhysLinkState",
+    "DefaultPort": "DefPort",
+    "PKeyViolations": "PkeyViolations",
+    "RespTimeValue": "RespTimeVal",
+    "OverrunErrors": "OverrunErr",
+    "LinkRoundTripLatency": "RoundTrip",
+    "SubnetTimeOut": "SubnetTimeout",
+    "MasterSMSL": "SMSL",
+    "MKeyViolations": "MkeyViolations",
+    "MulticastFDBCap": "McastFdbCap",
+    "VLArbitrationHighCap": "VLArbHighCap",
+    "MKeyProtectBits": "ProtectBits",
+    "LifeTimeValue": "LifeTime",
+    "ClassVersion": "ClassVers",
+    "DefaultMulticastPrimaryPort": "DefMcastPrimPort",
+    "LinearFDBTop": "LinearFdbTop",
+    "PortState": "LinkState",
+    "BaseVersion": "BaseVers",
+    "DefaultMulticastNotPrimaryPort": "DefMcastNotPrimPort",
+    "QKeyViolations": "QkeyViolations",
+    "FilterRawOutbound": "FilterRawOutb",
+    "OperationalVLs": "OperVLs",
+    "LocalPortNum": "LocalPort",
+    "FilterRawInbound": "FilterRawInb",
+    "CapabilityMask": "CapMask",
+    "HOQLife": "HoqLife",
+    "GUIDCap": "GuidCap",
+    "MKeyLeasePeriod": "MkeyLeasePeriod",
+    "PartitionEnforcementOutbound": "PartEnforceOutb",
+    "LocalPhyErrors": "LocalPhysErr",
+    "NodeGUID": "Guid",
+    "DeviceID": "DevId",
+    "LID": "Lid",
+    "LinearFDBCap": "LinearFdbCap",
+    "SystemImageGUID": "SystemGuid",
+    "MKey": "Mkey",
+    "VLArbitrationLowCap": "VLArbLowCap",
+    "PortGUID": "PortGuid",
+    "RandomFDBCap": "RandomFdbCap",
+    "PortStateChange": "StateChange",
+    "PartitionEnforcementInbound": "PartEnforceInb",
+    "GIDPrefix": "GidPrefix",
+    "FilterRawInboundCap": "FilterRawInbound",
+    "FilterRawOutboundCap": "FilterRawOutbound",
+    "OutboundEnforcementCap": "OutboundPartEnf",
+    "InboundEnforcementCap": "InboundPartEnf",
+    "PartitionCap": "PartCap",
+    "MasterSMLID": "SMLid",
+    "OptimizedSLtoVLMappingProgramming": "OptSLtoVLMapping",
+    "LIDsPerPort": "LidsPerPort",
 }

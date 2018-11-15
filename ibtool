@@ -7,7 +7,7 @@ import sys
 from libibtool.tools import *
 
 # Generate the global command map
-banner = """Command suite for IB management v%s""" % (rdma.__version__)
+banner = """Command suite for IB management v{}""".format(rdma.__version__)
 
 commands = {
     "ibroute": None,
@@ -83,7 +83,7 @@ commands = {
     "help": (".tools",),
 }
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) == 1:
         cmd_help([], MyOptParse(cmd_help))
         sys.exit(0)
@@ -111,5 +111,7 @@ if __name__ == '__main__':
                 raise
         sys.exit(100)
     else:
-        sys.stderr.write("Bad command %s\n" % (sys.argv[1]))
+        sys.stderr.write(
+            "Bad command {}\n".format(sys.argv[1]),
+        )
         sys.exit(1)

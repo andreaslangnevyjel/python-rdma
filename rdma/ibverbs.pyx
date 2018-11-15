@@ -91,7 +91,7 @@ class WRError(rdma.SysError):
     Raised when an error occurs posting work requests. :attr:`bad_index`
     is the index into the work request list what failed to post.
     """
-    def __init__(self,int errno,char *func,char *msg,int bad_index):
+    def __init__(self, int errno, char *func, char *msg, int bad_index):
         rdma.SysError.__init__(self,errno,func,msg)
         self.bad_index = bad_index
 
@@ -1271,7 +1271,12 @@ cdef class SRQ:
                 for i in range(n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
-                raise WRError(rc,"ibv_post_srq_recv","Failed to post work request",n)
+                raise WRError(
+                    rc,
+                    b"ibv_post_srq_recv",
+                    b"Failed to post work request",
+                    n,
+                )
         finally:
             free(mem)
 
@@ -1656,7 +1661,12 @@ cdef class QP:
                 for i in range(n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
-                raise WRError(rc,"ibv_post_send","Failed to post work request",n)
+                raise WRError(
+                    rc,
+                    b"ibv_post_send",
+                    b"Failed to post work request",
+                    n,
+                )
         finally:
             free(mem)
 
@@ -1717,7 +1727,12 @@ cdef class QP:
                 for i in range(n): #  0 <= i < n:
                     if cwr+i == cbad_wr:
                         break
-                raise WRError(rc,"ibv_post_recv","Failed to post work request",n)
+                raise WRError(
+                    rc,
+                    b"ibv_post_recv",
+                    b"Failed to post work request",
+                    n,
+                )
         finally:
             free(mem)
 

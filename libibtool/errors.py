@@ -15,71 +15,78 @@ class CheckError(CmdError):
 warnings = []
 
 
-def red(s):
+def red(s: str) -> str:
     if lib.args.colour:
-        return "\033[1;031m%s\033[0;39m" % (s)
-    return s
+        return "\033[1;031m{}\033[0;39m".format(s)
+    else:
+        return s
 
 
-def green(s):
+def green(s: str) -> str:
     if lib.args.colour:
-        return "\033[1;032m%s\033[0;39m" % (s)
-    return s
+        return "\033[1;032m{}\033[0;39m".format(s)
+    else:
+        return s
 
 
-def blue(s):
+def blue(s: str) -> str:
     if lib.args.colour:
-        return "\033[1;034m%s\033[0;39m" % (s)
-    return s
+        return "\033[1;034m{}\033[0;39m".format(s)
+    else:
+        return s
 
 
 def load_thresholds(fn):
     """Load the performance counters threshold file."""
     if fn is None:
         return {
-            'portRcvErrors': 10,
-            'portXmitConstraintErrors': 100,
-            'symbolErrorCounter': 10,
-            'VL15Dropped': 100,
-            'portXmitDiscards': 100,
-            'excessiveBufferOverrunErrors': 10,
-            'linkErrorRecoveryCounter': 10,
-            'portRcvSwitchRelayErrors': 100,
-            'portRcvRemotePhysicalErrors': 100,
-            'localLinkIntegrityErrors': 10,
-            'portRcvConstraintErrors': 100,
-            'linkDownedCounter': 10
+            "portRcvErrors": 10,
+            "portXmitConstraintErrors": 100,
+            "symbolErrorCounter": 10,
+            "VL15Dropped": 100,
+            "portXmitDiscards": 100,
+            "excessiveBufferOverrunErrors": 10,
+            "linkErrorRecoveryCounter": 10,
+            "portRcvSwitchRelayErrors": 100,
+            "portRcvRemotePhysicalErrors": 100,
+            "localLinkIntegrityErrors": 10,
+            "portRcvConstraintErrors": 100,
+            "linkDownedCounter": 10,
         }
     else:
         with open(fn, "rt") as F:
             res = {}
-            for I in F.readlines():
-                I = I.strip()
-                if not I:
+            for line in F.readlines():
+                line = line.strip()
+                if not line:
                     continue
-                if I[0] == "#":
+                if line[0] == "#":
                     continue
                 try:
-                    p = I.partition('=')
+                    p = line.partition("=")
                     res[p[0].strip()] = int(p[2].strip(), 0)
                 except ValueError:
-                    raise CmdError("Invalid threshold line %r" % (I))
+                    raise CmdError("Invalid threshold line {!r}".format(line))
 
     # Canonize and check the names
     res2 = {}
-    keys = set(I[0] for I in IBA.PMPortCounters.MEMBERS)
-    onames = dict((v, k) for k, v in libib_name_map_perfquery.items())
+    keys = set(member[0] for member in IBA.PMPortCounters.MEMBERS)
+    onames = {
+        v: k for k, v in libib_name_map_perfquery.items()
+    }
     for k, v in res.items():
         if k not in keys:
             k = onames.get(k, k)
         if k not in keys:
             kl = k.lower()
-            for I in keys:
-                if I.lower() == kl:
-                    k = I
+            for line in keys:
+                if line.lower() == kl:
+                    k = line
                     break
         if k not in keys:
-            raise CmdError("Threshold key %r is not known" % (k))
+            raise CmdError(
+                "Threshold key {!r} is not known".format(k),
+            )
         res2[k] = v
     return res2
 
@@ -88,41 +95,56 @@ def check(o, a, v, comp, compn, fmt, desc, error=False):
     c = getattr(o, a)
     if comp(c, v):
         if lib.debug >= 1:
-            print("D: Check OK: %r %r against %r: %s" % (a, fmt(c), fmt(v), desc))
+            print(
+                "D: Check OK: {!r} {!r} against {!r}: {}".format(
+                    a,
+                    fmt(c),
+                    fmt(v),
+                    desc,
+                ),
+            )
         return
-    msg = "%s is %r, %s %r: %s" % (a, fmt(c), compn, fmt(v), desc)
+    msg = "{} is {!r}, {} {!r}: {}".format(
+        a,
+        fmt(c),
+        compn,
+        fmt(v),
+        desc,
+    )
     if error:
         raise CheckError(msg)
     warnings.append(msg)
 
 
-def checkEQ(o, a, v, desc, fmt=str, error=False):
+def check_eq(o, a, v, desc, fmt=str, error=False):
     check(o, a, v, (lambda a, b: a == b), "expected", fmt, desc, error)
 
 
-def checkNEQ(o, a, v, desc, fmt=str, error=False):
+def check_neq(o, a, v, desc, fmt=str, error=False):
     check(o, a, v, (lambda a, b: a != b), "but shouldn't be", fmt, desc, error)
 
 
-def checkLTE(o, a, v, desc, fmt=str, error=False):
+def check_lte(o, a, v, desc, fmt=str, error=False):
     check(o, a, v, (lambda a, b: a <= b), "expected less than", fmt, desc, error)
 
 
-def get_max(v):
+def get_max(v) -> int:
     if v == 0:
         return 0
-    I = -1
+    idx = -1
     while v != 0:
         v = v >> 1
-        I = I + 1
-    return 1 << I
+        idx = idx + 1
+    return 1 << idx
 
 
 def link_configured(pinf):
     """True if the port info is in a configured state such that speed and width
     can be considered valid."""
-    return (pinf.portPhysicalState == IBA.PHYS_PORT_STATE_LINK_UP or
-            pinf.portPhysicalState == IBA.PHYS_PORT_STATE_LINK_ERR_RECOVERY)
+    return (
+        pinf.portPhysicalState == IBA.PHYS_PORT_STATE_LINK_UP or pinf.portPhysicalState ==
+        IBA.PHYS_PORT_STATE_LINK_ERR_RECOVERY
+    )
 
 
 # Decorators to tell what kind of check the function is doing so the
@@ -153,7 +175,7 @@ def clear_check(func):
     return func
 
 
-def get_perf(sched, path, ninf, port_idx, reset=False, select=0xFFFF):
+def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF):
     """Coroutine to get port counters."""
     cnts = IBA.PMPortCounters()
     if port_idx is None:
@@ -183,8 +205,9 @@ def get_perf(sched, path, ninf, port_idx, reset=False, select=0xFFFF):
                 results[port] = yield sched.PerformanceGet(cnts, path)
 
         results = [None] * (ninf.numPorts + 1)
-        yield sched.mqueue(get_cnts(I)
-                           for I in range(1, ninf.numPorts + 1))
+        yield sched.mqueue(
+            get_cnts(idx) for idx in range(1, ninf.numPorts + 1)
+        )
         if reset:
             return
 
@@ -200,27 +223,38 @@ def get_perf(sched, path, ninf, port_idx, reset=False, select=0xFFFF):
 
 
 @node_check
-def do_check_node(sched, path, portGUID, ninf, **kwargs):
+def do_check_node(sched, path, port_guid, ninf, **kwargs):
     """Coroutine to do the checknode action"""
     req = IBA.ComponentMask(IBA.SANodeRecord())
     if isinstance(path, rdma.path.IBDRPath):
-        req.nodeInfo.portGUID = portGUID
+        req.nodeInfo.portGUID = port_guid
     else:
         req.LID = path.DLID
     ninfr = yield sched.SubnAdmGet(req)
 
-    if portGUID != ninfr.nodeInfo.portGUID:
-        raise CheckError("SA and SMP NodeInfo's differ %r != %r" % (
-            portGUID, ninfr.nodeInfo.portGUID))
+    if port_guid != ninfr.nodeInfo.portGUID:
+        raise CheckError(
+            "SA and SMP NodeInfo's differ {!r} != {!r}".format(
+                port_guid,
+                ninfr.nodeInfo.portGUID,
+            ),
+        )
 
     try:
-        npath = yield rdma.path.get_mad_path(sched, portGUID,
-                                             dqpn=1,
-                                             qkey=IBA.IB_DEFAULT_QP1_QKEY)
+        npath = yield rdma.path.get_mad_path(
+            sched,
+            port_guid,
+            dqpn=1,
+            qkey=IBA.IB_DEFAULT_QP1_QKEY,
+        )
         if lib.debug >= 1:
             print("D: SA path to end port is", repr(npath))
     except rdma.path.SAPathNotFoundError:
-        raise CheckError("SA could not find a path for %r" % (ninf.portGUID))
+        raise CheckError(
+            "SA could not find a path for {!r}".format(
+                ninf.portGUID,
+            ),
+        )
     path._cached_gmp_path = npath
 
 
@@ -237,22 +271,52 @@ def do_check_port(sched, path, desc, ninf, pinf, port_idx, port, sbn, **kwargs):
             if not link_configured(peer_port.pinf):
                 return
             max_speed = min(max_speed, get_max(peer_port.pinf.linkSpeedSupported))
-    checkEQ(pinf, "linkSpeedActive",
-            max_speed,
-            desc=desc, fmt=IBA_describe.link_speed)
-    checkNEQ(pinf, "LID", 0, desc=desc)
-    checkNEQ(pinf, "masterSMLID", 0, desc=desc)
+    check_eq(
+        pinf,
+        "linkSpeedActive",
+        max_speed,
+        desc=desc,
+        fmt=IBA_describe.link_speed,
+    )
+    check_neq(
+        pinf,
+        "LID",
+        0,
+        desc=desc,
+    )
+    check_neq(
+        pinf,
+        "masterSMLID",
+        0,
+        desc=desc,
+    )
     if ninf.nodeType != IBA.NODE_SWITCH:
-        checkEQ(pinf, "localPortNum", port_idx, desc=desc)
+        check_eq(
+            pinf,
+            "localPortNum",
+            port_idx,
+            desc=desc,
+        )
 
 
 @port_check
 def do_check_portstate(sched, path, desc, pinf, **kwargs):
     """Coroutine to do the checkportstate action"""
-    checkEQ(pinf, "portPhysicalState", IBA.PHYS_PORT_STATE_LINK_UP,
-            desc=desc, error=True, fmt=IBA_describe.phys_link_state)
-    checkEQ(pinf, "portState", IBA.PORT_STATE_ACTIVE,
-            desc=desc, fmt=IBA_describe.link_state)
+    check_eq(
+        pinf,
+        "portPhysicalState",
+        IBA.PHYS_PORT_STATE_LINK_UP,
+        desc=desc,
+        error=True,
+        fmt=IBA_describe.phys_link_state,
+    )
+    check_eq(
+        pinf,
+        "portState",
+        IBA.PORT_STATE_ACTIVE,
+        desc=desc,
+        fmt=IBA_describe.link_state,
+    )
 
 
 @port_check
@@ -269,10 +333,13 @@ def do_check_portwidth(sched, path, desc, pinf, port, sbn, **kwargs):
                 return
             max_width = min(max_width, get_max(peer_port.pinf.linkWidthSupported))
     # FIXME: What about 12x ports vs three 4x ports? How is that reported?
-    checkEQ(pinf, "linkWidthActive",
-            max_width,
-            desc=desc,
-            fmt=lambda v: "%ux" % (IBA_describe.link_width(v)))
+    check_eq(
+        pinf,
+        "linkWidthActive",
+        max_width,
+        desc=desc,
+        fmt=lambda v: "{:d}".format(IBA_describe.link_width(v)),
+    )
 
 
 @node_check
@@ -322,7 +389,7 @@ def do_check_errors(sched, path, gpath, ninf, pinf, portGUID, port_idx, **kwargs
 
     for k, v in thresh.items():
         if v > 0 and hasattr(ret, k):
-            checkLTE(ret, k, v, desc=desc)
+            check_lte(ret, k, v, desc=desc)
 
 
 @perf_check
@@ -656,51 +723,93 @@ def perform_topo_check(argv, o, funcs):
 def cmd_ibcheckstate(argv, o):
     """Run ibchecknode over every node in the network and ibcheckportstate over every port.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_check_node,
-                                        do_check_portstate])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_check_node,
+            do_check_portstate,
+        ],
+    )
 
 
 def cmd_ibcheckwidth(argv, o):
     """Run ibchecknode over every node in the network and ibcheckportwidth over every port.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_check_node,
-                                        do_check_portwidth])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_check_node,
+            do_check_portwidth,
+        ],
+    )
 
 
 def cmd_ibchecknet(argv, o):
     """Run ibchecknode over every node in the network and ibcheckport plus ibcheckerrs over every port.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_check_node,
-                                        do_check_portstate,
-                                        do_check_portwidth,
-                                        do_check_port,
-                                        do_check_errors])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_check_node,
+            do_check_portstate,
+            do_check_portwidth,
+            do_check_port,
+            do_check_errors,
+        ],
+    )
 
 
 def cmd_ibcheckerrors(argv, o):
     """Run ibchecknode over every node in the network and ibcheckerrs over every port.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_check_node,
-                                        do_check_portstate,
-                                        do_check_errors])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_check_node,
+            do_check_portstate,
+            do_check_errors,
+        ],
+    )
 
 
 def cmd_ibclearcounters(argv, o):
     """Clear all PMPortCounters on every port.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_clear_counters])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_clear_counters,
+        ],
+    )
 
 
 def cmd_ibclearerrors(argv, o):
     """Clear only error counters in PMPortCounters on every port.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_clear_error_counters])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_clear_error_counters,
+        ],
+    )
 
 
 def cmd_ibdatacounters(argv, o):
     """Show data counters for all ports.
        Usage: %prog"""
-    return perform_topo_check(argv, o, [do_show_counts])
+    return perform_topo_check(
+        argv,
+        o,
+        [
+            do_show_counts,
+        ],
+    )
 
 
 def cmd_ibidsverify(argv, o):

@@ -9,28 +9,42 @@ import rdma.subnet
 from libibtool.libibopts import *
 
 
-def as_node_name(node):
+def as_node_name(node) -> str:
     if isinstance(node, rdma.subnet.CA):
-        return '"H-%s"' % (node.ninf.nodeGUID)
-    if isinstance(node, rdma.subnet.Switch):
-        return '"S-%s"' % (node.ninf.nodeGUID)
-    if isinstance(node, rdma.subnet.Router):
-        return '"R-%s"' % (node.ninf.nodeGUID)
-    return '"?-%s"' % (node.ninf.nodeGUID)
+        return '"H-{}"'.format(node.ninf.nodeGUID)
+    elif isinstance(node, rdma.subnet.Switch):
+        return '"S-{}"'.format(node.ninf.nodeGUID)
+    elif isinstance(node, rdma.subnet.Router):
+        return '"R-{}"'.format(node.ninf.nodeGUID)
+    else:
+        return '"?-{}"'.format(node.ninf.nodeGUID)
 
 
-def as_port_name(port):
+def as_port_name(port) -> str:
     node = port.parent
     if isinstance(node, rdma.subnet.Switch):
-        return '%s[%u]' % (as_node_name(node), node.ports.index(port))
-    return '%s[%u](%s)' % (as_node_name(node), node.ports.index(port), port.portGUID)
+        return "{}[{:d}]".format(
+            as_node_name(node),
+            node.ports.index(port),
+        )
+    else:
+        return "{}[{:d}]({})".format(
+            as_node_name(node),
+            node.ports.index(port),
+            port.portGUID,
+        )
 
 
 def summary(sched, sbn, node):
     if isinstance(node, rdma.subnet.CA):
-        print('%-8s: %s ports %u "%s"' % (
-            "Ca", node.ninf.nodeGUID, node.ninf.numPorts,
-            IBA_describe.dstr(node.desc)))
+        print(
+            '{:<8s}: {} ports {:d} "{}"'.format(
+                "Ca",
+                node.ninf.nodeGUID,
+                node.ninf.numPorts,
+                IBA_describe.dstr(node.desc),
+            ),
+        )
     elif isinstance(node, rdma.subnet.Switch):
         zport = node.ports[0]
         pinf = zport.pinf
@@ -42,18 +56,34 @@ def summary(sched, sbn, node):
             path = sbn.get_path_smp(sched, zport)
             pinf = yield sched.SubnGet(IBA.SMPPortInfo, path)
             sbn.get_port_pinf(pinf, path=path, port_idx=0)
-        print('%-8s: %s ports %u "%s" base port 0 lid %u lmc %u' % (
-            "Switch", node.ninf.nodeGUID, node.ninf.numPorts,
-            IBA_describe.dstr(node.desc),
-            zport.LID, pinf.LMC))
+        print(
+            '{:<8s}: {} ports {:d} "{}" base port 0 lid {:d} lmc {:d}'.format(
+                "Switch",
+                node.ninf.nodeGUID,
+                node.ninf.numPorts,
+                IBA_describe.dstr(node.desc),
+                zport.LID,
+                pinf.LMC,
+            ),
+        )
     elif isinstance(node, rdma.subnet.Router):
-        print('%-8s: %s ports %u "%s"' % (
-            "Router", node.ninf.nodeGUID, node.ninf.numPorts,
-            IBA_describe.dstr(node.desc)))
+        print(
+            '{:<8s}: {} ports {:d}%u "%s"'.format(
+                "Router",
+                node.ninf.nodeGUID,
+                node.ninf.numPorts,
+                IBA_describe.dstr(node.desc),
+            ),
+        )
     else:
-        print('%-8s: %s ports %u "%s"' % (
-            "??%u" % (node.ninf.nodeType), node.ninf.nodeGUID, node.ninf.numPorts,
-            IBA_describe.dstr(node.desc)))
+        print(
+            '{:<8s}: {} ports {:d} "{}"'.format(
+                "??{:d}".format(node.ninf.nodeType),
+                node.ninf.nodeGUID,
+                node.ninf.numPorts,
+                IBA_describe.dstr(node.desc),
+            ),
+        )
 
 
 def summary2(node):
@@ -64,27 +94,38 @@ def summary2(node):
     elif isinstance(node, rdma.subnet.Router):
         kind = "Router"
     else:
-        kind = "??%u" % (node.ninf.nodeType)
+        kind = "??{:d}".format(node.ninf.nodeType)
 
-    print('%-8s: %s ports %u devid 0x%x vendid 0x%x "%s"' % (
-        kind, node.ninf.nodeGUID, node.ninf.numPorts,
-        node.ninf.deviceID, node.ninf.vendorID,
-        IBA_describe.dstr(node.desc)))
+    print(
+        '{:<8s}: {} ports {:d} devid 0x{:x} vendid 0x{:x} "{}"'.format(
+            kind,
+            node.ninf.nodeGUID,
+            node.ninf.numPorts,
+            node.ninf.deviceID,
+            node.ninf.vendorID,
+            IBA_describe.dstr(node.desc),
+        ),
+    )
 
 
 def go_listing(argv, o, node_type, lib=None):
     if lib is None:
         LibIBOpts.setup(o, address=False, discovery=True)
-        (args, values) = o.parse_args(argv, expected_values=0)
+        args, values = o.parse_args(argv, expected_values=0)
         lib = LibIBOpts(o, args, values)
 
     with lib.get_umad() as umad:
         sched = lib.get_sched(umad)
-        sbn = lib.get_subnet(sched,
-                             ["all_NodeInfo %u" % (node_type),
-                              "all_NodeDescription %u" % (node_type)])
-        itms = [I for I in sbn.iternodes()
-                if I.ninf.nodeType == node_type]
+        sbn = lib.get_subnet(
+            sched,
+            [
+                "all_NodeInfo {:d}".format(node_type),
+                "all_NodeDescription {:d}".format(node_type),
+            ],
+        )
+        itms = [
+            entry for entry in sbn.iternodes() if entry.ninf.nodeType == node_type
+        ]
         itms.sort(key=lambda x: x.ninf.nodeGUID)
         sched.run(mqueue=(summary(sched, sbn, I) for I in itms))
     return lib.done()
@@ -93,8 +134,12 @@ def go_listing(argv, o, node_type, lib=None):
 def go_print_node(argv, o, node_type):
     """Display a single ibnetdiscover record searching by node GUID."""
     LibIBOpts.setup(o, address=False, discovery=True)
-    o.add_option("-l", action="store_true", dest="list",
-                 help="Display all CAs")
+    o.add_option(
+        "-l",
+        action="store_true",
+        dest="list",
+        help="Display all CAs",
+    )
     (args, values) = o.parse_args(argv)
     lib = LibIBOpts(o, args, values, 1, (tmpl_node_guid,))
 
@@ -110,19 +155,30 @@ def go_print_node(argv, o, node_type):
 
         if isinstance(sched, rdma.satransactor.SATransactor):
             sbn = lib.get_subnet(sched)
-            sched.run(queue=rdma.discovery.subnet_ninf_GUID(sched, sbn, node_guid))
+            sched.run(
+                queue=rdma.discovery.subnet_ninf_GUID(sched, sbn, node_guid),
+            )
         else:
             # Can't search by node GUID, do it the hard way..
-            sbn = lib.get_subnet(sched,
-                                 ["all_NodeInfo %u" % (node_type)])
+            sbn = lib.get_subnet(
+                sched,
+                [
+                    "all_NodeInfo {:d}".format(node_type),
+                ],
+            )
 
         node = sbn.nodes.get(node_guid)
         if node is None:
-            raise CmdError("Could not find node %s" % (node_guid))
+            raise CmdError("Could not find node {}".format(node_guid))
         sched.run(queue=rdma.discovery.topo_surround_SMP(sched, sbn, node))
         if node.ninf.nodeType != node_type:
-            raise CmdError("Node %s was type %u not %u" % (
-                node_guid, node.ninf.nodeType, node_type))
+            raise CmdError(
+                "Node {} was type {:d} not {:d}".format(
+                    node_guid,
+                    node.ninf.nodeType,
+                    node_type,
+                ),
+            )
 
         print_ibnetdiscover_single(sbn, node)
     return lib.done()
@@ -173,14 +229,21 @@ def cmd_ibnodes(argv, o):
 
     with lib.get_umad() as umad:
         sched = lib.get_sched(umad)
-        sbn = lib.get_subnet(sched,
-                             ["all_NodeInfo",
-                              "all_NodeDescription"])
-        itms = [I for I in sbn.iternodes()
-                if (I.ninf.nodeType == IBA.NODE_CA or
-                    I.ninf.nodeType == IBA.NODE_SWITCH)]
+        sbn = lib.get_subnet(
+            sched,
+            [
+                "all_NodeInfo",
+                "all_NodeDescription",
+            ],
+        )
+        itms = [
+            entry for entry in sbn.iternodes() if (
+                entry.ninf.nodeType == IBA.NODE_CA or
+                entry.ninf.nodeType == IBA.NODE_SWITCH
+            )
+        ]
         itms.sort(key=lambda x: x.ninf.nodeGUID)
-        sched.run(mqueue=(summary(sched, sbn, I) for I in itms))
+        sched.run(mqueue=(summary(sched, sbn, entry) for entry in itms))
     return lib.done()
 
 
@@ -267,14 +330,34 @@ def print_ibnetdiscover_topology(sbn, root):
 def cmd_ibnetdiscover(argv, o):
     """Display the topology of the subnet.
        Usage: %prog"""
-    o.add_option("-l", "--list", action="store_true", dest="list",
-                 help="Show a summary listing of all nodes")
-    o.add_option("-H", "--Hca_list", action="store_true", dest="cas",
-                 help="Show a summary listing of all CA nodes")
-    o.add_option("-S", "--Switch_list", action="store_true", dest="switches",
-                 help="Show a summary listing of all switch nodes")
-    o.add_option("-R", "--Router_list", action="store_true", dest="routers",
-                 help="Show a summary listing of all router nodes")
+    o.add_option(
+        "-l",
+        "--list",
+        action="store_true",
+        dest="list",
+        help="Show a summary listing of all nodes",
+    )
+    o.add_option(
+        "-H",
+        "--Hca_list",
+        action="store_true",
+        dest="cas",
+        help="Show a summary listing of all CA nodes",
+    )
+    o.add_option(
+        "-S",
+        "--Switch_list",
+        action="store_true",
+        dest="switches",
+        help="Show a summary listing of all switch nodes",
+    )
+    o.add_option(
+        "-R",
+        "--Router_list",
+        action="store_true",
+        dest="routers",
+        help="Show a summary listing of all router nodes",
+    )
     LibIBOpts.setup(o, address=False, discovery=True)
     (args, values) = o.parse_args(argv, expected_values=0)
     lib = LibIBOpts(o, args, values)
@@ -283,11 +366,15 @@ def cmd_ibnetdiscover(argv, o):
         sched = lib.get_sched(umad)
         # Sigh, I'd love to have incremental output but my tidy encapsulation
         # does not allow that.
-        sbn = lib.get_subnet(sched,
-                             ["all_NodeInfo",
-                              "all_NodeDescription",
-                              "all_PortInfo",
-                              "all_topology"])
+        sbn = lib.get_subnet(
+            sched,
+            [
+                "all_NodeInfo",
+                "all_NodeDescription",
+                "all_PortInfo",
+                "all_topology",
+            ],
+        )
 
         root = sbn.ports[umad.parent.port_guid]
 
@@ -339,76 +426,142 @@ def print_switch(sbn, args, switch):
                                      IBA_describe.dstr(switch.desc, True)))
             first = False
         if pinf.portPhysicalState != IBA.PHYS_PORT_STATE_LINK_UP:
-            link = "%s/%s" % (
+            link = "{}/{}".format(
                 IBA_describe.link_state(pinf.portState),
-                IBA_describe.phys_link_state(pinf.portPhysicalState))
+                IBA_describe.phys_link_state(pinf.portPhysicalState),
+            )
         else:
             if pinf.linkSpeedExtActive == 0:
-                link = "%2ux %s %s/%s" % (
+                link = "{:2d}x {} {}/{}".format(
                     IBA_describe.link_width(pinf.linkWidthActive),
                     IBA_describe.link_speed(pinf.linkSpeedActive),
                     IBA_describe.link_state(pinf.portState),
-                    IBA_describe.phys_link_state(pinf.portPhysicalState))
+                    IBA_describe.phys_link_state(pinf.portPhysicalState),
+                )
             else:
-                link = "%2ux %s %s/%s" % (
+                link = "{:2d}x {} {}/{}".format(
                     IBA_describe.link_width(pinf.linkWidthActive),
                     IBA_describe.link_speed_ext(pinf.linkSpeedExtActive),
                     IBA_describe.link_state(pinf.portState),
-                    IBA_describe.phys_link_state(pinf.portPhysicalState))
+                    IBA_describe.phys_link_state(pinf.portPhysicalState),
+                )
         if args.additional:
-            additional = " (HOQ:%u VL_Stall:%u)" % (pinf.HOQLife, pinf.VLStallCount)
+            additional = " (HOQ:{:d} VL_Stall:{:d})".format(
+                pinf.HOQLife,
+                pinf.VLStallCount,
+            )
         else:
             additional = ""
-        lhs = "%3d %4d[  ] ==(%s)%s" % (port0.LID, idx, link, additional)
+        lhs = "{:3d} {:4}[  ] ==({}){}".format(
+            port0.LID,
+            idx,
+            link,
+            additional,
+        )
 
         err = []
         peer_port = sbn.topology.get(port)
         if peer_port is None:
             rhs = '[  ] "" ( )'
         else:
-            rhs = "%3d %4d[  ] %s" % (
-                peer_port.to_end_port().LID, peer_port.port_id,
-                IBA_describe.dstr(peer_port.parent.desc, True))
-            if better_possible(pinf.linkWidthSupported, peer_port.pinf.linkWidthSupported,
-                               pinf.linkWidthEnabled):
-                err.append("Could be %sx" % (
-                    IBA_describe.link_width(1 << int(math.floor(math.log(pinf.linkWidthSupported, 2))))))
-            if (pinf.linkSpeedExtSupported != 0 and peer_port.pinf.linkSpeedExtSupported):
-                if better_possible(pinf.linkSpeedExtSupported, peer_port.pinf.linkSpeedExtSupported,
-                                   pinf.linkSpeedExtEnabled):
-                    err.append("Could be %s" % (
-                        IBA_describe.link_speed_ext(1 << int(math.floor(math.log(pinf.linkSpeedExtSupported, 2))))))
+            rhs = "{:3d} {:4d}[  ] {}".format(
+                peer_port.to_end_port().LID,
+                peer_port.port_id,
+                IBA_describe.dstr(peer_port.parent.desc, True),
+            )
+            if better_possible(
+                pinf.linkWidthSupported,
+                peer_port.pinf.linkWidthSupported,
+                pinf.linkWidthEnabled,
+            ):
+                err.append(
+                    "Could be {:d}x".format(
+                        IBA_describe.link_width(1 << int(math.floor(math.log(pinf.linkWidthSupported, 2)))),
+                    ),
+                )
+            if pinf.linkSpeedExtSupported != 0 and peer_port.pinf.linkSpeedExtSupported:
+                if better_possible(
+                    pinf.linkSpeedExtSupported,
+                    peer_port.pinf.linkSpeedExtSupported,
+                    pinf.linkSpeedExtEnabled,
+                ):
+                    err.append(
+                        "Could be {}".format(
+                            IBA_describe.link_speed_ext(1 << int(math.floor(math.log(pinf.linkSpeedExtSupported, 2)))),
+                        )
+                    )
             else:
-                if better_possible(pinf.linkSpeedSupported, peer_port.pinf.linkSpeedSupported,
-                                   pinf.linkSpeedEnabled):
-                    err.append("Could be %s" % (
-                        IBA_describe.link_speed(1 << int(math.floor(math.log(pinf.linkSpeedSupported, 2))))))
+                if better_possible(
+                    pinf.linkSpeedSupported,
+                    peer_port.pinf.linkSpeedSupported,
+                    pinf.linkSpeedEnabled,
+                ):
+                    err.append(
+                        "Could be {}".format(
+                            IBA_describe.link_speed(1 << int(math.floor(math.log(pinf.linkSpeedSupported, 2)))),
+                        )
+                    )
 
             err = ",".join(err)
         if err:
-            err = " (%s)" % (err)
+            err = " ({})".format(err)
 
         if args.line_mode:
-            print("%s %s %-40s==> %s%s" % (guid,
-                                           IBA_describe.dstr(switch.desc, True),
-                                           lhs, rhs, err))
+            print(
+                "{} {} {:>40s}==> {}{}".format(
+                    guid,
+                    IBA_describe.dstr(switch.desc, True),
+                    lhs,
+                    rhs,
+                    err,
+                ),
+            )
         else:
-            print("   %-40s==> %s%s" % (lhs, rhs, err))
+            print(
+                "   {:<40s}==> {}{}".format(
+                    lhs,
+                    rhs,
+                    err,
+                ),
+            )
 
 
 def cmd_iblinkinfo(argv, o):
     """Display the topology of the subnet, differently.
        Usage: %prog [TARGET]"""
-    o.add_option("-g", "--portguids", action="store_true", dest="port_guid",
-                 help="Display port GUIDs not node GUIDs.")
-    o.add_option("-l", "--line", action="store_true", dest="line_mode",
-                 help="Prefix each link with the switch GUID.")
-    o.add_option("-p", "--additional", action="store_true", dest="additional",
-                 help="Also print VLStallCount and HOQLife.")
-    o.add_option("--down", action="store_true", dest="only_down",
-                 help="Only print downed links")
-    o.add_option("--up", action="store_true", dest="only_up",
-                 help="Only print links that are not POLLING")
+    o.add_option(
+        "-g",
+        "--portguids",
+        action="store_true",
+        dest="port_guid",
+        help="Display port GUIDs not node GUIDs.",
+    )
+    o.add_option(
+        "-l",
+        "--line",
+        action="store_true",
+        dest="line_mode",
+        help="Prefix each link with the switch GUID.",
+    )
+    o.add_option(
+        "-p",
+        "--additional",
+        action="store_true",
+        dest="additional",
+        help="Also print VLStallCount and HOQLife.",
+    )
+    o.add_option(
+        "--down",
+        action="store_true",
+        dest="only_down",
+        help="Only print downed links",
+    )
+    o.add_option(
+        "--up",
+        action="store_true",
+        dest="only_up",
+        help="Only print links that are not POLLING",
+    )
     LibIBOpts.setup(o, discovery=True)
     (args, values) = o.parse_args(argv)
     lib = LibIBOpts(o, args, values, 1, (tmpl_target,))
@@ -419,11 +572,15 @@ def cmd_iblinkinfo(argv, o):
     with lib.get_umad_for_target(values[0]) as umad:
         sched = lib.get_sched(umad)
         if values[0] is None:
-            sbn = lib.get_subnet(sched,
-                                 ["all_NodeInfo",
-                                  "all_NodeDescription",
-                                  "all_PortInfo",
-                                  "all_topology"])
+            sbn = lib.get_subnet(
+                sched,
+                [
+                    "all_NodeInfo",
+                    "all_NodeDescription",
+                    "all_PortInfo",
+                    "all_topology",
+                ],
+            )
             root = sbn.ports[umad.parent.port_guid]
             for I in sbn.iterbfs(root):
                 if isinstance(I.parent, rdma.subnet.Switch):
@@ -433,18 +590,32 @@ def cmd_iblinkinfo(argv, o):
             sched.run(queue=rdma.discovery.subnet_get_port(sched, sbn, lib.path))
             port = sbn.path_to_port(lib.path)
             if not isinstance(port.parent, rdma.subnet.Switch):
-                raise CmdError("Port %s is not a switch" % (port))
+                raise CmdError("Port {} is not a switch".format(port))
             sched.run(queue=rdma.discovery.topo_surround_SMP(sched, sbn, port.parent))
 
             # Fill in the pinfs we are going to use
             peer_ports = set(I for I, Idx in port.parent.iterports())
             peer_ports.update(peer for peer, prior in sbn.iterpeers(port.parent))
-            sched.run(mqueue=(rdma.discovery.subnet_pinf_SMP(sched, sbn, I.port_id,
-                                                             sbn.get_path_smp(sched, I.to_end_port()))
-                              for I in peer_ports if (I is not None and
-                                                      I.pinf is None)))
+            sched.run(
+                mqueue=(
+                    rdma.discovery.subnet_pinf_SMP(
+                        sched,
+                        sbn,
+                        entry.port_id,
+                        sbn.get_path_smp(sched, entry.to_end_port()),
+                    ) for entry in peer_ports if (entry is not None and entry.pinf is None)
+                ),
+            )
 
-            sched.run(mqueue=(rdma.discovery.subnet_pinf_SMP(sched, sbn, idx, sbn.get_path_smp(sched, I.to_end_port()))
-                              for I, idx in peer_ports if I is not None and I.pinf is None))
+            sched.run(
+                mqueue=(
+                    rdma.discovery.subnet_pinf_SMP(
+                        sched,
+                        sbn,
+                        idx,
+                        sbn.get_path_smp(sched, entry.to_end_port()),
+                    ) for entry, idx in peer_ports if entry is not None and entry.pinf is None
+                ),
+            )
             print_switch(sbn, args, port.parent)
     return lib.done()
