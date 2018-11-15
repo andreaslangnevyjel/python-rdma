@@ -42,7 +42,7 @@ def cmd_vendstat(argv, o):
         pi = umad.subn_get(IBA.SMPPortInfo, smp_path)
         if not pi.capabilityMask & IBA.isVendorClassSupported:
             raise CmdError("Port does not support vendor MADs")
-        vinf = umad.VendGet(args.kind, path)
+        vinf = umad.vend_get(args.kind, path)
         vinf.printer(sys.stdout, **lib.format_args)
     return lib.done()
 
@@ -160,7 +160,7 @@ def cmd_ibsysstat(argv, o):
 
     with lib.get_umad_for_target(values[0], gmp=True) as umad:
         path = lib.path
-        vinf = umad.VendGet(values[1], path)
+        vinf = umad.vend_get(values[1], path)
         vinf.printer(sys.stdout, **lib.format_args)
     return lib.done()
 
@@ -203,7 +203,7 @@ def cmd_ibping(argv, o):
             while count != args.count:
                 start = rdma.tools.clock_monotonic()
                 try:
-                    vinf = umad.VendGet(vend.OFASysStatPing, path)
+                    vinf = umad.vend_get(vend.OFASysStatPing, path)
                 except rdma.MADError:
                     lost = lost + 1
                     count = count + 1

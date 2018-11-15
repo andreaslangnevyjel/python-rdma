@@ -246,7 +246,7 @@ class Switch(Node):
         """Coroutine to fetch the entire LFDB from the SA"""
         req = IBA.ComponentMask(IBA.SALinearForwardingTableRecord())
         req.LID = sched.get_path_lid(path)
-        res = yield sched.SubnAdmGetTable(req)
+        res = yield sched.subn_adm_get_table(req)
         for I in res:
             idx = I.blockNum
             self.lfdb[idx * 64:idx * 64 + 64] = bytearray(I.linearForwardingTable.portBlock)
@@ -265,7 +265,7 @@ class Switch(Node):
         """Coroutine to fetch the entire MFDB from the SA"""
         req = IBA.ComponentMask(IBA.SAMulticastForwardingTableRecord())
         req.LID = sched.get_path_lid(path)
-        res = yield sched.SubnAdmGetTable(req)
+        res = yield sched.subn_adm_get_table(req)
         for inf in res:
             pos = inf.position
             idx = inf.blockNum

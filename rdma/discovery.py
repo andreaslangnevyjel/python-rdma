@@ -14,7 +14,7 @@ def subnet_ninf_GUID(sched, sbn, node_guid):
     SA for a specific GUID and store it in *sbn*."""
     req = IBA.ComponentMask(IBA.SANodeRecord())
     req.nodeInfo.nodeGUID = node_guid
-    res = yield sched.SubnAdmGetTable(req)
+    res = yield sched.subn_adm_get_table(req)
 
     # The SM can return multiple records that match a nodeGUID, one for each port
     # on a CA. When it does this it must set the portGUID and local_port_num correctly
@@ -30,7 +30,7 @@ def subnet_ninf_SA(sched, sbn, node_type=None):
     req = IBA.ComponentMask(IBA.SANodeRecord())
     if node_type is not None:
         req.nodeInfo.nodeType = node_type
-    res = yield sched.SubnAdmGetTable(IBA.SANodeRecord())
+    res = yield sched.subn_adm_get_table(IBA.SANodeRecord())
     if res:
         sbn.set_max_lid(max(I.LID for I in res))
     for I in res:
@@ -47,7 +47,7 @@ def subnet_ninf_SA(sched, sbn, node_type=None):
 def subnet_swinf_SA(sched, sbn):
     """Coroutine to fetch all :class:`~rdma.IBA.SMPSwitchInfo` records
     from the SA and store them in *sbn*."""
-    res = yield sched.SubnAdmGetTable(IBA.SASwitchInfoRecord())
+    res = yield sched.subn_adm_get_table(IBA.SASwitchInfoRecord())
     if res:
         sbn.set_max_lid(max(I.LID for I in res))
     for I in res:
@@ -60,7 +60,7 @@ def _subnet_fill_LIDs_SA(sched, sbn, LMC):
     """Coroutine to ask the SA for all the PortInfo's with LMC=LMC."""
     pinf = IBA.ComponentMask(IBA.SAPortInfoRecord())
     pinf.portInfo.LMC = LMC
-    res = yield sched.SubnAdmGetTable(pinf)
+    res = yield sched.subn_adm_get_table(pinf)
     if res:
         sbn.set_max_lid(max(I.endportLID for I in res))
     for I in res:
@@ -84,7 +84,7 @@ def subnet_fill_LIDs_SA(sched, sbn):
 def subnet_topology_SA(sched, sbn):
     """Coroutine to fill in the topology in *sbn*."""
     assert "all_NodeInfo" in sbn.loaded
-    res = yield sched.SubnAdmGetTable(IBA.SALinkRecord)
+    res = yield sched.subn_adm_get_table(IBA.SALinkRecord)
 
     sbn.topology = {}
     for I in res:
@@ -106,7 +106,7 @@ def subnet_pinf_SA(sched, sbn):
     """Coroutine to ask the SA for all :class:`~rdma.IBA.SMPPortInfo`."""
     assert "all_NodeInfo" in sbn.loaded
 
-    res = yield sched.SubnAdmGetTable(IBA.SAPortInfoRecord)
+    res = yield sched.subn_adm_get_table(IBA.SAPortInfoRecord)
     for I in res:
         sbn.get_port_pinf(I.portInfo, port_idx=I.portNum, lid=I.endportLID)
     sbn.loaded.add("all_PortInfo")
@@ -131,7 +131,7 @@ def subnet_ninf_SMP(sched, sbn, path, get_desc=True, use_sa=None, done_desc=None
     if use_sa:
         req = IBA.ComponentMask(IBA.SANodeRecord())
         req.LID = yield sched.prepare_path_lid(path)
-        ret = yield sched.SubnAdmGet(req)
+        ret = yield sched.subn_adm_get(req)
         sched.result = sbn.get_node_ninf(ret.nodeInfo, path)
         sched.result[0].set_desc(ret.nodeDescription.nodeString)
         path._cached_node_type = ret.nodeInfo.nodeType
@@ -422,7 +422,7 @@ def topo_peer_SMP(
             req = IBA.ComponentMask(IBA.SALinkRecord())
             req.fromLID = yield sched.prepare_path_lid(path)
             req.fromPort = port_idx
-            rep = yield sched.SubnAdmGet(req)
+            rep = yield sched.subn_adm_get(req)
             peer_path._cached_resolved_dlid = rep.toLID
             peer_port = sbn.get_port(
                 port_idx=rep.toPort,

@@ -21,7 +21,7 @@ def cmd_set_guid(argv, o):
     Set an alias guid on the port through the SA
     Usage: %prog TARGET SLOT GUID
 
-    This uses a SubnAdmSet(GUIDInfo) to program an alias GUID on the end port.
+    This uses a subn_adm_set(GUIDInfo) to program an alias GUID on the end port.
     """
     LibIBOpts.setup(o)
     (args, values) = o.parse_args(argv)
@@ -32,5 +32,5 @@ def cmd_set_guid(argv, o):
 
     with lib.get_umad_for_target(values[0], gmp=True) as umad:
         set_cm = set_guid(lib.path.DLID, values[2], values[1])
-        ret = umad.SubnAdmSet(set_cm, umad.end_port.sa_path)
+        ret = umad.subn_adm_set(set_cm, umad.end_port.sa_path)
         ret.printer(sys.stdout)

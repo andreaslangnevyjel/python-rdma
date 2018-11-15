@@ -8,7 +8,7 @@
           attributeID="0x10"
           attributeName="OFA_SYSSTAT_PING"
           format="libibtool.vendstruct.OFASysStatFormat"
-          methods="VendGet">
+          methods="vend_get">
     <mb bits="64">cookie</mb>
   </struct>
   <struct name="OFASysStatHostInfo"
@@ -16,7 +16,7 @@
           attributeID="0x11"
           attributeName="OFA_SYSSTAT_HOST_INFO"
           format="libibtool.vendstruct.OFASysStatFormat"
-          methods="VendGet">
+          methods="vend_get">
     <mb bits="8" count="216" display="string">data_str</mb>
   </struct>
   <struct name="OFASysStatCPUInfo"
@@ -24,7 +24,7 @@
           attributeID="0x112"
           attributeName="OFA_SYSSTAT_CPU_INFO"
           format="libibtool.vendstruct.OFASysStatFormat"
-          methods="VendGet">
+          methods="vend_get">
     <mb bits="8" count="216" display="string">data_str</mb>
   </struct>
 </makestructs>

@@ -7,7 +7,7 @@
           attributeID="0x17"
           attributeName="MLX_GENERAL_INFO"
           format="libibtool.vendstruct.MlxFormat"
-          methods="VendGet">
+          methods="vend_get">
     <mb bits="64"></mb>
     <!-- is3_hw_info_t -->
     <mb bits="16">hw_revision</mb>

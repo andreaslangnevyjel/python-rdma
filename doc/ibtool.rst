@@ -141,7 +141,7 @@ Compared to the libib versions:
 * All commands support the `--sa` option which causes SMPs to be converted
   into SA record queries and sent to the SA. (see
   :class:`rdma.satransactor.SATransactor`) In `--sa` mode no SMPs are
-  issued. Some commands have `SubnAdmGetTable` support when in `--sa` mode
+  issued. Some commands have `subn_adm_get_table` support when in `--sa` mode
   which makes them run faster. (Be warned, opensm has various bugs in its
   \*Record support)
 * None of the commands unconditionally write files into /var/cache/ or otherwise

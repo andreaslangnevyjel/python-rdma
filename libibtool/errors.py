@@ -230,7 +230,7 @@ def do_check_node(sched, path, port_guid, ninf, **kwargs):
         req.nodeInfo.portGUID = port_guid
     else:
         req.LID = path.DLID
-    ninfr = yield sched.SubnAdmGet(req)
+    ninfr = yield sched.subn_adm_get(req)
 
     if port_guid != ninfr.nodeInfo.portGUID:
         raise CheckError(

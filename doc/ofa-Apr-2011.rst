@@ -322,7 +322,7 @@ Library Tour - IBA (3)
 
 Dynamic language with introspection makes this dead easy::
 
- $ ibtool query SubnAdmGetTable SANodeRecord \
+ $ ibtool query subn_adm_get_table SANodeRecord \
    -f nodeInfo.systemImageGUID=0017:77ff:fef9:6e79
  Reply structure #0
    LID..............................9
@@ -388,7 +388,7 @@ Library Tour - IB Subnet
 
 Fetch, store and manipulate an IB subnet:
 
-- Discovery via DR SMP, LID SMP or SA *SubnAdmGetTable*
+- Discovery via DR SMP, LID SMP or SA *subn_adm_get_table*
 - Incremental out of order loading
 - Save/Load to a Python pickle
 - Iterate, BFS iterate, lookup by GUID, etc.

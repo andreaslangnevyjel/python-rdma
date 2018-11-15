@@ -25,7 +25,7 @@ to switch port 0.
 ---------------------------------------------
 
 Functions that end in `\_SA` collect information using SA
-:meth:`~rdma.madtransactor.MADTransactor.SubnAdmGetTable` RPCs, while `\_SMP`
+:meth:`~rdma.madtransactor.MADTransactor.subn_adm_get_table` RPCs, while `\_SMP`
 functions collect information using VL15
 :meth:`~rdma.madtransactor.MADTransactor.SubnGet` RPCs. These are all helper
 data collection functions to fill in a :class:`rdma.subnet.Subnet` instance.

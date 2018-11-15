@@ -95,7 +95,7 @@
           sect="13.4.8.3"
           attributeID="0x03"
           attributeName="MAD_INFORM_INFO"
-          methods="SubnAdmSet">
+          methods="subn_adm_set">
     <mb bits="128" off="0[0]" type="HdrIPv6Addr">GID<!--GID--></mb>
     <mb bits="16" off="0[128]">LIDRangeBegin<!--LIDRangeBegin--></mb>
     <mb bits="16" off="0[144]">LIDRangeEnd<!--LIDRangeEnd--></mb>

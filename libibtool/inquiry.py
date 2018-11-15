@@ -193,18 +193,19 @@ def cmd_ibaddr(argv, o):
 
 
 methods = {
-    "SubnGet",
-    "PerformanceGet",
-    "SubnAdmGet",
-    "SubnAdmGetTable",
-    "BMGet",
-    "CommMgtGet",
-    "DevMgtGet",
-    "SNMPGet",
+    "subn_get",
+    "performance_get",
+    "subn_adm_get",
+    "subn_adm_get_table",
+    "bm_get",
+    "comm_mgt_get",
+    "dev_mgt_get",
+    "snmp_get",
 }
 
 methods.intersection_update(dir(rdma.madtransactor.MADTransactor))
 
+print(methods)
 
 def is_valid_attribute(attr) -> bool:
     if getattr(attr, "MAD_LENGTH", None) is None or getattr(attr, "MAD_ATTRIBUTE_ID", None) is None:
@@ -278,11 +279,13 @@ def cmd_query(argv, o):
     if len(values) < 3:
         raise CmdError("Too few arguments")
 
-    with lib.get_umad_for_target(values[2],
-                                 gmp=(values[0] != "SubnGet")) as umad:
+    with lib.get_umad_for_target(
+        values[2],
+        gmp=(values[0] != "subn_get"),
+    ) as umad:
         meth = getattr(umad, values[0])
         req = values[1]()
-        if values[0].startswith("SubnAdm"):
+        if values[0].startswith("subn_adm"):
             req = IBA.ComponentMask(req)
         for cur_f in args.fields:
             try:

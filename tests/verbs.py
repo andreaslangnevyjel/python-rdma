@@ -166,7 +166,7 @@ class umad_self_test(unittest.TestCase):
 
     def test_vmad(self):
         with rdma.vmad.VMAD(self.ctx, self.end_port.sa_path) as vmad:
-            ret = vmad.SubnAdmGet(IBA.MADClassPortInfo)
+            ret = vmad.subn_adm_get(IBA.MADClassPortInfo)
             print(repr(vmad.reply_path))
             ret.printer(sys.stdout)
 
@@ -175,7 +175,7 @@ class umad_self_test(unittest.TestCase):
             rdma.path.resolve_path(vmad, path, True)
             path.has_grh = True
             path.hop_limit = 255
-            ret = vmad.SubnAdmGet(IBA.MADClassPortInfo, path)
+            ret = vmad.subn_adm_get(IBA.MADClassPortInfo, path)
             print("SA reply path grh", repr(vmad.reply_path))
 
             # Get a LID path to our immediate peer

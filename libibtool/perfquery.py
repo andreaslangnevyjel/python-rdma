@@ -89,7 +89,7 @@ class Querier(object):
             pass
         ninf = IBA.ComponentMask(IBA.SANodeRecord())
         ninf.LID = self.path.DLID
-        ninf = self.umad.SubnAdmGet(ninf)
+        ninf = self.umad.subn_adm_get(ninf)
         self.__dict__["ninf"] = ninf
         if self.path.DGID is None:
             self.path.DGID = IBA.GID(prefix=IBA.GID_DEFAULT_PREFIX,

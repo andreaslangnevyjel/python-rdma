@@ -33,7 +33,7 @@
           sect="15.2.5.2"
           attributeID="0x11"
           attributeName="SA_NODE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="16" off="0[16]"><!--Reserved--></mb>
     <mb bits="320" off="0[32]" type="struct SMPNodeInfo">nodeInfo<!--NodeInfo--></mb>
@@ -46,7 +46,7 @@
           sect="15.2.5.3"
           attributeID="0x12"
           attributeName="SA_PORT_INFO_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">endportLID<!--EndportLID--></mb>
     <mb bits="8" off="0[16]">portNum<!--PortNum--></mb>
     <mb bits="8" off="0[24]"><!--Reserved--></mb>
@@ -59,7 +59,7 @@
           sect="15.2.5.4"
           attributeID="0x13"
           attributeName="SA_SL_TO_VL_MAPPING_TABLE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="8" off="0[16]">inputPortNum<!--InputPortNum--></mb>
     <mb bits="8" off="0[24]">outputPortNum<!--OutputPortNum--></mb>
@@ -73,7 +73,7 @@
           sect="15.2.5.5"
           attributeID="0x14"
           attributeName="SA_SWITCH_INFO_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="16" off="0[16]"><!--Reserved--></mb>
     <mb bits="160" off="0[32]" type="struct SMPSwitchInfo">switchInfo<!--SwitchInfo--></mb>
@@ -85,7 +85,7 @@
           sect="15.2.5.6"
           attributeID="0x15"
           attributeName="SA_LINEAR_FORWARDING_TABLE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="16" off="0[16]">blockNum<!--BlockNum--></mb>
     <mb bits="32" off="0[32]"><!--Reserved--></mb>
@@ -98,7 +98,7 @@
           sect="15.2.5.7"
           attributeID="0x16"
           attributeName="SA_RANDOM_FORWARDING_TABLE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="16" off="0[16]">blockNum<!--BlockNum--></mb>
     <mb bits="32" off="0[32]"><!--Reserved--></mb>
@@ -111,7 +111,7 @@
           sect="15.2.5.8"
           attributeID="0x17"
           attributeName="SA_MULTICAST_FORWARDING_TABLE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="2" off="0[16]"><!--Reserved--></mb>
     <mb bits="4" off="0[18]">position<!--Position--></mb>
@@ -126,7 +126,7 @@
           sect="15.2.5.9"
           attributeID="0x36"
           attributeName="SA_VL_ARBITRATION_TABLE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="8" off="0[16]">outputPortNum<!--OutputPortNum--></mb>
     <mb bits="8" off="0[24]">blockNum<!--BlockNum--></mb>
@@ -140,7 +140,7 @@
           sect="15.2.5.10"
           attributeID="0x18"
           attributeName="SA_SM_INFO_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="16" off="0[16]"><!--Reserved--></mb>
     <mb bits="192" off="0[32]" type="struct SMPSMInfo">SMInfo<!--SMInfo--></mb>
@@ -152,7 +152,7 @@
           sect="15.2.5.12"
           attributeID="0xF3"
           attributeName="SA_INFORM_INFO_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="128" off="0[0]" type="HdrIPv6Addr">subscriberGID<!--SubscriberGID--></mb>
     <mb bits="16" off="0[128]">enumeration<!--Enumeration--></mb>
     <mb bits="16" off="0[144]"><!--Reserved--></mb>
@@ -167,7 +167,7 @@
           sect="15.2.5.13"
           attributeID="0x20"
           attributeName="SA_LINK_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">fromLID<!--FromLID--></mb>
     <mb bits="8" off="0[16]">fromPort<!--FromPort--></mb>
     <mb bits="8" off="0[24]">toPort<!--ToPort--></mb>
@@ -181,7 +181,7 @@
           sect="15.2.5.18"
           attributeID="0x30"
           attributeName="SA_GUID_INFO_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable SubnAdmSet SubnAdmDelete">
+          methods="SubnAdmGet subn_adm_get_table subn_adm_set SubnAdmDelete">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="8" off="0[16]">blockNum<!--BlockNum--></mb>
     <mb bits="8" off="0[24]"><!--Reserved--></mb>
@@ -195,7 +195,7 @@
           sect="15.2.5.14"
           attributeID="0x31"
           attributeName="SA_SERVICE_RECORD"
-          methods="SubnAdmGet SubnAdmSet SubnAdmGetTable SubnAdmDelete">
+          methods="SubnAdmGet subn_adm_set subn_adm_get_table SubnAdmDelete">
     <mb bits="64" off="0[0]" display="hex">serviceID<!--ServiceID--></mb>
     <mb bits="128" off="0[64]" type="HdrIPv6Addr">serviceGID<!--ServiceGID--></mb>
     <mb bits="16" off="0[192]" display="hex">servicePKey<!--ServiceP_Key--></mb>
@@ -215,7 +215,7 @@
           sect="15.2.5.11"
           attributeID="0x33"
           attributeName="SA_P_KEY_TABLE_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="16" off="0[0]">LID<!--LID--></mb>
     <mb bits="16" off="0[16]">blockNum<!--BlockNum--></mb>
     <mb bits="8" off="0[32]">portNum<!--PortNum--></mb>
@@ -229,7 +229,7 @@
           sect="15.2.5.16"
           attributeID="0x35"
           attributeName="SA_PATH_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="64" off="0[0]" display="hex">serviceID<!--ServiceID8MSB--></mb>
     <!-- Gap so component mask computes properly. Grr. -->
     <mb bits="0" off="0[64]">serviceID56LSB<!--ServiceID56LSB--></mb>
@@ -265,7 +265,7 @@
           sect="15.2.5.17"
           attributeID="0x38"
           attributeName="SA_MC_MEMBER_RECORD"
-          methods="SubnAdmGet SubnAdmSet SubnAdmGetTable SubnAdmDelete">
+          methods="SubnAdmGet subn_adm_set subn_adm_get_table SubnAdmDelete">
     <mb bits="128" off="0[0]" type="HdrIPv6Addr">MGID<!--MGID--></mb>
     <mb bits="128" off="0[128]" type="HdrIPv6Addr">portGID<!--PortGID--></mb>
     <mb bits="32" off="0[256]" display="hex">QKey<!--Q_Key--></mb>
@@ -346,7 +346,7 @@
           sect="15.2.5.15"
           attributeID="0x3B"
           attributeName="SA_SERVICE_ASSOCIATION_RECORD"
-          methods="SubnAdmGet SubnAdmGetTable">
+          methods="SubnAdmGet subn_adm_get_table">
     <mb bits="128" off="0[0]" type="HdrIPv6Addr">serviceKey<!--ServiceKey--></mb>
     <mb bits="8" off="0[128]" count="64" display="string">serviceName<!--ServiceName--></mb>
   </struct>

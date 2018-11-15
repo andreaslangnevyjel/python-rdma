@@ -537,7 +537,7 @@ def _resolve_path_async(mad, path, reversible=False, properties=None):
             setattr(q, k, v)
 
     try:
-        rep = yield mad.SubnAdmGet(q)
+        rep = yield mad.subn_adm_get(q)
     except rdma.MADClassError as err:
         if err.code == IBA.MAD_STATUS_SA_NO_RECORDS:
             raise SAPathNotFoundError("Failed getting path record for path %r." % (path),

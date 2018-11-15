@@ -87,7 +87,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         for _part in path.drPath[1:]:
             req.fromLID = start_lid
             req.fromPort = _part
-            rep = yield self._parent.SubnAdmGet(req)
+            rep = yield self._parent.subn_adm_get(req)
             start_lid = rep.toLID
         path._cached_resolved_dlid = start_lid
         self._parent.result = start_lid
@@ -112,7 +112,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         But opensm does, so we handle it by returning 0 for the record
         request. In the instance valid means 'within the bounds set by the
         other records'. In general though if you hit this you should probably
-        be using a :meth:`SubnAdmGetTable` anyhow....
+        be using a :meth:`subn_adm_get_table` anyhow....
         """
         if class_code == IBA.MAD_STATUS_SA_NO_RECORDS:
             return IBA.ATTR_TO_STRUCT[

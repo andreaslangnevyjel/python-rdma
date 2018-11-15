@@ -339,7 +339,7 @@ def cmd_saquery_help(o, cmd, usage):
 
 def cmd_saquery(argv, o):
     """
-    Issue a SubnAdmGetTable() request to the SA for an attribute
+    Issue a subn_adm_get_table() request to the SA for an attribute
     Usage: %prog [OPTIONS] [ITEM] [ARG] [MEMBER=VALUE]*
 
     This command performs a search at the SA for ITEM things that match
@@ -376,7 +376,7 @@ def cmd_saquery(argv, o):
                  const=IBA.SAInformInfoRecord)
 
     o.add_option("--get", action="store_true", dest="use_get",
-                 help="Use a SubnAdmGet() method instead of SubnAdmGetTable()")
+                 help="Use a SubnAdmGet() method instead of subn_adm_get_table()")
     o.add_option("--no-defaults", action="store_true", dest="no_defaults",
                  help="Do not set default values for any queries")
 
@@ -501,12 +501,12 @@ def cmd_saquery(argv, o):
         name_map = _format_args.get("name_map", {})
         try:
             if getattr(query, "MAD_SUBNADMGETTABLE", None) is None or args.use_get:
-                ret = umad.SubnAdmGet(query_cm, path)
+                ret = umad.subn_adm_get(query_cm, path)
                 n = ret.__class__.__name__
                 print("%s:" % (name_map.get(n, n)))
                 do_print(out, ret)
             else:
-                ret = umad.SubnAdmGetTable(query_cm, path)
+                ret = umad.subn_adm_get_table(query_cm, path)
                 for I in ret:
                     n = I.__class__.__name__
                     print("%s dump:" % (name_map.get(n, n)))

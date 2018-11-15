@@ -403,7 +403,7 @@ class MADTransactor(object):
         fmt.SMKey = getattr(path, "SMKey", 0)
         return self._do_mad(fmt, payload, path, attribute_modifier, method, completer)
 
-    def SubnAdmGet(self, payload, path=None, attribute_modifier=0):
+    def subn_adm_get(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
             payload,
             path,
@@ -411,7 +411,7 @@ class MADTransactor(object):
             payload.MAD_SUBNADMGET,
         )
 
-    def SubnAdmGetTable(self, payload, path=None, attribute_modifier=0):
+    def subn_adm_get_table(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
             payload,
             path,
@@ -419,7 +419,7 @@ class MADTransactor(object):
             payload.MAD_SUBNADMGETTABLE,
         )
 
-    def SubnAdmSet(self, payload, path=None, attribute_modifier=0):
+    def subn_adm_set(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
             payload,
             path,
@@ -437,7 +437,7 @@ class MADTransactor(object):
             method,
         )
 
-    def VendGet(self, payload, path, attribute_modifier=0):
+    def vend_get(self, payload, path, attribute_modifier=0):
         return self._vend_do(
             payload,
             path,
@@ -445,7 +445,7 @@ class MADTransactor(object):
             payload.MAD_VENDGET,
         )
 
-    def VendSet(self, payload, path, attribute_modifier=0):
+    def vend_set(self, payload, path, attribute_modifier=0):
         return self._vend_do(
             payload,
             path,
@@ -659,4 +659,4 @@ class MADTransactor(object):
     # TODO ["BMGet", "BMSet", "CommMgtGet", "CommMgtSend", "CommMgtSet",
     # "DevMgtGet", "DevMgtSet", "SNMPGet",
     # "SNMPSend", "SubnAdmDelete", "SubnAdmGetMulti",
-    # "SubnAdmGetTraceTable", "SubnAdmSet"]
+    # "SubnAdmGetTraceTable", "subn_adm_set"]
