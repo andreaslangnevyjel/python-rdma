@@ -44,7 +44,7 @@
           sect="13.4.8.1"
           attributeID="0x01"
           attributeName="MAD_CLASS_PORT_INFO"
-          methods="CommMgtGet CommMgtSet performance_get BMGet BMSet DevMgtGet DevMgtSet SNMPGet SubnAdmGet">
+          methods="CommMgtGet CommMgtSet PerformanceGet BMGet BMSet DevMgtGet DevMgtSet SNMPGet SubnAdmGet">
     <mb bits="8" off="0[0]">baseVersion<!--BaseVersion--></mb>
     <mb bits="8" off="0[8]">classVersion<!--ClassVersion--></mb>
     <mb bits="16" off="0[16]" display="hex">capabilityMask<!--CapabilityMask--></mb>

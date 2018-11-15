@@ -76,7 +76,7 @@ class Querier(object):
             return self.__dict__["cpinf"]
         except KeyError:
             pass
-        cpinf = self.umad.performance_get(IBA.MADClassPortInfo, self.path)
+        cpinf = self.umad.PerformanceGet(IBA.MADClassPortInfo, self.path)
         self.path.resp_time = cpinf.respTimeValue
         self.__dict__["cpinf"] = cpinf
         return cpinf
@@ -143,7 +143,7 @@ class Querier(object):
             def get_cnts(sched, res, port, path):
                 if not self.args.reset_only:
                     cnts.portSelect = port
-                    res[port] = yield sched.performance_get(cnts, path)
+                    res[port] = yield sched.PerformanceGet(cnts, path)
                 if self.reset:
                     cnts.portSelect = port
                     yield sched.PerformanceSet(cnts, path)
@@ -165,7 +165,7 @@ class Querier(object):
         else:
             try:
                 if not self.args.reset_only:
-                    res = yield sched.performance_get(cnts, self.path)
+                    res = yield sched.PerformanceGet(cnts, self.path)
                 if self.reset:
                     yield sched.PerformanceSet(cnts, self.path)
                     if self.args.reset_only:
