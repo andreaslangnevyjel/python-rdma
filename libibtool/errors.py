@@ -187,7 +187,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
 
     accumulate = False
     if cnts.portSelect == 0xFF:
-        cpinf = yield sched.performance_get(IBA.MADClassPortInfo, path)
+        cpinf = yield sched.PerformanceGet(IBA.MADClassPortInfo, path)
         path.resp_time = cpinf.respTimeValue
         accumulate = not (cpinf.capabilityMask & IBA.allPortSelect)
         if accumulate and ninf.nodeType == IBA.NODE_CA:
@@ -202,7 +202,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
             if reset:
                 yield sched.PerformanceSet(cnts, path)
             else:
-                results[port] = yield sched.performance_get(cnts, path)
+                results[port] = yield sched.PerformanceGet(cnts, path)
 
         results = [None] * (ninf.numPorts + 1)
         yield sched.mqueue(
@@ -217,7 +217,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
             yield sched.PerformanceSet(cnts, path)
             return
         else:
-            res = yield sched.performance_get(cnts, path)
+            res = yield sched.PerformanceGet(cnts, path)
     res.portSelect = cnts.portSelect
     sched.result = res
 

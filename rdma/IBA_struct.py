@@ -1196,9 +1196,10 @@ class MADHeaderDirected(rdma.binstruct.BinStruct):
 class MADClassPortInfo(rdma.binstruct.BinStruct):
     """Class Port Info (section 13.4.8.1)"""
     __slots__ = (
-    'baseVersion', 'classVersion', 'capabilityMask', 'capabilityMask2', 'respTimeValue', 'redirectGID', 'redirectTC',
-    'redirectSL', 'redirectFL', 'redirectLID', 'redirectPKey', 'reserved_256', 'redirectQP', 'redirectQKey', 'trapGID',
-    'trapTC', 'trapSL', 'trapFL', 'trapLID', 'trapPKey', 'trapHL', 'trapQP', 'trapQKey')
+        'baseVersion', 'classVersion', 'capabilityMask', 'capabilityMask2', 'respTimeValue', 'redirectGID', 'redirectTC',
+        'redirectSL', 'redirectFL', 'redirectLID', 'redirectPKey', 'reserved_256', 'redirectQP', 'redirectQKey', 'trapGID',
+        'trapTC', 'trapSL', 'trapFL', 'trapLID', 'trapPKey', 'trapHL', 'trapQP', 'trapQKey',
+    )
     MAD_LENGTH = 72
     MAD_ATTRIBUTE_ID = 0x1
     MAD_BMGET = 0x1  # MAD_METHOD_GET
@@ -1214,14 +1215,16 @@ class MADClassPortInfo(rdma.binstruct.BinStruct):
         'baseVersion': 0, 'classVersion': 1, 'capabilityMask': 2, 'capabilityMask2': 3, 'respTimeValue': 4,
         'redirectGID': 5, 'redirectTC': 6, 'redirectSL': 7, 'redirectFL': 8, 'redirectLID': 9, 'redirectPKey': 10,
         'reserved_256': 11, 'redirectQP': 12, 'redirectQKey': 13, 'trapGID': 14, 'trapTC': 15, 'trapSL': 16,
-        'trapFL': 17, 'trapLID': 18, 'trapPKey': 19, 'trapHL': 20, 'trapQP': 21, 'trapQKey': 22
+        'trapFL': 17, 'trapLID': 18, 'trapPKey': 19, 'trapHL': 20, 'trapQP': 21, 'trapQKey': 22,
     }
-    MEMBERS = [('baseVersion', 8, 1), ('classVersion', 8, 1), ('capabilityMask', 16, 1), ('capabilityMask2', 27, 1),
-               ('respTimeValue', 5, 1), ('redirectGID', 128, 1), ('redirectTC', 8, 1), ('redirectSL', 4, 1),
-               ('redirectFL', 20, 1), ('redirectLID', 16, 1), ('redirectPKey', 16, 1), ('reserved_256', 8, 1),
-               ('redirectQP', 24, 1), ('redirectQKey', 32, 1), ('trapGID', 128, 1), ('trapTC', 8, 1), ('trapSL', 4, 1),
-               ('trapFL', 20, 1), ('trapLID', 16, 1), ('trapPKey', 16, 1), ('trapHL', 8, 1), ('trapQP', 24, 1),
-               ('trapQKey', 32, 1)]
+    MEMBERS = [
+        ('baseVersion', 8, 1), ('classVersion', 8, 1), ('capabilityMask', 16, 1), ('capabilityMask2', 27, 1),
+        ('respTimeValue', 5, 1), ('redirectGID', 128, 1), ('redirectTC', 8, 1), ('redirectSL', 4, 1),
+        ('redirectFL', 20, 1), ('redirectLID', 16, 1), ('redirectPKey', 16, 1), ('reserved_256', 8, 1),
+        ('redirectQP', 24, 1), ('redirectQKey', 32, 1), ('trapGID', 128, 1), ('trapTC', 8, 1), ('trapSL', 4, 1),
+        ('trapFL', 20, 1), ('trapLID', 16, 1), ('trapPKey', 16, 1), ('trapHL', 8, 1), ('trapQP', 24, 1),
+        ('trapQKey', 32, 1),
+
 
     def zero(self):
         self.baseVersion = 0

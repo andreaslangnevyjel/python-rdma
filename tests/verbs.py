@@ -193,10 +193,10 @@ class umad_self_test(unittest.TestCase):
             print("Got peer path", repr(peer_path))
 
             # Try some GMPs to the peer
-            ret = vmad.performance_get(IBA.MADClassPortInfo, peer_path)
+            ret = vmad.PerformanceGet(IBA.MADClassPortInfo, peer_path)
             print("Got peer reply path", repr(vmad.reply_path))
-            ret = vmad.performance_get(IBA.MADClassPortInfo,
-                                       peer_path.copy(has_grh=True,
+            ret = vmad.PerformanceGet(IBA.MADClassPortInfo,
+                                      peer_path.copy(has_grh=True,
                                                      hop_limit=255))
             print("Got peer reply path grh", repr(vmad.reply_path))
 

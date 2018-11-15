@@ -92,8 +92,12 @@ class LibIBOpts(object):
                             except ValueError:
                                 pass
 
-                        path = tmpl(v, default_end_port,
-                                    require_dev, require_ep)
+                        path = tmpl(
+                            v,
+                            default_end_port,
+                            require_dev,
+                            require_ep,
+                        )
 
                         if self.args.addr_direct and not isinstance(path, rdma.path.IBDRPath):
                             raise ValueError("Not a directed route")

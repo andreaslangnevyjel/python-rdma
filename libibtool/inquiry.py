@@ -194,7 +194,7 @@ def cmd_ibaddr(argv, o):
 
 methods = {
     "subn_get",
-    "performance_get",
+    "PerformanceGet",
     "subn_adm_get",
     "subn_adm_get_table",
     "bm_get",
