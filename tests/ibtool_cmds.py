@@ -60,8 +60,8 @@ class IbtoolCmdsTest(unittest.TestCase):
                     self.end_port,
                     drPath=b"\0" + chr(self.end_port.port_id).encode("ascii"),
                 )
-                self.peer_pinf = umad.SubnGet(IBA.SMPPortInfo, dr)
-                self.peer_ninf = umad.SubnGet(IBA.SMPNodeInfo, dr)
+                self.peer_pinf = umad.subn_get(IBA.SMPPortInfo, dr)
+                self.peer_ninf = umad.subn_get(IBA.SMPNodeInfo, dr)
 
     def xcmd(self, *args):
         """Run the libib stuff. Switch this out to use diff to compare outputs."""

@@ -54,7 +54,7 @@ def summary(sched, sbn, node):
                 break
         if pinf is None:
             path = sbn.get_path_smp(sched, zport)
-            pinf = yield sched.SubnGet(IBA.SMPPortInfo, path)
+            pinf = yield sched.subn_get(IBA.SMPPortInfo, path)
             sbn.get_port_pinf(pinf, path=path, port_idx=0)
         print(
             '{:<8s}: {} ports {:d} "{}" base port 0 lid {:d} lmc {:d}'.format(

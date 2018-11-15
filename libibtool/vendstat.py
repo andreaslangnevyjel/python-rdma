@@ -39,7 +39,7 @@ def cmd_vendstat(argv, o):
     with lib.get_umad_for_target(values[0], gmp=True) as umad:
         path = lib.path
         smp_path = path.copy(dqpn=0)
-        pi = umad.SubnGet(IBA.SMPPortInfo, smp_path)
+        pi = umad.subn_get(IBA.SMPPortInfo, smp_path)
         if not pi.capabilityMask & IBA.isVendorClassSupported:
             raise CmdError("Port does not support vendor MADs")
         vinf = umad.VendGet(args.kind, path)

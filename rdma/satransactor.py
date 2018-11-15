@@ -92,11 +92,11 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         path._cached_resolved_dlid = start_lid
         self._parent.result = start_lid
 
-    def _get_new_TID(self):
-        return self._parent._get_new_TID()
+    def _get_new_tid(self):
+        return self._parent._get_new_tid()
 
-    def _doMAD(self, fmt, payload, path, attribute_modifier, method, completer=None):
-        return self._parent._doMAD(
+    def _do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
+        return self._parent._do_mad(
             fmt,
             payload,
             path,
@@ -154,7 +154,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
             completer,
         )
 
-    def SubnGet(self, payload, path, attribute_modifier=0):
+    def subn_get(self, payload, path, attribute_modifier=0):
         ID = payload.MAD_ATTRIBUTE_ID
         meth = payload.MAD_SUBNGET
         if ID == IBA.SMPGUIDInfo.MAD_ATTRIBUTE_ID:
@@ -316,7 +316,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 ),
             )
 
-        return self._parent.SubnGet(payload, path, attribute_modifier)
+        return self._parent.subn_get(payload, path, attribute_modifier)
 
     def __getattr__(self, name):
         """Let us wrapper things with additional members."""

@@ -115,7 +115,7 @@ def subnet_pinf_SA(sched, sbn):
 
 def subnet_pinf_SMP(sched, sbn, sel, path):
     """Coroutine to send SMPs to get :class:`~rdma.IBA.SMPPortInfo`."""
-    pinf = yield sched.SubnGet(IBA.SMPPortInfo, path, sel)
+    pinf = yield sched.subn_get(IBA.SMPPortInfo, path, sel)
     sbn.get_port_pinf(pinf, port_select=sel, path=path)
 
 
@@ -136,7 +136,7 @@ def subnet_ninf_SMP(sched, sbn, path, get_desc=True, use_sa=None, done_desc=None
         sched.result[0].set_desc(ret.nodeDescription.nodeString)
         path._cached_node_type = ret.nodeInfo.nodeType
     else:
-        ninf = yield sched.SubnGet(IBA.SMPNodeInfo, path)
+        ninf = yield sched.subn_get(IBA.SMPNodeInfo, path)
         result = sbn.get_node_ninf(ninf, path)
         sched.result = result
         node, port = result
@@ -311,7 +311,7 @@ class _SubnetTopo(object):
     def do_port(self, path, node, aport, port_idx, depth):
         """Coroutine to get a :class:`~rdma.IBA.SMPPortInfo` and schedule
         scanning the attached node, if applicable."""
-        pinf = yield self.sched.SubnGet(IBA.SMPPortInfo, path, port_idx)
+        pinf = yield self.sched.subn_get(IBA.SMPPortInfo, path, port_idx)
         aport = self.sbn.get_port_pinf(pinf, path=path, port_idx=port_idx)
 
         if self.lid_route and isinstance(path, rdma.path.IBDRPath):
@@ -335,7 +335,7 @@ class _SubnetTopo(object):
     def do_node(self, path, depth: int=0, peer=None):
         """Coroutine to get the :class:`~rdma.IBA.SMPNodeInfo` and scan all the
         port infos."""
-        ninf = yield self.sched.SubnGet(IBA.SMPNodeInfo, path)
+        ninf = yield self.sched.subn_get(IBA.SMPNodeInfo, path)
         node, port = self.sbn.get_node_ninf(ninf, path)
 
         if isinstance(node, rdma.subnet.Switch):
@@ -482,7 +482,7 @@ def topo_surround_SMP(sched, sbn, node, get_desc: bool=True):
         def do_port(sel, path):
             aport = node.get_port(sel)
             if aport.pinf is None:
-                pinf = yield sched.SubnGet(IBA.SMPPortInfo, path, sel)
+                pinf = yield sched.subn_get(IBA.SMPPortInfo, path, sel)
                 sbn.get_port_pinf(pinf, port_select=sel, path=path)
             else:
                 pinf = aport.pinf

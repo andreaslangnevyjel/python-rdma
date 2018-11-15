@@ -44,8 +44,8 @@ def _fetch_mcast(sched, sbn, port, path, mlid, topo):
             defbits = defbits | (1 << switch.swinf.defaultMulticastNotPrimaryPort)
 
     def get_block(pos):
-        inf = yield sched.SubnGet(IBA.SMPMulticastForwardingTable,
-                                  path, (idx // 32) | (pos << 28))
+        inf = yield sched.subn_get(IBA.SMPMulticastForwardingTable,
+                                   path, (idx // 32) | (pos << 28))
         for I, v in enumerate(inf.portMaskBlock):
             block[I] = block[I] | (v << pos * 16)
 
@@ -113,8 +113,8 @@ def trace(umad, sched, sbn, sport, spath, dport, dpath, step_fn):
     while cport != dport:
         # print cpath,DLID
         if isinstance(cport.parent, rdma.subnet.Switch):
-            inf = umad.SubnGet(IBA.SMPLinearForwardingTable,
-                               cpath, DLID / 64)
+            inf = umad.subn_get(IBA.SMPLinearForwardingTable,
+                                cpath, DLID / 64)
             port_id = inf.portBlock[DLID % 64]
             out_port = cport.parent.get_port(port_id)
         else:

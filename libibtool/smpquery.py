@@ -7,12 +7,12 @@ from libibtool.libibopts import *
 
 def do_ni(umad, kind, path, attr):
     print("# Node info:", path)
-    ni = umad.SubnGet(kind, path, attr)
+    ni = umad.subn_get(kind, path, attr)
     ni.printer(sys.stdout, **_format_args)
 
 
 def do_nd(umad, kind, path, attr):
-    nd = umad.SubnGet(kind, path, attr)
+    nd = umad.subn_get(kind, path, attr)
     print(
         "Node Description: {!r}".format(
             IBA_describe.description(nd.nodeString),
@@ -22,29 +22,29 @@ def do_nd(umad, kind, path, attr):
 
 def do_pi(umad, kind, path, attr):
     print("# Port info:", path)
-    pi = umad.SubnGet(kind, path, attr)
+    pi = umad.subn_get(kind, path, attr)
     pi.printer(sys.stdout, **_format_args)
 
 
 def do_si(umad, kind, path, attr):
     print("# Switch info:", path)
-    si = umad.SubnGet(kind, path, attr)
+    si = umad.subn_get(kind, path, attr)
     si.printer(sys.stdout, **_format_args)
 
 
 def do_pkeys(umad, kind, path, attr):
-    ni = umad.SubnGet(IBA.SMPNodeInfo, path)
+    ni = umad.subn_get(IBA.SMPNodeInfo, path)
     if attr > ni.numPorts:
         raise CmdError("Invalid port number")
     if ni.nodeType == IBA.NODE_SWITCH and attr != 0:
-        si = umad.SubnGet(IBA.SMPSwitchInfo, path)
+        si = umad.subn_get(IBA.SMPSwitchInfo, path)
         count = si.partitionEnforcementCap
     else:
         count = ni.partitionCap
 
     pkeys = []
     for cur_v in range((count + 31) // 32):
-        pkeys.extend(umad.SubnGet(kind, path, (attr << 16) | cur_v).PKeyBlock)
+        pkeys.extend(umad.subn_get(kind, path, (attr << 16) | cur_v).PKeyBlock)
 
     for num, cur_v in enumerate(pkeys[:count]):
         if num % 8 == 0:
@@ -60,15 +60,15 @@ def do_pkeys(umad, kind, path, attr):
 
 
 def do_sl2vl(umad, kind, path, attr):
-    ni = umad.SubnGet(IBA.SMPNodeInfo, path)
+    ni = umad.subn_get(IBA.SMPNodeInfo, path)
 
     if ni.nodeType == IBA.NODE_SWITCH:
         sl2vl = [None] * (ni.numPorts + 1)
         for cur_v in range(ni.numPorts + 1):
-            sl2vl[cur_v] = umad.SubnGet(kind, path, cur_v << 8 | attr).SLtoVL
+            sl2vl[cur_v] = umad.subn_get(kind, path, cur_v << 8 | attr).SLtoVL
     else:
         attr = ni.local_port_num
-        sl2vl = (umad.SubnGet(kind, path, attr).SLtoVL,)
+        sl2vl = (umad.subn_get(kind, path, attr).SLtoVL,)
 
     print("# SL2VL table", path)
     print(
@@ -89,7 +89,7 @@ def dump_vlarb(umad, path, attr, name, offset, cap):
     vl = []
     for idx in range((cap + 31) // 32):
         vl.extend(
-            umad.SubnGet(
+            umad.subn_get(
                 IBA.SMPVLArbitrationTable,
                 path,
                 (offset + idx) << 16 | attr,
@@ -100,10 +100,10 @@ def dump_vlarb(umad, path, attr, name, offset, cap):
 
 
 def do_vlarb(umad, _kind, path, attr):
-    ni = umad.SubnGet(IBA.SMPNodeInfo, path)
+    ni = umad.subn_get(IBA.SMPNodeInfo, path)
     if attr == 0:
         if ni.nodeType == IBA.NODE_SWITCH:
-            si = umad.SubnGet(IBA.SMPSwitchInfo, path)
+            si = umad.subn_get(IBA.SMPSwitchInfo, path)
             if not si.enhancedPort0:
                 print(
                     "# No VLArbitration tables (BSP0): {}s port {:d}".format(
@@ -113,7 +113,7 @@ def do_vlarb(umad, _kind, path, attr):
                 )
                 return
 
-    pi = umad.SubnGet(IBA.SMPPortInfo, path, attr)
+    pi = umad.subn_get(IBA.SMPPortInfo, path, attr)
     print(
         "# VLArbitration tables: {} port {:d} LowCap {:d} High Cap {:d}".format(
             path,
@@ -129,12 +129,12 @@ def do_vlarb(umad, _kind, path, attr):
 
 
 def do_guid(umad, kind, path, _attr):
-    pi = umad.SubnGet(IBA.SMPPortInfo, path)
+    pi = umad.subn_get(IBA.SMPPortInfo, path)
     count = pi.GUIDCap
 
     guids = []
     for I in range((count + 7) // 8):
-        guids.extend(umad.SubnGet(kind, path, I).GUIDBlock)
+        guids.extend(umad.subn_get(kind, path, I).GUIDBlock)
 
     for num, I in enumerate(guids[:count]):
         if num % 2 == 0:
@@ -148,12 +148,12 @@ def do_guid(umad, kind, path, _attr):
 
 
 def do_lft(umad, kind, path, _attr):
-    swi = umad.SubnGet(IBA.SMPSwitchInfo, path)
+    swi = umad.subn_get(IBA.SMPSwitchInfo, path)
 
     count = swi.linearFDBCap
     lft = []
     for I in range((count + 63) // 64):
-        lft.extend(umad.SubnGet(kind, path, I).portBlock)
+        lft.extend(umad.subn_get(kind, path, I).portBlock)
 
     for num, I in enumerate(lft[:count]):
         if num % 8 == 0:

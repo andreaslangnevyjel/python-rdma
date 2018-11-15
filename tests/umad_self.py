@@ -23,19 +23,19 @@ class umad_self_test(unittest.TestCase):
         self.umad = None
 
     def test_node_info(self):
-        inf = self.umad.SubnGet(IBA.SMPNodeInfo(), self.local_path)
+        inf = self.umad.subn_get(IBA.SMPNodeInfo(), self.local_path)
         inf.printer(sys.stdout)
         ports = inf.numPorts
 
-        inf = self.umad.SubnGet(IBA.SMPPortInfo, self.local_path)
+        inf = self.umad.subn_get(IBA.SMPPortInfo, self.local_path)
         inf.printer(sys.stdout)
 
         self.assertEqual(ports, len(self.end_port.parent.end_ports))
         for I in range(1, ports):
-            inf = self.umad.SubnGet(IBA.SMPPortInfo, self.local_path, I)
+            inf = self.umad.subn_get(IBA.SMPPortInfo, self.local_path, I)
 
         self.assertRaises(rdma.MADError,
-                          self.umad.SubnGet, IBA.SMPPortInfo,
+                          self.umad.subn_get, IBA.SMPPortInfo,
                           self.local_path, ports + 3)
 
     def test_timeout(self):

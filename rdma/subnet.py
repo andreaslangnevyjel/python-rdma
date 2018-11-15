@@ -79,7 +79,7 @@ class Node(object):
 
     def get_desc(self, sched, path):
         """Coroutine to fetch the node description"""
-        ns = yield sched.SubnGet(IBA.SMPNodeDescription, path)
+        ns = yield sched.subn_get(IBA.SMPNodeDescription, path)
         self.set_desc(ns.nodeString)
 
     def iterports(self):
@@ -231,11 +231,11 @@ class Switch(Node):
         load.
 
         :returns: via sched a contex t"""
-        self.swinf = yield sched.SubnGet(IBA.SMPSwitchInfo, path)
+        self.swinf = yield sched.subn_get(IBA.SMPSwitchInfo, path)
 
     def _get_lfdb(self, sched, idx, path):
         """Coroutine to fetch a single LFDB block."""
-        inf = yield sched.SubnGet(
+        inf = yield sched.subn_get(
             IBA.SMPLinearForwardingTable,
             path,
             idx,
@@ -253,7 +253,7 @@ class Switch(Node):
 
     def _get_mfdb(self, sched, idx, pos, path):
         """Coroutine to fetch a single MFDB block."""
-        inf = yield sched.SubnGet(
+        inf = yield sched.subn_get(
             IBA.SMPMulticastForwardingTable,
             path,
             idx | (pos << 28),

@@ -174,9 +174,9 @@ def cmd_ibaddr(argv, o):
 
     with lib.get_umad_for_target(values[0]) as umad:
         path = lib.path
-        ninf = umad.SubnGet(IBA.SMPNodeInfo, path)
+        ninf = umad.subn_get(IBA.SMPNodeInfo, path)
         path.DGID = IBA.GID(prefix=IBA.GID_DEFAULT_PREFIX, guid=ninf.portGUID)
-        pinf = umad.SubnGet(IBA.SMPPortInfo, path, 0)
+        pinf = umad.subn_get(IBA.SMPPortInfo, path, 0)
 
         if args.gid:
             print("GID {}".format(path.DGID), end=' ')
@@ -202,6 +202,7 @@ methods = {
     "DevMgtGet",
     "SNMPGet",
 }
+
 methods.intersection_update(dir(rdma.madtransactor.MADTransactor))
 
 
@@ -347,10 +348,10 @@ def cmd_sminfo(argv, o):
         sinf = IBA.SMPSMInfo()
         if args.smkey is not None:
             sinf.SMKey = args.sminfo_smkey
-        sinf = umad.SubnGet(sinf, path)
+        sinf = umad.subn_get(sinf, path)
         smlid = path.DLID
         if smlid == IBA.LID_PERMISSIVE:
-            smlid = umad.SubnGet(IBA.SMPPortInfo, path).LID
+            smlid = umad.subn_get(IBA.SMPPortInfo, path).LID
         print(
             "sminfo: sm lid {:d} sm guid {}, activity count {:d} priority {:d} state {:d}".format(
                 smlid,
@@ -369,7 +370,7 @@ def cmd_sminfo(argv, o):
             if args.priority is not None:
                 sinf.priority = args.priority
             amod = values[1]
-            sinf = umad.SubnSet(sinf, path, amod)
+            sinf = umad.subn_set(sinf, path, amod)
             print(
                 "sminfo: sm lid {:d} sm guid {}, activity count {:d} priority {:d} state {:d}".format(
                     smlid,
@@ -412,7 +413,7 @@ def cmd_smpdump(argv, o):
         setattr(Dummy, "MAD_ATTRIBUTE_ID", values[1])
         setattr(Dummy, "MAD_SUBNGET", IBA.MAD_METHOD_GET)
         payload = Dummy
-        res = umad.SubnGet(payload, path, values[2] if len(values) >= 3 else 0)
+        res = umad.subn_get(payload, path, values[2] if len(values) >= 3 else 0)
         if args.decode:
             umad.reply_fmt.printer(sys.stdout)
         else:
@@ -452,9 +453,9 @@ def cmd_ibportstate(argv, o):
 
         port_idx = values[1]
         if isinstance(umad, rdma.satransactor.SATransactor):
-            pinf = umad._parent.SubnGet(IBA.SMPPortInfo, path, port_idx)
+            pinf = umad._parent.subn_get(IBA.SMPPortInfo, path, port_idx)
         else:
-            pinf = umad.SubnGet(IBA.SMPPortInfo, path, port_idx)
+            pinf = umad.subn_get(IBA.SMPPortInfo, path, port_idx)
 
         if isinstance(path, rdma.path.IBDRPath):
             peer_path = path.copy()
@@ -468,7 +469,7 @@ def cmd_ibportstate(argv, o):
                 drPath=b"\0" + chr(port_idx),
             )
         if pinf.portState != IBA.PORT_STATE_DOWN:
-            peer_pinf = umad.SubnGet(IBA.SMPPortInfo, peer_path, port_idx)
+            peer_pinf = umad.subn_get(IBA.SMPPortInfo, peer_path, port_idx)
         else:
             peer_pinf = None
 
@@ -499,16 +500,16 @@ def cmd_ibportstate(argv, o):
             pinf.printer(sys.stdout, **lib.format_args)
         elif values[2] == "enable" or values[2] == "reset":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_POLLING
-            umad.SubnSet(mpinf, path, port_idx)
+            umad.subn_set(mpinf, path, port_idx)
         elif values[2] == "disable":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_DISABLED
-            umad.SubnSet(mpinf, path, port_idx)
+            umad.subn_set(mpinf, path, port_idx)
         elif values[2] == "speed":
             mpinf.linkSpeedEnabled = values[3]
-            umad.SubnSet(mpinf, path, port_idx)
+            umad.subn_set(mpinf, path, port_idx)
         elif values[2] == "width":
             mpinf.linkWidthEnabled = values[3]
-            umad.SubnSet(mpinf, path, port_idx)
+            umad.subn_set(mpinf, path, port_idx)
         else:
             raise CmdError("Operation {!r} is not known".format(values[3]))
     return lib.done()

@@ -27,11 +27,11 @@ class _MADFormat(binstruct.BinFormat, IBA.MADHeader):
         """Return a short description of the RPC described by this format."""
         kind = IBA.get_fmt_payload(*self.match)
         return "{} {}({:d}.{:d}) {}({:d})".format(
-            IBA.const_str('MAD_METHOD_', self.method, True),
-            '??' if kind[0] is None else kind[0].__name__,
+            IBA.const_str("MAD_METHOD_", self.method, True),
+            "??" if kind[0] is None else kind[0].__name__,
             self.mgmtClass,
             self.classVersion,
-            '??' if kind[1] is None else kind[1].__name__,
+            "??" if kind[1] is None else kind[1].__name__,
             self.attributeID,
         )
 
@@ -122,7 +122,7 @@ class MADTransactor(object):
         into buf. Return path of the reply"""
         pass
 
-    def _get_new_TID(self):
+    def _get_new_tid(self):
         """Override in derived classes."""
         pass
 
@@ -153,33 +153,35 @@ class MADTransactor(object):
 
     @staticmethod
     def get_request_match_key(buf) -> Tuple:
-        """Return a :class:`tuple` for matching a request MAD buf. The :class:`tuple`
+        """
+        Return a :class:`tuple` for matching a request MAD buf. The :class:`tuple`
         is `((oui << 8) | mgmtClass,(baseVersion << 8) | classVersion,attributeID)`. Where *oui* is 0
-        if this is not a vendor OUI MAD."""
+        if this is not a vendor OUI MAD.
+        """
         if isinstance(buf, bytearray):
-            mgmtClass = buf[1]
-            classVersion = (buf[0] << 8) | buf[2]
+            mgmt_class = buf[1]
+            class_version = (buf[0] << 8) | buf[2]
             attr = (buf[16] << 8) | buf[17]
-            if mgmtClass >= 0x30 and mgmtClass <= 0x4F:
+            if 0x4F >= mgmt_class >= 0x30:
                 oui = (buf[37] << 16) | (buf[38] << 8) | buf[39]
             else:
                 oui = 0
         else:
-            mgmtClass = ord(buf[1])
-            classVersion = (ord(buf[0]) << 8) | ord(buf[2])
+            mgmt_class = ord(buf[1])
+            class_version = (ord(buf[0]) << 8) | ord(buf[2])
             attr = (ord(buf[16]) << 8) | ord(buf[17])
-            if mgmtClass >= 0x30 and mgmtClass <= 0x4F:
+            if 0x4F >= mgmt_class >= 0x30:
                 oui = (ord(buf[37]) << 16) | (ord(buf[38]) << 8) | ord(buf[39])
             else:
                 oui = 0
-        return ((oui << 8) | mgmtClass, classVersion, attr)
+        return (oui << 8) | mgmt_class, class_version, attr
 
-    def _prepareMAD(self, fmt, payload, attribute_modifier, method, path):
+    def _prepare_mad(self, fmt, payload, attribute_modifier, method, path):
         fmt.baseVersion = IBA.MAD_BASE_VERSION
         fmt.mgmtClass = fmt.MAD_CLASS
         fmt.classVersion = fmt.MAD_CLASS_VERSION
         fmt.method = method
-        fmt.transactionID = self._get_new_TID()
+        fmt.transactionID = self._get_new_tid()
         fmt.attributeID = payload.MAD_ATTRIBUTE_ID
         fmt.attribute_modifier = attribute_modifier
 
@@ -195,7 +197,7 @@ class MADTransactor(object):
             self.trace_func(self, TRACE_SEND, fmt=fmt, path=path)
         return buf
 
-    def _completeMAD(self, ret, fmt, path, newer, completer):
+    def _complete_mad(self, ret, fmt, path, newer, completer):
         if self.trace_func is not None:
             self.trace_func(self, TRACE_COMPLETE, ret=ret, fmt=fmt, path=path)
 
@@ -211,8 +213,9 @@ class MADTransactor(object):
                 nfmt = IBA.SAHeader  # FIXME, should be class specific
                 rmpp = True
 
-        if ((not rmpp and len(rbuf) != fmt.MAD_LENGTH) or
-            (rmpp and len(rbuf) < nfmt.MAD_LENGTH)):
+        if (
+            (not rmpp and len(rbuf) != fmt.MAD_LENGTH) or (rmpp and len(rbuf) < nfmt.MAD_LENGTH)
+        ):
             raise rdma.MADError(
                 req=fmt,
                 rep_buf=rbuf,
@@ -225,9 +228,13 @@ class MADTransactor(object):
         # The try wrappers the unpack incase the MAD is busted somehow.
         try:
             self.reply_fmt = nfmt(rbuf)
-        except:
-            e = rdma.MADError(req=fmt, rep_buf=rbuf, path=path,
-                              exc_info=sys.exc_info())
+        except Exception:
+            e = rdma.MADError(
+                req=fmt,
+                rep_buf=rbuf,
+                path=path,
+                exc_info=sys.exc_info(),
+            )
             raise rdma.MADError(e).with_traceback(e.exc_info[2])
 
         # Note that everything in get_reply_match_key has already been
@@ -289,7 +296,7 @@ class MADTransactor(object):
                         )
 
                     start = self.reply_fmt.MAD_LENGTH
-                    count = (len(rbuf) - start) // (step)
+                    count = (len(rbuf) - start) // step
                     # self.reply_fmt.printer(sys.stdout)
                     # print start,step,len(rpayload),len(rbuf)
                     # print repr(rbuf[start+step*len(rpayload):])
@@ -309,7 +316,7 @@ class MADTransactor(object):
                 rpayload = newer(self.reply_fmt.data)
         except rdma.MADError:
             raise
-        except:
+        except Exception:
             e = rdma.MADError(
                 req=fmt,
                 rep_buf=rbuf,
@@ -330,15 +337,15 @@ class MADTransactor(object):
             return ret
         return rpayload
 
-    def _doMAD(self, fmt, payload, path, attribute_modifier, method, completer=None):
+    def _do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
         """To support the asynchronous MADTransactor models the RPC wrapper
         caller must always return _doMAD(). If for some reason there is some
         post-processing work to do then a completer function must be specified
         to do it."""
-        buf = self._prepareMAD(fmt, payload, attribute_modifier, method, path)
+        buf = self._prepare_mad(fmt, payload, attribute_modifier, method, path)
         ret = self._execute(buf, path)
         newer = payload if isinstance(payload, type) else payload.__class__
-        return self._completeMAD(ret, fmt, path, newer, completer)
+        return self._complete_mad(ret, fmt, path, newer, completer)
 
     def _subn_do(self, payload, path, attribute_modifier, method):
         if isinstance(path, rdma.path.IBDRPath):
@@ -350,9 +357,9 @@ class MADTransactor(object):
         else:
             fmt = IBA.SMPFormat()
         fmt.MKey = getattr(path, "MKey", 0)
-        return self._doMAD(fmt, payload, path, attribute_modifier, method)
+        return self._do_mad(fmt, payload, path, attribute_modifier, method)
 
-    def SubnGet(self, payload, path, attribute_modifier=0):
+    def subn_get(self, payload, path, attribute_modifier=0):
         return self._subn_do(
             payload,
             path,
@@ -360,7 +367,7 @@ class MADTransactor(object):
             payload.MAD_SUBNGET,
         )
 
-    def SubnSet(self, payload, path, attribute_modifier=0):
+    def subn_set(self, payload, path, attribute_modifier=0):
         return self._subn_do(
             payload,
             path,
@@ -368,8 +375,8 @@ class MADTransactor(object):
             payload.MAD_SUBNSET,
         )
 
-    def PerformanceGet(self, payload, path, attribute_modifier=0):
-        return self._doMAD(
+    def performance_get(self, payload, path, attribute_modifier=0):
+        return self._do_mad(
             IBA.PMFormat(),
             payload,
             path,
@@ -378,7 +385,7 @@ class MADTransactor(object):
         )
 
     def PerformanceSet(self, payload, path, attribute_modifier=0):
-        return self._doMAD(
+        return self._do_mad(
             IBA.PMFormat(),
             payload,
             path,
@@ -394,7 +401,7 @@ class MADTransactor(object):
             fmt.componentMask = payload.component_mask
             payload = payload.payload
         fmt.SMKey = getattr(path, "SMKey", 0)
-        return self._doMAD(fmt, payload, path, attribute_modifier, method, completer)
+        return self._do_mad(fmt, payload, path, attribute_modifier, method, completer)
 
     def SubnAdmGet(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
@@ -422,7 +429,7 @@ class MADTransactor(object):
 
     def _vend_do(self, payload, path, attribute_modifier, method):
         fmt = payload.FORMAT()
-        return self._doMAD(
+        return self._do_mad(
             fmt,
             payload,
             path,
@@ -521,7 +528,7 @@ class MADTransactor(object):
             return fmt, kind[1](fmt.data)
         except rdma.MADError:
             raise
-        except:
+        except Exception:
             e = rdma.MADError(
                 req_buf=rbuf,
                 path=path,
@@ -633,7 +640,7 @@ class MADTransactor(object):
     def do_async(self, op):
         """This runs a simple async work coroutine against a synchronous
         instance. In this case the coroutine yields its own next result."""
-        assert (self.is_async == False)
+        assert (self.is_async is False)
         if op is None:
             return self.result
         result = None
@@ -649,7 +656,7 @@ class MADTransactor(object):
             except StopIteration:
                 return self.result
 
-    # TODO ['BMGet', 'BMSet', 'CommMgtGet', 'CommMgtSend', 'CommMgtSet',
-    # 'DevMgtGet', 'DevMgtSet', 'SNMPGet',
-    # 'SNMPSend', 'SubnAdmDelete', 'SubnAdmGetMulti',
-    # 'SubnAdmGetTraceTable', 'SubnAdmSet']
+    # TODO ["BMGet", "BMSet", "CommMgtGet", "CommMgtSend", "CommMgtSet",
+    # "DevMgtGet", "DevMgtSet", "SNMPGet",
+    # "SNMPSend", "SubnAdmDelete", "SubnAdmGetMulti",
+    # "SubnAdmGetTraceTable", "SubnAdmSet"]

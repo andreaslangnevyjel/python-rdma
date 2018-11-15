@@ -62,17 +62,17 @@ class madschedule_test(unittest.TestCase):
         """Check that exceptions flow from the MAD decoder."""
 
         def first(self, sched):
-            inf = yield sched.SubnGet(IBA.SMPNodeInfo, self.local_path)
+            inf = yield sched.subn_get(IBA.SMPNodeInfo, self.local_path)
             with self.with_assertRaises(rdma.MADError):
-                yield sched.SubnGet(IBA.SMPPortInfo,
-                                    self.local_path, inf.numPorts + 3)
+                yield sched.subn_get(IBA.SMPPortInfo,
+                                     self.local_path, inf.numPorts + 3)
 
         sched = rdma.sched.MADSchedule(self.umad)
         sched.run(first(self, sched))
 
     def get_port_info(self, sched, path, port, follow):
         print("Get port_info %u follow=%r" % (port, follow))
-        pinf = yield sched.SubnGet(IBA.SMPPortInfo, path, port)
+        pinf = yield sched.subn_get(IBA.SMPPortInfo, path, port)
         print("Done port", port)
         # pinf.printer(sys.stdout)
 
@@ -83,7 +83,7 @@ class madschedule_test(unittest.TestCase):
             yield self.get_node_info(sched, npath)
 
     def get_node_info(self, sched, path):
-        ninf = yield sched.SubnGet(IBA.SMPNodeInfo, path)
+        ninf = yield sched.subn_get(IBA.SMPNodeInfo, path)
         if ninf.nodeGUID in self.guids:
             return
         self.guids.add(ninf.nodeGUID)
@@ -92,7 +92,7 @@ class madschedule_test(unittest.TestCase):
         if ninf.nodeType == IBA.NODE_SWITCH:
             sched.mqueue(self.get_port_info(sched, path, I, True) \
                          for I in range(1, ninf.numPorts + 1))
-            pinf = yield sched.SubnGet(IBA.SMPPortInfo, path, 0)
+            pinf = yield sched.subn_get(IBA.SMPPortInfo, path, 0)
         else:
             yield self.get_port_info(
                 sched,

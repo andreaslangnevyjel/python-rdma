@@ -129,7 +129,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         self._tid = int(codecs.encode(os.urandom(4), "hex"), 16)
         self.end_port = parent
 
-    def _get_new_TID(self):
+    def _get_new_tid(self):
         self._tid = (self._tid + 1) % (1 << 32)
         return self._tid
 

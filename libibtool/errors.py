@@ -187,7 +187,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
 
     accumulate = False
     if cnts.portSelect == 0xFF:
-        cpinf = yield sched.PerformanceGet(IBA.MADClassPortInfo, path)
+        cpinf = yield sched.performance_get(IBA.MADClassPortInfo, path)
         path.resp_time = cpinf.respTimeValue
         accumulate = not (cpinf.capabilityMask & IBA.allPortSelect)
         if accumulate and ninf.nodeType == IBA.NODE_CA:
@@ -202,7 +202,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
             if reset:
                 yield sched.PerformanceSet(cnts, path)
             else:
-                results[port] = yield sched.PerformanceGet(cnts, path)
+                results[port] = yield sched.performance_get(cnts, path)
 
         results = [None] * (ninf.numPorts + 1)
         yield sched.mqueue(
@@ -217,7 +217,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
             yield sched.PerformanceSet(cnts, path)
             return
         else:
-            res = yield sched.PerformanceGet(cnts, path)
+            res = yield sched.performance_get(cnts, path)
     res.portSelect = cnts.portSelect
     sched.result = res
 
@@ -504,25 +504,25 @@ def perform_single_check(argv, o, funcs):
         kwargs = {}
         kwargs["sbn"] = None
         kwargs["port"] = None
-        kwargs["ninf"] = ninf = umad.SubnGet(IBA.SMPNodeInfo, path)
+        kwargs["ninf"] = ninf = umad.subn_get(IBA.SMPNodeInfo, path)
         if kinds & (KIND_PERF | KIND_PORT):
             kwargs["port_idx"] = port_idx = values[1]
         else:
             port_idx = ninf.local_port_num
 
         if kinds & KIND_PORT:
-            kwargs["pinf"] = pinf = umad.SubnGet(IBA.SMPPortInfo, path, values[1])
+            kwargs["pinf"] = pinf = umad.subn_get(IBA.SMPPortInfo, path, values[1])
             if ninf.nodeType == IBA.NODE_SWITCH:
-                ep_pinf = umad.SubnGet(IBA.SMPPortInfo, path, 0)
+                ep_pinf = umad.subn_get(IBA.SMPPortInfo, path, 0)
             else:
                 ep_pinf = pinf
             kwargs["desc"] = "lid %u port %u" % (ep_pinf.LID, values[1])
         else:
-            kwargs["pinf"] = ep_pinf = pinf = umad.SubnGet(IBA.SMPPortInfo, path)
+            kwargs["pinf"] = ep_pinf = pinf = umad.subn_get(IBA.SMPPortInfo, path)
         kwargs["portGUID"] = portGUID = kwargs["ninf"].portGUID
         nodeDesc = None
         if kinds & KIND_PERF:
-            nodeDesc = IBA_describe.description(umad.SubnGet(IBA.SMPNodeDescription, path).nodeString)
+            nodeDesc = IBA_describe.description(umad.subn_get(IBA.SMPNodeDescription, path).nodeString)
 
         def done_checks(kind, failed=False):
             if kind & KIND_PERF and warnings:

@@ -51,7 +51,7 @@ def cmd_init_all_ports(argv, o):
                     pinf.linkSpeedEnabled = 0
                     pinf.linkWidthEnabled = 0
                     pinf.portState = IBA.PORT_STATE_DOWN
-                    yield self.sched.SubnSet(pinf, path, port_idx)
+                    yield self.sched.subn_set(pinf, path, port_idx)
                 except rdma.MADError as e:
                     print(
                         "Failed to set port state on {} via {}".format(
@@ -199,7 +199,7 @@ def cmd_set_port_state(argv, o):
         dr = sbn.get_dr_cache(umad.parent)
         dpath = [get_path(port, port_idx) for port, port_idx in zip(eps, port_idxs)]
 
-        pinfs = [umad.SubnGet(IBA.SMPPortInfo, path, port_idx)
+        pinfs = [umad.subn_get(IBA.SMPPortInfo, path, port_idx)
                  for path, port_idx in zip(dpath, port_idxs)]
 
         # Do all the sets at once, at the end.
@@ -212,7 +212,7 @@ def cmd_set_port_state(argv, o):
             mpinf.linkWidthEnabled = 0
 
             if args.phys_state != 0:
-                umad.SubnSet(mpinf, path, port_idx)
+                umad.subn_set(mpinf, path, port_idx)
             else:
                 print(
                     "Would have changed {}@{:d} on {}".format(
