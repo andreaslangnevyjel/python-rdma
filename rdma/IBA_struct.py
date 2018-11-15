@@ -1224,7 +1224,7 @@ class MADClassPortInfo(rdma.binstruct.BinStruct):
         ('redirectQP', 24, 1), ('redirectQKey', 32, 1), ('trapGID', 128, 1), ('trapTC', 8, 1), ('trapSL', 4, 1),
         ('trapFL', 20, 1), ('trapLID', 16, 1), ('trapPKey', 16, 1), ('trapHL', 8, 1), ('trapQP', 24, 1),
         ('trapQKey', 32, 1),
-
+    ]
 
     def zero(self):
         self.baseVersion = 0
