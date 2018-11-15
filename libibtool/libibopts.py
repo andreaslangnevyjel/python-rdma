@@ -468,7 +468,7 @@ class LibIBOpts(object):
         """
         try:
             return self.__dict__["cache_fn"]
-        except AttributeError:
+        except KeyError:
             pass
         ret = self.__dict__["cache_fn"] = self.compute_cache_fn(self.args.cache)
         return ret

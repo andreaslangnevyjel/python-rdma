@@ -31,7 +31,7 @@ class pickle_test(unittest.TestCase):
         pinf = IBA.SMPPortInfo()
         for I in range(1, 100):
             pinf.LID = I
-            port = sbn.get_port_pinf(pinf, port_idx=0, LID=I)
+            port = sbn.get_port_pinf(pinf, port_idx=0, lid=I)
             port.portGUID = IBA.GUID(0xDEADBEEF0000 | I)
             sbn.ports[port.portGUID] = port
 

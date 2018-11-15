@@ -1749,13 +1749,13 @@ class SMPNodeInfo(rdma.binstruct.BinStruct):
     """Generic Node Data (section 14.2.5.3)"""
     __slots__ = (
     'baseVersion', 'classVersion', 'nodeType', 'numPorts', 'systemImageGUID', 'nodeGUID', 'portGUID', 'partitionCap',
-    'deviceID', 'revision', 'localPortNum', 'vendorID')
+    'deviceID', 'revision', 'local_port_num', 'vendorID')
     MAD_LENGTH = 40
     MAD_ATTRIBUTE_ID = 0x11
     MAD_SUBNGET = 0x1  # MAD_METHOD_GET
     MEMBERS = [('baseVersion', 8, 1), ('classVersion', 8, 1), ('nodeType', 8, 1), ('numPorts', 8, 1),
                ('systemImageGUID', 64, 1), ('nodeGUID', 64, 1), ('portGUID', 64, 1), ('partitionCap', 16, 1),
-               ('deviceID', 16, 1), ('revision', 32, 1), ('localPortNum', 8, 1), ('vendorID', 24, 1)]
+               ('deviceID', 16, 1), ('revision', 32, 1), ('local_port_num', 8, 1), ('vendorID', 24, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -1768,16 +1768,16 @@ class SMPNodeInfo(rdma.binstruct.BinStruct):
         self.partitionCap = 0
         self.deviceID = 0
         self.revision = 0
-        self.localPortNum = 0
+        self.local_port_num = 0
         self.vendorID = 0
 
     @property
     def _pack_0_32(self):
-        return ((self.localPortNum & 0xFF) << 24) | ((self.vendorID & 0xFFFFFF) << 0)
+        return ((self.local_port_num & 0xFF) << 24) | ((self.vendorID & 0xFFFFFF) << 0)
 
     @_pack_0_32.setter
     def _pack_0_32(self, value):
-        self.localPortNum = (value >> 24) & 0xFF
+        self.local_port_num = (value >> 24) & 0xFF
         self.vendorID = (value >> 0) & 0xFFFFFF
 
     def pack_into(self, buffer, offset=0):
@@ -1923,7 +1923,7 @@ class SMPGUIDInfo(rdma.binstruct.BinStruct):
 class SMPPortInfo(rdma.binstruct.BinStruct):
     """Port Information (section 14.2.5.6)"""
     __slots__ = (
-    'MKey', 'GIDPrefix', 'LID', 'masterSMLID', 'capabilityMask', 'diagCode', 'MKeyLeasePeriod', 'localPortNum',
+    'MKey', 'GIDPrefix', 'LID', 'masterSMLID', 'capabilityMask', 'diagCode', 'MKeyLeasePeriod', 'local_port_num',
     'linkWidthEnabled', 'linkWidthSupported', 'linkWidthActive', 'linkSpeedSupported', 'portState', 'portPhysicalState',
     'linkDownDefaultState', 'MKeyProtectBits', 'reserved_274', 'LMC', 'linkSpeedActive', 'linkSpeedEnabled',
     'neighborMTU', 'masterSMSL', 'VLCap', 'initType', 'VLHighLimit', 'VLArbitrationHighCap', 'VLArbitrationLowCap',
@@ -1938,7 +1938,7 @@ class SMPPortInfo(rdma.binstruct.BinStruct):
     MAD_SUBNGET = 0x1  # MAD_METHOD_GET
     MAD_SUBNSET = 0x2  # MAD_METHOD_SET
     MEMBERS = [('MKey', 64, 1), ('GIDPrefix', 64, 1), ('LID', 16, 1), ('masterSMLID', 16, 1), ('capabilityMask', 32, 1),
-               ('diagCode', 16, 1), ('MKeyLeasePeriod', 16, 1), ('localPortNum', 8, 1), ('linkWidthEnabled', 8, 1),
+               ('diagCode', 16, 1), ('MKeyLeasePeriod', 16, 1), ('local_port_num', 8, 1), ('linkWidthEnabled', 8, 1),
                ('linkWidthSupported', 8, 1), ('linkWidthActive', 8, 1), ('linkSpeedSupported', 4, 1),
                ('portState', 4, 1), ('portPhysicalState', 4, 1), ('linkDownDefaultState', 4, 1),
                ('MKeyProtectBits', 2, 1), ('reserved_274', 3, 1), ('LMC', 3, 1), ('linkSpeedActive', 4, 1),
@@ -1962,7 +1962,7 @@ class SMPPortInfo(rdma.binstruct.BinStruct):
         self.capabilityMask = 0
         self.diagCode = 0
         self.MKeyLeasePeriod = 0
-        self.localPortNum = 0
+        self.local_port_num = 0
         self.linkWidthEnabled = 0
         self.linkWidthSupported = 0
         self.linkWidthActive = 0
@@ -2120,17 +2120,17 @@ class SMPPortInfo(rdma.binstruct.BinStruct):
 
     def pack_into(self, buffer, offset=0):
         struct.pack_into('>QQHHLHHBBBBLLLHHLLLL', buffer, offset + 0, self.MKey, self.GIDPrefix, self.LID,
-                         self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod, self.localPortNum,
+                         self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod, self.local_port_num,
                          self.linkWidthEnabled, self.linkWidthSupported, self.linkWidthActive, self._pack_0_32,
                          self._pack_1_32, self._pack_2_32, self.MKeyViolations, self.PKeyViolations, self._pack_3_32,
                          self._pack_4_32, self._pack_5_32, self._pack_6_32)
 
     def unpack_from(self, buffer, offset=0):
         (
-        self.MKey, self.GIDPrefix, self.LID, self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod,
-        self.localPortNum, self.linkWidthEnabled, self.linkWidthSupported, self.linkWidthActive, self._pack_0_32,
-        self._pack_1_32, self._pack_2_32, self.MKeyViolations, self.PKeyViolations, self._pack_3_32, self._pack_4_32,
-        self._pack_5_32, self._pack_6_32,) = struct.unpack_from('>QQHHLHHBBBBLLLHHLLLL', buffer, offset + 0)
+            self.MKey, self.GIDPrefix, self.LID, self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod,
+            self.local_port_num, self.linkWidthEnabled, self.linkWidthSupported, self.linkWidthActive, self._pack_0_32,
+            self._pack_1_32, self._pack_2_32, self.MKeyViolations, self.PKeyViolations, self._pack_3_32, self._pack_4_32,
+            self._pack_5_32, self._pack_6_32,) = struct.unpack_from('>QQHHLHHBBBBLLLHHLLLL', buffer, offset + 0)
 
 
 class SMPPKeyTable(rdma.binstruct.BinStruct):
@@ -2647,7 +2647,7 @@ class SANodeRecord(rdma.binstruct.BinStruct):
     COMPONENT_MASK = {
         'LID': 0, 'reserved_16': 1, 'nodeInfo.baseVersion': 2, 'nodeInfo.classVersion': 3, 'nodeInfo.nodeType': 4,
         'nodeInfo.numPorts': 5, 'nodeInfo.systemImageGUID': 6, 'nodeInfo.nodeGUID': 7, 'nodeInfo.portGUID': 8,
-        'nodeInfo.partitionCap': 9, 'nodeInfo.deviceID': 10, 'nodeInfo.revision': 11, 'nodeInfo.localPortNum': 12,
+        'nodeInfo.partitionCap': 9, 'nodeInfo.deviceID': 10, 'nodeInfo.revision': 11, 'nodeInfo.local_port_num': 12,
         'nodeInfo.vendorID': 13, 'nodeDescription.nodeString': 14
     }
     MEMBERS = [('LID', 16, 1), ('reserved_16', 16, 1), ('nodeInfo', 320, 1), ('nodeDescription', 512, 1)]
@@ -2684,7 +2684,7 @@ class SAPortInfoRecord(rdma.binstruct.BinStruct):
     COMPONENT_MASK = {
         'endportLID': 0, 'portNum': 1, 'reserved_24': 2, 'portInfo.MKey': 3, 'portInfo.GIDPrefix': 4, 'portInfo.LID': 5,
         'portInfo.masterSMLID': 6, 'portInfo.capabilityMask': 7, 'portInfo.diagCode': 8, 'portInfo.MKeyLeasePeriod': 9,
-        'portInfo.localPortNum': 10, 'portInfo.linkWidthEnabled': 11, 'portInfo.linkWidthSupported': 12,
+        'portInfo.local_port_num': 10, 'portInfo.linkWidthEnabled': 11, 'portInfo.linkWidthSupported': 12,
         'portInfo.linkWidthActive': 13, 'portInfo.linkSpeedSupported': 14, 'portInfo.portState': 15,
         'portInfo.portPhysicalState': 16, 'portInfo.linkDownDefaultState': 17, 'portInfo.MKeyProtectBits': 18,
         'portInfo.reserved_274': 19, 'portInfo.LMC': 20, 'portInfo.linkSpeedActive': 21,

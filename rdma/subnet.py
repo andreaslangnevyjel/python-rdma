@@ -8,7 +8,7 @@ import rdma.IBA as IBA
 import rdma.IBA_describe as IBA_describe
 import rdma.path
 import rdma.satransactor
-from typing import Tuple, List
+from typing import Tuple, List, ByteString
 
 
 class Node(object):
@@ -68,12 +68,12 @@ class Node(object):
                 self.ports = [None] * (port_idx + 1)
         except IndexError:
             if self.ninf:
-                self.ports.extend(None for I in range(len(self.ports), self.ninf.numPorts + 1))
+                self.ports.extend(None for _idx in range(len(self.ports), self.ninf.numPorts + 1))
             else:
-                self.ports.extend(None for I in range(len(self.ports), port_idx + 1))
+                self.ports.extend(None for _idx in range(len(self.ports), port_idx + 1))
         self.ports[port_idx] = port
 
-    def set_desc(self, node_string: str):
+    def set_desc(self, node_string: ByteString):
         """Set the description from a *nodeString* type value."""
         self.desc = IBA_describe.description(node_string)
 
@@ -91,10 +91,10 @@ class Node(object):
             num = len(self.ports)
         else:
             num = self.ninf.numPorts + 1
-        for I in range(1, num):
-            port = self.get_port(I)
-            if (port.portGUID is not None or port.LID is not None):
-                yield (port, I)
+        for idx in range(1, num):
+            port = self.get_port(idx)
+            if port.portGUID is not None or port.LID is not None:
+                yield (port, idx)
 
     def iterend_ports(self):
         """Iterate over all end ports. This only returns ports that are in the
@@ -102,8 +102,11 @@ class Node(object):
 
         :rtype: generator of :class:`Port`"""
         if self.ports is not None:
-            return (I for I in self.ports[1:] if I is not None and
-                    (I.portGUID is not None or I.LID is not None))
+            return (
+                entry for entry in self.ports[1:] if entry is not None and (
+                    entry.portGUID is not None or entry.LID is not None
+                )
+            )
 
     def to_end_port(self, port):
         """Return the end port that is associated with *port*.
@@ -209,19 +212,19 @@ class Switch(Node):
         if do_lfdb:
             self.lfdb = [None] * self.top_unicast_lid
             if isinstance(sched, rdma.satransactor.SATransactor):
-                yield self._get_LFDB_SA(sched, path)
+                yield self._get_lfdb_sa(sched, path)
             else:
                 for idx in range(int(len(self.lfdb) / 64)):
-                    yield self._get_LFDB(sched, idx, path)
+                    yield self._get_lfdb(sched, idx, path)
         if do_mfdb:
             self.mfdb = [0] * ((self.swinf.multicastFDBCap + 31) // 32 * 32)
             if isinstance(sched, rdma.satransactor.SATransactor):
-                yield self._get_MFDB_SA(sched, path)
+                yield self._get_mfdb_sa(sched, path)
             else:
                 positions = (len(self.ports) + 15) // 16
                 for idx in range(int(len(self.mfdb) / 32)):
                     for pos in range(0, positions):
-                        yield self._get_MFDB(sched, idx, pos, path)
+                        yield self._get_mfdb(sched, idx, pos, path)
 
     def get_switch_inf(self, sched, path):
         """Coroutine to fetch a switch info and then can schedual a LFDB/MFDB
@@ -230,7 +233,7 @@ class Switch(Node):
         :returns: via sched a contex t"""
         self.swinf = yield sched.SubnGet(IBA.SMPSwitchInfo, path)
 
-    def _get_LFDB(self, sched, idx, path):
+    def _get_lfdb(self, sched, idx, path):
         """Coroutine to fetch a single LFDB block."""
         inf = yield sched.SubnGet(
             IBA.SMPLinearForwardingTable,
@@ -239,7 +242,7 @@ class Switch(Node):
         )
         self.lfdb[idx * 64:idx * 64 + 64] = bytearray(inf.portBlock)
 
-    def _get_LFDB_SA(self, sched, path):
+    def _get_lfdb_sa(self, sched, path):
         """Coroutine to fetch the entire LFDB from the SA"""
         req = IBA.ComponentMask(IBA.SALinearForwardingTableRecord())
         req.LID = sched.get_path_lid(path)
@@ -248,7 +251,7 @@ class Switch(Node):
             idx = I.blockNum
             self.lfdb[idx * 64:idx * 64 + 64] = bytearray(I.linearForwardingTable.portBlock)
 
-    def _get_MFDB(self, sched, idx, pos, path):
+    def _get_mfdb(self, sched, idx, pos, path):
         """Coroutine to fetch a single MFDB block."""
         inf = yield sched.SubnGet(
             IBA.SMPMulticastForwardingTable,
@@ -258,7 +261,7 @@ class Switch(Node):
         for I, v in enumerate(inf.portMaskBlock):
             self.mfdb[idx * 32 + I] = self.mfdb[idx * 32 + I] | (v << pos * 16)
 
-    def _get_MFDB_SA(self, sched, path):
+    def _get_mfdb_sa(self, sched, path):
         """Coroutine to fetch the entire MFDB from the SA"""
         req = IBA.ComponentMask(IBA.SAMulticastForwardingTableRecord())
         req.LID = sched.get_path_lid(path)
@@ -312,15 +315,15 @@ class Subnet(object):
         self.topology = {}
         self.loaded = set()
 
-    def set_max_lid(self, max_lid):
+    def set_max_lid(self, max_lid: int):
         """Make :attr:`lids` sufficiently big to store *max_lid*."""
         if len(self.lids) <= max_lid:
-            self.lids.extend(None for I in range(len(self.lids), max_lid + 1))
+            self.lids.extend(None for _idx in range(len(self.lids), max_lid + 1))
 
     def _resolve_dr_path(self, path):
         """Convert the DR path *path* into an end port. Returns `None` if
         no end port was found."""
-        drPath = path.drPath
+        dr_path = path.drPath
         if path.DLID == IBA.LID_PERMISSIVE:
             start = self.ports.get(path.end_port.port_guid)
         else:
@@ -331,17 +334,17 @@ class Subnet(object):
 
         if start is None:
             return None
-        if len(drPath) <= 0:
+        if len(dr_path) <= 0:
             return start
-        if ord(drPath[0]) != 0:
+        if ord(dr_path[0]) != 0:
             return None
-        if len(drPath) <= 1:
+        if len(dr_path) <= 1:
             return start
         if not isinstance(start, Switch):
-            if ord(drPath[1]) != start.port_id:
+            if ord(dr_path[1]) != start.port_id:
                 return None
-        for idx in range(1, len(drPath)):
-            aport = start.parent.get_port_nc(ord(drPath[idx]))
+        for idx in range(1, len(dr_path)):
+            aport = start.parent.get_port_nc(ord(dr_path[idx]))
             if aport is None:
                 return None
             start = self.topology.get(aport)
@@ -433,10 +436,10 @@ class Subnet(object):
                         ret = self.get_path_smp(path, np.to_end_port())
 
                 # When we eat the DR path like this it breaks
-                # localPortNum, but since we are going in and out of the
+                # local_port_num, but since we are going in and out of the
                 # same port we can just record what it should have been
                 # here.
-                ret._cached_subnet_localPortNum = drPath[-2]
+                ret._cached_subnet_local_port_num = drPath[-2]
 
             return ret
 
@@ -602,7 +605,7 @@ class Subnet(object):
         the appropriate information from both is integrated into the database.
 
         :rtype: tuple(:class:`Node`, :class:`Port`)"""
-        port_idx = ninf.localPortNum
+        port_idx = ninf.local_port_num
         if ninf.nodeType == IBA.NODE_SWITCH:
             type_ = Switch
             port_idx = 0
@@ -628,7 +631,7 @@ class Subnet(object):
     def get_port(
         self,
         port_select=None,
-        localPortNum=None,
+        local_port_num=None,
         port_idx=None,
         **kwargs,
     ):
@@ -638,7 +641,7 @@ class Subnet(object):
         to disambiguate what requested port 0 means.
 
         If at all possible call this with *port_idx* set correctly and nothing
-        else. Otherwise set *localPortNum* to the value returned by the MAD.
+        else. Otherwise set *local_port_num* to the value returned by the MAD.
 
         :rtype: :class:`Port`
         :raises ValueError: If the node type is needed but not known."""
@@ -653,7 +656,7 @@ class Subnet(object):
             else:
                 node, port = self.get_node(Node, port_idx=port_idx, **kwargs)
         else:
-            # Okay, requesting port 0.. This is either localPortNum or switch port 0,
+            # Okay, requesting port 0.. This is either local_port_num or switch port 0,
             # or unknowable.
             port = self.search_end_port(**kwargs)
             if (port is None or port.parent is None or
@@ -664,7 +667,7 @@ class Subnet(object):
             if isinstance(node, Switch):
                 port_idx = 0
             else:
-                port_idx = localPortNum
+                port_idx = local_port_num
             if port_idx is None:
                 self.link_end_port(port, **kwargs)
                 return port
@@ -672,7 +675,7 @@ class Subnet(object):
         self.link_end_port(port, **kwargs)
         return node.get_port(port_idx)
 
-    def get_port_pinf(self, pinf, port_select=None, port_idx=None, path=None, LID=None):
+    def get_port_pinf(self, pinf, port_select=None, port_idx=None, path=None, lid=None):
         """Return the :class:`Port` object that holds the associated *pinf*. This
         function requires a correct *port_idx* if the node type is not known.
 
@@ -680,17 +683,18 @@ class Subnet(object):
         # Note, pinf.LID is not strongly defined by IBA for external switch
         # ports, if it is invalid we don't use it, otherwise we assume the
         # returned value matches switch port 0.
-        LMC = None
-        if ((LID is None or LID == pinf.LID) and pinf.LID != 0 and
-            pinf.LID < IBA.LID_MULTICAST):
-            LID = pinf.LID
-            LMC = pinf.LMC
+        lmc = None
+        if (
+            (lid is None or lid == pinf.LID) and pinf.LID != 0 and pinf.LID < IBA.LID_MULTICAST
+        ):
+            lid = pinf.LID
+            lmc = pinf.LMC
         port = self.get_port(
             port_select=port_select,
-            localPortNum=pinf.localPortNum,
+            local_port_num=pinf.local_port_num,
             port_idx=port_idx, path=path,
-            LID=LID,
-            LMC=LMC,
+            LID=lid,
+            LMC=lmc,
         )
         port.pinf = pinf
         return port

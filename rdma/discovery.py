@@ -17,7 +17,7 @@ def subnet_ninf_GUID(sched, sbn, node_guid):
     res = yield sched.SubnAdmGetTable(req)
 
     # The SM can return multiple records that match a nodeGUID, one for each port
-    # on a CA. When it does this it must set the portGUID and localPortNum correctly
+    # on a CA. When it does this it must set the portGUID and local_port_num correctly
     # to match the LID in the RID.
     for I in res:
         np = sbn.get_node_ninf(I.nodeInfo, LID=I.LID)
@@ -108,7 +108,7 @@ def subnet_pinf_SA(sched, sbn):
 
     res = yield sched.SubnAdmGetTable(IBA.SAPortInfoRecord)
     for I in res:
-        sbn.get_port_pinf(I.portInfo, port_idx=I.portNum, LID=I.endportLID)
+        sbn.get_port_pinf(I.portInfo, port_idx=I.portNum, lid=I.endportLID)
     sbn.loaded.add("all_PortInfo")
     sbn.loaded.add("all_LIDs")
 
@@ -340,7 +340,7 @@ class _SubnetTopo(object):
 
         if isinstance(node, rdma.subnet.Switch):
             if peer is not None:
-                aport = node.get_port(ninf.localPortNum)
+                aport = node.get_port(ninf.local_port_num)
                 self.sbn.topology[aport] = peer
                 self.sbn.topology[peer] = aport
 
@@ -355,7 +355,7 @@ class _SubnetTopo(object):
             if peer is not None:
                 self.sbn.topology[port] = peer
                 self.sbn.topology[peer] = port
-            self.sched_ports(node, path, ninf.localPortNum, depth)
+            self.sched_ports(node, path, ninf.local_port_num, depth)
 
 
 def topo_SMP(sched, sbn, get_desc: bool=True):
@@ -441,8 +441,8 @@ def topo_peer_SMP(
         if not use_sa:
             lpn = getattr(
                 peer_path,
-                "_cached_subnet_localPortNum",
-                peer_node.ninf.localPortNum,
+                "_cached_subnet_local_port_num",
+                peer_node.ninf.local_port_num,
             )
             peer_port = sbn.get_port(
                 port_idx=lpn,

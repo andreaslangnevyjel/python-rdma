@@ -4,6 +4,7 @@
 
 import rdma.IBA as IBA
 import rdma.binstruct
+from typing import ByteString
 
 
 def mad_status(status: int) -> str:
@@ -12,7 +13,7 @@ def mad_status(status: int) -> str:
     if status & IBA.MAD_STATUS_BUSY:
         res = res + "BUSY "
     if status & IBA.MAD_STATUS_REDIRECT:
-        res = res + "REDIECT "
+        res = res + "REDIRECT "
     code = (status >> 2) & 7
     if code == 0:
         return res + "Ok"
@@ -191,30 +192,34 @@ def to_rate(value: int) -> int:
         return IBA.PR_RATE_2Gb5
 
 
-def description(value) -> str:
-    """Decodes a fixed length string from a IBA MAD (such as
+def description(value: ByteString) -> str:
+    """
+    Decodes a fixed length string from a IBA MAD (such as
     :class:`rdma.IBA.SMPNodeDescription`) These strings are considered to be
-    UTF-8 and null padding is removed."""
+    UTF-8 and null padding is removed.
+    """
     if isinstance(value, bytearray):
         zero = 0
     else:
         zero = ord(0)
-    for idx in range(0, len(value) - 1, 1):
+    for idx in range(len(value) - 1):
         if value[idx] == zero:
             return value[:idx].decode("UTF-8")
     return ""
 
 
 def dstr(value, quotes: bool=False) -> str:
-    """Convert to a display string. This escapes values like `repr` but
+    """
+    Convert to a display string. This escapes values like `repr` but
     returns with no extra adornment like quotes or a starting u. The intent of
     this function is to provide a safe printable that has undesired values
     escaped. FIXME: This should not be so aggressive with `repr`, that throws
-    away the unicode as well."""
+    away the unicode as well.
+    """
     if value is None:
         return "None"
     r = repr(value)
-    if isinstance(value, str):
+    if isinstance(value, bytes):
         r = r[1:]
     if quotes:
         return r

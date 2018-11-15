@@ -16,7 +16,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
     defined. :class:`~rdma.IBA.SMPPortInfo` requires the port number, which is
     often 0. This requires extra work unless the node type is known since the
     SA does not support the same port 0 semantics. Generally using
-    `ninf.localPortNum` as the attributeModifier works around this.
+    `ninf.local_port_num` as the attributeModifier works around this.
 
     When using the async interface it is not possible to use a
     :class:`~rdma.path.IBDRPath` since that requires multiple MADs to resolve
