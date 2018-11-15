@@ -454,9 +454,11 @@ class MADTransactor(object):
         )
 
     def parse_request(self, rbuf, path):
-        """Parse a request packet into a format and data.
+        """
+        Parse a request packet into a format and data.
 
-        :raises rdma.MADError: If the packet could not be parsed."""
+        :raises rdma.MADError: If the packet could not be parsed.
+        """
         l = len(rbuf)
         if l <= IBA.MADHeader.MAD_LENGTH:
             raise rdma.MADError(

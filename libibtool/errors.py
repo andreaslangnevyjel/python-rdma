@@ -378,14 +378,17 @@ def do_check_duplicates(sched, path, desc, pinf, port, sbn, **kwargs):
 
 
 @perf_check
-def do_check_errors(sched, path, gpath, ninf, pinf, portGUID, port_idx, **kwargs):
+def do_check_errors(sched, path, gpath, ninf, pinf, port_guid, port_idx, **kwargs):
     """Coroutine to check the performance counters for a port."""
     ret = yield get_perf(sched, gpath, ninf, port_idx)
 
     if port_idx == 255:
-        desc = "lid %u all ports" % (pinf.LID)
+        desc = "lid {:d} all ports".format(pinf.LID)
     else:
-        desc = "lid %u port %u" % (pinf.LID, ret.portSelect)
+        desc = "lid {:d} port {:d}".format(
+            pinf.LID,
+            ret.portSelect,
+        )
 
     for k, v in thresh.items():
         if v > 0 and hasattr(ret, k):
@@ -651,9 +654,12 @@ def perform_topo_check(argv, o, funcs):
         )
         kwargs["port_guid"] = portGUID = ep.portGUID
 
-        if (args.only_up and
-            (port.pinf.portPhysicalState == IBA.PHYS_PORT_STATE_POLLING or
-             port.pinf.portPhysicalState == IBA.PHYS_PORT_STATE_DISABLED)):
+        if (
+            args.only_up and (
+                port.pinf.portPhysicalState == IBA.PHYS_PORT_STATE_POLLING or
+                port.pinf.portPhysicalState == IBA.PHYS_PORT_STATE_DISABLED
+            )
+        ):
             return
 
         if kind & (KIND_PERF | KIND_CLEAR):
