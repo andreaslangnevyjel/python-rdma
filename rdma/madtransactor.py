@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from typing import Tuple
 
 import rdma
 import rdma.IBA as IBA
 import rdma.path
-from typing import List, Tuple, Dict
 from rdma import binstruct
 
 TRACE_SEND = 0
@@ -174,14 +174,14 @@ class MADTransactor(object):
                 oui = 0
         return ((oui << 8) | mgmtClass, classVersion, attr)
 
-    def _prepareMAD(self, fmt, payload, attributeModifier, method, path):
+    def _prepareMAD(self, fmt, payload, attribute_modifier, method, path):
         fmt.baseVersion = IBA.MAD_BASE_VERSION
         fmt.mgmtClass = fmt.MAD_CLASS
         fmt.classVersion = fmt.MAD_CLASS_VERSION
         fmt.method = method
         fmt.transactionID = self._get_new_TID()
         fmt.attributeID = payload.MAD_ATTRIBUTE_ID
-        fmt.attributeModifier = attributeModifier
+        fmt.attribute_modifier = attribute_modifier
 
         # You can pass in the class object for payload and this means
         # send all zeros for it. Used for GET operations with no additional
@@ -330,17 +330,17 @@ class MADTransactor(object):
             return ret
         return rpayload
 
-    def _doMAD(self, fmt, payload, path, attributeModifier, method, completer=None):
+    def _doMAD(self, fmt, payload, path, attribute_modifier, method, completer=None):
         """To support the asynchronous MADTransactor models the RPC wrapper
         caller must always return _doMAD(). If for some reason there is some
         post-processing work to do then a completer function must be specified
         to do it."""
-        buf = self._prepareMAD(fmt, payload, attributeModifier, method, path)
+        buf = self._prepareMAD(fmt, payload, attribute_modifier, method, path)
         ret = self._execute(buf, path)
         newer = payload if isinstance(payload, type) else payload.__class__
         return self._completeMAD(ret, fmt, path, newer, completer)
 
-    def _subn_do(self, payload, path, attributeModifier, method):
+    def _subn_do(self, payload, path, attribute_modifier, method):
         if isinstance(path, rdma.path.IBDRPath):
             fmt = IBA.SMPFormatDirected()
             fmt.drSLID = path.drSLID
@@ -350,43 +350,43 @@ class MADTransactor(object):
         else:
             fmt = IBA.SMPFormat()
         fmt.MKey = getattr(path, "MKey", 0)
-        return self._doMAD(fmt, payload, path, attributeModifier, method)
+        return self._doMAD(fmt, payload, path, attribute_modifier, method)
 
-    def SubnGet(self, payload, path, attributeModifier=0):
+    def SubnGet(self, payload, path, attribute_modifier=0):
         return self._subn_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNGET,
         )
 
-    def SubnSet(self, payload, path, attributeModifier=0):
+    def SubnSet(self, payload, path, attribute_modifier=0):
         return self._subn_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNSET,
         )
 
-    def PerformanceGet(self, payload, path, attributeModifier=0):
+    def PerformanceGet(self, payload, path, attribute_modifier=0):
         return self._doMAD(
             IBA.PMFormat(),
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_PERFORMANCEGET,
         )
 
-    def PerformanceSet(self, payload, path, attributeModifier=0):
+    def PerformanceSet(self, payload, path, attribute_modifier=0):
         return self._doMAD(
             IBA.PMFormat(),
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_PERFORMANCESET,
         )
 
-    def _subn_adm_do(self, payload, path, attributeModifier, method, completer=None):
+    def _subn_adm_do(self, payload, path, attribute_modifier, method, completer=None):
         if path is None:
             path = self.end_port.sa_path
         fmt = IBA.SAFormat()
@@ -394,55 +394,55 @@ class MADTransactor(object):
             fmt.componentMask = payload.component_mask
             payload = payload.payload
         fmt.SMKey = getattr(path, "SMKey", 0)
-        return self._doMAD(fmt, payload, path, attributeModifier, method, completer)
+        return self._doMAD(fmt, payload, path, attribute_modifier, method, completer)
 
-    def SubnAdmGet(self, payload, path=None, attributeModifier=0):
+    def SubnAdmGet(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNADMGET,
         )
 
-    def SubnAdmGetTable(self, payload, path=None, attributeModifier=0):
+    def SubnAdmGetTable(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNADMGETTABLE,
         )
 
-    def SubnAdmSet(self, payload, path=None, attributeModifier=0):
+    def SubnAdmSet(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNADMSET,
         )
 
-    def _vend_do(self, payload, path, attributeModifier, method):
+    def _vend_do(self, payload, path, attribute_modifier, method):
         fmt = payload.FORMAT()
         return self._doMAD(
             fmt,
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             method,
         )
 
-    def VendGet(self, payload, path, attributeModifier=0):
+    def VendGet(self, payload, path, attribute_modifier=0):
         return self._vend_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_VENDGET,
         )
 
-    def VendSet(self, payload, path, attributeModifier=0):
+    def VendSet(self, payload, path, attribute_modifier=0):
         return self._vend_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_VENDSET,
         )
 
@@ -559,7 +559,7 @@ class MADTransactor(object):
             self.trace_func(self, TRACE_REPLY, fmt=hdr, path=path)
         self.sendto(buf, path)
 
-    def send_reply(self, ofmt, payload, path, attributeModifier=0,
+    def send_reply(self, ofmt, payload, path, attribute_modifier=0,
                    status=0, class_code=0):
         """Generate a reply packet. *ofmt* should be the request format."""
         fmt = ofmt.__class__()
@@ -577,7 +577,7 @@ class MADTransactor(object):
             fmt.method = ofmt.method | IBA.MAD_METHOD_RESPONSE
         fmt.transactionID = ofmt.transactionID
         fmt.attributeID = ofmt.attributeID
-        fmt.attributeModifier = attributeModifier
+        fmt.attribute_modifier = attribute_modifier
 
         if not isinstance(payload, type):
             payload.pack_into(fmt.data)
@@ -589,7 +589,7 @@ class MADTransactor(object):
             self.trace_func(self, TRACE_REPLY, fmt=fmt, path=path)
         self.sendto(buf, path)
 
-    def send_rmpp_reply(self, ofmt, attrClass, payload, path, attributeModifier=0,
+    def send_rmpp_reply(self, ofmt, attrClass, payload, path, attribute_modifier=0,
                         status=0, class_code=0):
         """Like send_reply, but generates an RMPP reply packet.
         *ofmt* should be the request format.
@@ -610,7 +610,7 @@ class MADTransactor(object):
             fmt.method = ofmt.method | IBA.MAD_METHOD_RESPONSE
         fmt.transactionID = ofmt.transactionID
         fmt.attributeID = ofmt.attributeID
-        fmt.attributeModifier = attributeModifier
+        fmt.attribute_modifier = attribute_modifier
         fmt.attributeOffset = attrlen / 8
         fmt.RMPPFlags = IBA.RMPP_ACTIVE
         fmt.data1 = 1

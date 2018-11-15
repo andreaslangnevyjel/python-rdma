@@ -297,8 +297,8 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
 
     # Implement the MADTransactor interface. This is the asynchronous use model,
     # where the RPC functions return the work to do, not the result.
-    def _doMAD(self, fmt, payload, path, attributeModifier, method, completer=None):
-        buf = self._prepareMAD(fmt, payload, attributeModifier, method, path)
+    def _doMAD(self, fmt, payload, path, attribute_modifier, method, completer=None):
+        buf = self._prepareMAD(fmt, payload, attribute_modifier, method, path)
         newer = payload if isinstance(payload, type) else payload.__class__
         return self.Work(buf, fmt, path, newer, completer)
 

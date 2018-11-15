@@ -32,14 +32,21 @@ class OFASysStatClassPortInfo(IBA.MADClassPortInfo):
 
 
 def install_vend():
-    """Since the vendor MADs can collide we prefer to only setup the dumper
-    if they are going to be used."""
+    """
+    Since the vendor MADs can collide we prefer to only setup the dumper
+    if they are going to be used.
+    """
     import libibtool.vend as vend
-    formats = set(I[0] for I in vend.ATTR_TO_STRUCT.keys())
-    for I in formats:
-        vend.ATTR_TO_STRUCT[I, IBA.MADClassPortInfo.MAD_ATTRIBUTE_ID] = IBA.MADClassPortInfo
-        vend.CLASS_TO_STRUCT[I.MAD_CLASS | (getattr(I, "MAD_CLASS_OUI", 0) << 8),
-                             (IBA.MAD_BASE_VERSION << 8) | I.MAD_CLASS_VERSION] = I
+    formats = set(key[0] for key in vend.ATTR_TO_STRUCT.keys())
+    for fmt in formats:
+        vend.ATTR_TO_STRUCT[
+            fmt,
+            IBA.MADClassPortInfo.MAD_ATTRIBUTE_ID
+        ] = IBA.MADClassPortInfo
+        vend.CLASS_TO_STRUCT[
+            fmt.MAD_CLASS | (getattr(fmt, "MAD_CLASS_OUI", 0) << 8),
+            (IBA.MAD_BASE_VERSION << 8) | fmt.MAD_CLASS_VERSION
+        ] = fmt
     IBA.MEMBER_FORMATS.update(vend.MEMBER_FORMATS)
     IBA.ATTR_TO_STRUCT.update(vend.ATTR_TO_STRUCT)
     IBA.CLASS_TO_STRUCT.update(vend.CLASS_TO_STRUCT)

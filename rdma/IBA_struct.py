@@ -436,13 +436,13 @@ class CMFormat(rdma.binstruct.BinFormat):
     """Request for Communication (section 16.7.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'data')
+    'reserved_144', 'attribute_modifier', 'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x7
     MAD_CLASS_VERSION = 0x2
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('data', 1856, 1)]
+               ('attribute_modifier', 32, 1), ('data', 1856, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -454,19 +454,19 @@ class CMFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.data = bytearray(232)
 
     def pack_into(self, buffer, offset=0):
         buffer[offset + 24:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier)
+                         self.reserved_144, self.attribute_modifier)
 
     def unpack_from(self, buffer, offset=0):
         self.data = bytearray(buffer[offset + 24:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from(
             '>BBBBHHQHHL', buffer, offset + 0)
 
 
@@ -1117,11 +1117,11 @@ class MADHeader(rdma.binstruct.BinStruct):
     """MAD Base Header (section 13.4.3)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier')
+    'reserved_144', 'attribute_modifier')
     MAD_LENGTH = 24
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1)]
+               ('attribute_modifier', 32, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -1133,16 +1133,16 @@ class MADHeader(rdma.binstruct.BinStruct):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
 
     def pack_into(self, buffer, offset=0):
         struct.pack_into('>BBBBHHQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier)
+                         self.reserved_144, self.attribute_modifier)
 
     def unpack_from(self, buffer, offset=0):
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from(
             '>BBBBHHQHHL', buffer, offset + 0)
 
 
@@ -1150,11 +1150,11 @@ class MADHeaderDirected(rdma.binstruct.BinStruct):
     """MAD Base Header Directed (section 13.4.3)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'D', 'status', 'hopPointer', 'hopCount', 'transactionID',
-    'attributeID', 'reserved_144', 'attributeModifier')
+    'attributeID', 'reserved_144', 'attribute_modifier')
     MAD_LENGTH = 24
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('D', 1, 1),
                ('status', 15, 1), ('hopPointer', 8, 1), ('hopCount', 8, 1), ('transactionID', 64, 1),
-               ('attributeID', 16, 1), ('reserved_144', 16, 1), ('attributeModifier', 32, 1)]
+               ('attributeID', 16, 1), ('reserved_144', 16, 1), ('attribute_modifier', 32, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -1168,7 +1168,7 @@ class MADHeaderDirected(rdma.binstruct.BinStruct):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
 
     @property
     def _pack_0_32(self):
@@ -1185,11 +1185,11 @@ class MADHeaderDirected(rdma.binstruct.BinStruct):
     def pack_into(self, buffer, offset=0):
         struct.pack_into('>BBBBLQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144,
-                         self.attributeModifier)
+                         self.attribute_modifier)
 
     def unpack_from(self, buffer, offset=0):
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID,
-         self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from('>BBBBLQHHL', buffer,
+         self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from('>BBBBLQHHL', buffer,
                                                                                             offset + 0)
 
 
@@ -1609,13 +1609,13 @@ class SMPFormat(rdma.binstruct.BinFormat):
     """SMP Format - LID Routed (section 14.2.1.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'MKey', 'reserved_256', 'data', 'reserved_1024')
+    'reserved_144', 'attribute_modifier', 'MKey', 'reserved_256', 'data', 'reserved_1024')
     MAD_LENGTH = 256
     MAD_CLASS = 0x1
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('MKey', 64, 1), ('reserved_256', 256, 1), ('data', 512, 1),
+               ('attribute_modifier', 32, 1), ('MKey', 64, 1), ('reserved_256', 256, 1), ('data', 512, 1),
                ('reserved_1024', 1024, 1)]
 
     def zero(self):
@@ -1628,7 +1628,7 @@ class SMPFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.MKey = 0
         self.reserved_256 = bytearray(32)
         self.data = bytearray(64)
@@ -1640,14 +1640,14 @@ class SMPFormat(rdma.binstruct.BinFormat):
         buffer[offset + 128:offset + 256] = self.reserved_1024
         struct.pack_into('>BBBBHHQHHLQ', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier, self.MKey)
+                         self.reserved_144, self.attribute_modifier, self.MKey)
 
     def unpack_from(self, buffer, offset=0):
         self.reserved_256 = bytearray(buffer[offset + 32:offset + 64])
         self.data = bytearray(buffer[offset + 64:offset + 128])
         self.reserved_1024 = bytearray(buffer[offset + 128:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,
          self.MKey,) = struct.unpack_from('>BBBBHHQHHLQ', buffer, offset + 0)
 
 
@@ -1655,14 +1655,14 @@ class SMPFormatDirected(rdma.binstruct.BinFormat):
     """SMP Format - Direct Routed (section 14.2.1.2)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'D', 'status', 'hopPointer', 'hopCount', 'transactionID',
-    'attributeID', 'reserved_144', 'attributeModifier', 'MKey', 'drSLID', 'drDLID', 'reserved_288', 'data',
+    'attributeID', 'reserved_144', 'attribute_modifier', 'MKey', 'drSLID', 'drDLID', 'reserved_288', 'data',
     'initialPath', 'returnPath')
     MAD_LENGTH = 256
     MAD_CLASS = 0x81
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('D', 1, 1),
                ('status', 15, 1), ('hopPointer', 8, 1), ('hopCount', 8, 1), ('transactionID', 64, 1),
-               ('attributeID', 16, 1), ('reserved_144', 16, 1), ('attributeModifier', 32, 1), ('MKey', 64, 1),
+               ('attributeID', 16, 1), ('reserved_144', 16, 1), ('attribute_modifier', 32, 1), ('MKey', 64, 1),
                ('drSLID', 16, 1), ('drDLID', 16, 1), ('reserved_288', 224, 1), ('data', 512, 1), ('initialPath', 8, 64),
                ('returnPath', 8, 64)]
 
@@ -1683,7 +1683,7 @@ class SMPFormatDirected(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.MKey = 0
         self.drSLID = 0
         self.drDLID = 0
@@ -1711,7 +1711,7 @@ class SMPFormatDirected(rdma.binstruct.BinFormat):
         buffer[offset + 192:offset + 256] = self.returnPath
         struct.pack_into('>BBBBLQHHLQHH', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144,
-                         self.attributeModifier, self.MKey, self.drSLID, self.drDLID)
+                         self.attribute_modifier, self.MKey, self.drSLID, self.drDLID)
 
     def unpack_from(self, buffer, offset=0):
         self.reserved_288 = bytearray(buffer[offset + 36:offset + 64])
@@ -1719,7 +1719,7 @@ class SMPFormatDirected(rdma.binstruct.BinFormat):
         self.initialPath = bytearray(buffer[offset + 128:offset + 192])
         self.returnPath = bytearray(buffer[offset + 192:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID,
-         self.attributeID, self.reserved_144, self.attributeModifier, self.MKey, self.drSLID,
+         self.attributeID, self.reserved_144, self.attribute_modifier, self.MKey, self.drSLID,
          self.drDLID,) = struct.unpack_from('>BBBBLQHHLQHH', buffer, offset + 0)
 
 
@@ -2510,14 +2510,14 @@ class SAHeader(rdma.binstruct.BinStruct):
     """SA Header (section 15.2.1.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'RMPPVersion', 'RMPPType', 'RRespTime', 'RMPPFlags', 'RMPPStatus', 'data1',
+    'reserved_144', 'attribute_modifier', 'RMPPVersion', 'RMPPType', 'RRespTime', 'RMPPFlags', 'RMPPStatus', 'data1',
     'data2', 'SMKey', 'attributeOffset', 'reserved_368', 'componentMask')
     MAD_LENGTH = 56
     MAD_CLASS = 0x3
     MAD_CLASS_VERSION = 0x2
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('RMPPVersion', 8, 1), ('RMPPType', 8, 1), ('RRespTime', 5, 1),
+               ('attribute_modifier', 32, 1), ('RMPPVersion', 8, 1), ('RMPPType', 8, 1), ('RRespTime', 5, 1),
                ('RMPPFlags', 3, 1), ('RMPPStatus', 8, 1), ('data1', 32, 1), ('data2', 32, 1), ('SMKey', 64, 1),
                ('attributeOffset', 16, 1), ('reserved_368', 16, 1), ('componentMask', 64, 1)]
 
@@ -2531,7 +2531,7 @@ class SAHeader(rdma.binstruct.BinStruct):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.RMPPVersion = 0
         self.RMPPType = 0
         self.RRespTime = 0
@@ -2560,12 +2560,12 @@ class SAHeader(rdma.binstruct.BinStruct):
     def pack_into(self, buffer, offset=0):
         struct.pack_into('>BBBBHHQHHLLLLQHHQ', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey,
+                         self.reserved_144, self.attribute_modifier, self._pack_0_32, self.data1, self.data2, self.SMKey,
                          self.attributeOffset, self.reserved_368, self.componentMask)
 
     def unpack_from(self, buffer, offset=0):
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1,
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier, self._pack_0_32, self.data1,
          self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask,) = struct.unpack_from(
             '>BBBBHHQHHLLLLQHHQ', buffer, offset + 0)
 
@@ -2574,14 +2574,14 @@ class SAFormat(rdma.binstruct.BinFormat):
     """SA Format (section 15.2.1.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'RMPPVersion', 'RMPPType', 'RRespTime', 'RMPPFlags', 'RMPPStatus', 'data1',
+    'reserved_144', 'attribute_modifier', 'RMPPVersion', 'RMPPType', 'RRespTime', 'RMPPFlags', 'RMPPStatus', 'data1',
     'data2', 'SMKey', 'attributeOffset', 'reserved_368', 'componentMask', 'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x3
     MAD_CLASS_VERSION = 0x2
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('RMPPVersion', 8, 1), ('RMPPType', 8, 1), ('RRespTime', 5, 1),
+               ('attribute_modifier', 32, 1), ('RMPPVersion', 8, 1), ('RMPPType', 8, 1), ('RRespTime', 5, 1),
                ('RMPPFlags', 3, 1), ('RMPPStatus', 8, 1), ('data1', 32, 1), ('data2', 32, 1), ('SMKey', 64, 1),
                ('attributeOffset', 16, 1), ('reserved_368', 16, 1), ('componentMask', 64, 1), ('data', 1600, 1)]
 
@@ -2595,7 +2595,7 @@ class SAFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.RMPPVersion = 0
         self.RMPPType = 0
         self.RRespTime = 0
@@ -2626,13 +2626,13 @@ class SAFormat(rdma.binstruct.BinFormat):
         buffer[offset + 56:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHLLLLQHHQ', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey,
+                         self.reserved_144, self.attribute_modifier, self._pack_0_32, self.data1, self.data2, self.SMKey,
                          self.attributeOffset, self.reserved_368, self.componentMask)
 
     def unpack_from(self, buffer, offset=0):
         self.data = bytearray(buffer[offset + 56:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1,
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier, self._pack_0_32, self.data1,
          self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask,) = struct.unpack_from(
             '>BBBBHHQHHLLLLQHHQ', buffer, offset + 0)
 
@@ -3617,13 +3617,13 @@ class PMFormat(rdma.binstruct.BinFormat):
     """Performance Management MAD Format (section 16.1.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'reserved_192', 'data')
+    'reserved_144', 'attribute_modifier', 'reserved_192', 'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x4
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('reserved_192', 320, 1), ('data', 1536, 1)]
+               ('attribute_modifier', 32, 1), ('reserved_192', 320, 1), ('data', 1536, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -3635,7 +3635,7 @@ class PMFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.reserved_192 = bytearray(40)
         self.data = bytearray(192)
 
@@ -3644,13 +3644,13 @@ class PMFormat(rdma.binstruct.BinFormat):
         buffer[offset + 64:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier)
+                         self.reserved_144, self.attribute_modifier)
 
     def unpack_from(self, buffer, offset=0):
         self.reserved_192 = bytearray(buffer[offset + 24:offset + 64])
         self.data = bytearray(buffer[offset + 64:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from(
             '>BBBBHHQHHL', buffer, offset + 0)
 
 
@@ -4382,13 +4382,13 @@ class DMFormat(rdma.binstruct.BinFormat):
     """Device Management MAD Format (section 16.3.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'reserved_192', 'data')
+    'reserved_144', 'attribute_modifier', 'reserved_192', 'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x6
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('reserved_192', 320, 1), ('data', 1536, 1)]
+               ('attribute_modifier', 32, 1), ('reserved_192', 320, 1), ('data', 1536, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -4400,7 +4400,7 @@ class DMFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.reserved_192 = bytearray(40)
         self.data = bytearray(192)
 
@@ -4409,13 +4409,13 @@ class DMFormat(rdma.binstruct.BinFormat):
         buffer[offset + 64:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier)
+                         self.reserved_144, self.attribute_modifier)
 
     def unpack_from(self, buffer, offset=0):
         self.reserved_192 = bytearray(buffer[offset + 24:offset + 64])
         self.data = bytearray(buffer[offset + 64:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from(
             '>BBBBHHQHHL', buffer, offset + 0)
 
 
@@ -4684,14 +4684,14 @@ class SNMPFormat(rdma.binstruct.BinFormat):
     """SNMP Tunneling MAD Format (section 16.4.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'reserved_192', 'RAddress', 'payloadLength', 'segmentNumber', 'sourceLID',
+    'reserved_144', 'attribute_modifier', 'reserved_192', 'RAddress', 'payloadLength', 'segmentNumber', 'sourceLID',
     'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x8
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('reserved_192', 256, 1), ('RAddress', 32, 1), ('payloadLength', 8, 1),
+               ('attribute_modifier', 32, 1), ('reserved_192', 256, 1), ('RAddress', 32, 1), ('payloadLength', 8, 1),
                ('segmentNumber', 8, 1), ('sourceLID', 16, 1), ('data', 1536, 1)]
 
     def zero(self):
@@ -4704,7 +4704,7 @@ class SNMPFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.reserved_192 = bytearray(32)
         self.RAddress = 0
         self.payloadLength = 0
@@ -4717,7 +4717,7 @@ class SNMPFormat(rdma.binstruct.BinFormat):
         buffer[offset + 64:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier)
+                         self.reserved_144, self.attribute_modifier)
         struct.pack_into('>LBBH', buffer, offset + 56, self.RAddress, self.payloadLength, self.segmentNumber,
                          self.sourceLID)
 
@@ -4725,7 +4725,7 @@ class SNMPFormat(rdma.binstruct.BinFormat):
         self.reserved_192 = bytearray(buffer[offset + 24:offset + 56])
         self.data = bytearray(buffer[offset + 64:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from(
             '>BBBBHHQHHL', buffer, offset + 0)
         (self.RAddress, self.payloadLength, self.segmentNumber, self.sourceLID,) = struct.unpack_from('>LBBH', buffer,
                                                                                                       offset + 56)
@@ -4775,13 +4775,13 @@ class VendFormat(rdma.binstruct.BinFormat):
     """Vendor Specific Management MAD Format (section 16.5.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'data')
+    'reserved_144', 'attribute_modifier', 'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x9
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('data', 1856, 1)]
+               ('attribute_modifier', 32, 1), ('data', 1856, 1)]
 
     def zero(self):
         self.baseVersion = 0
@@ -4793,19 +4793,19 @@ class VendFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.data = bytearray(232)
 
     def pack_into(self, buffer, offset=0):
         buffer[offset + 24:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier)
+                         self.reserved_144, self.attribute_modifier)
 
     def unpack_from(self, buffer, offset=0):
         self.data = bytearray(buffer[offset + 24:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier,) = struct.unpack_from(
             '>BBBBHHQHHL', buffer, offset + 0)
 
 
@@ -4813,14 +4813,14 @@ class VendOUIFormat(rdma.binstruct.BinFormat):
     """Vendor Specific Management MAD Format with OUI (section 16.5.1)"""
     __slots__ = (
     'baseVersion', 'mgmtClass', 'classVersion', 'method', 'status', 'classSpecific', 'transactionID', 'attributeID',
-    'reserved_144', 'attributeModifier', 'RMPPVersion', 'RMPPType', 'RRespTime', 'RMPPFlags', 'RMPPStatus', 'data1',
+    'reserved_144', 'attribute_modifier', 'RMPPVersion', 'RMPPType', 'RRespTime', 'RMPPFlags', 'RMPPStatus', 'data1',
     'data2', 'reserved_288', 'OUI', 'data')
     MAD_LENGTH = 256
     MAD_CLASS = 0x30
     MAD_CLASS_VERSION = 0x1
     MEMBERS = [('baseVersion', 8, 1), ('mgmtClass', 8, 1), ('classVersion', 8, 1), ('method', 8, 1), ('status', 16, 1),
                ('classSpecific', 16, 1), ('transactionID', 64, 1), ('attributeID', 16, 1), ('reserved_144', 16, 1),
-               ('attributeModifier', 32, 1), ('RMPPVersion', 8, 1), ('RMPPType', 8, 1), ('RRespTime', 5, 1),
+               ('attribute_modifier', 32, 1), ('RMPPVersion', 8, 1), ('RMPPType', 8, 1), ('RRespTime', 5, 1),
                ('RMPPFlags', 3, 1), ('RMPPStatus', 8, 1), ('data1', 32, 1), ('data2', 32, 1), ('reserved_288', 8, 1),
                ('OUI', 24, 1), ('data', 1728, 1)]
 
@@ -4834,7 +4834,7 @@ class VendOUIFormat(rdma.binstruct.BinFormat):
         self.transactionID = 0
         self.attributeID = 0
         self.reserved_144 = 0
-        self.attributeModifier = 0
+        self.attribute_modifier = 0
         self.RMPPVersion = 0
         self.RMPPType = 0
         self.RRespTime = 0
@@ -4872,13 +4872,13 @@ class VendOUIFormat(rdma.binstruct.BinFormat):
         buffer[offset + 40:offset + 256] = self.data
         struct.pack_into('>BBBBHHQHHLLLLL', buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion,
                          self.method, self.status, self.classSpecific, self.transactionID, self.attributeID,
-                         self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2,
+                         self.reserved_144, self.attribute_modifier, self._pack_0_32, self.data1, self.data2,
                          self._pack_1_32)
 
     def unpack_from(self, buffer, offset=0):
         self.data = bytearray(buffer[offset + 40:offset + 256])
         (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific,
-         self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1,
+         self.transactionID, self.attributeID, self.reserved_144, self.attribute_modifier, self._pack_0_32, self.data1,
          self.data2, self._pack_1_32,) = struct.unpack_from('>BBBBHHQHHLLLLL', buffer, offset + 0)
 
 

@@ -135,9 +135,14 @@ OPS = {
 def set_mad_attr(attr, name, v):
     try:
         # Need to use eval because name could have dots in it.
-        arg = eval("attr.%s" % (name))
+        arg = eval("attr.{}".format(name))
     except AttributeError:
-        raise CmdError("%r is not a valid attribute for %r" % (name, attr))
+        raise CmdError(
+            "{!r} is not a valid attribute for {!r}".format(
+                name,
+                attr,
+            ),
+        )
     try:
         if isinstance(arg, int) or isinstance(arg, int):
             v = int(v, 0)
@@ -148,18 +153,31 @@ def set_mad_attr(attr, name, v):
         elif isinstance(arg, bytearray):
             v = v.decode("string_escape")
             if len(v) > len(arg):
-                raise CmdError("String %r is too long, can only be up to %u" % (
-                    v, len(arg)))
+                raise CmdError(
+                    "String {!r} is too long, can only be up to {:d}".format(
+                        v,
+                        len(arg),
+                    ),
+                )
             if len(v) < len(arg):
                 v = v + bytearray(len(arg) - len(v))
         elif isinstance(arg, list):
             raise CmdError("Lists currently cannot be set.")
         else:
-            raise CmdError("Internal Error, I don't know what %s %r is." % (
-                type(arg), arg))
+            raise CmdError(
+                "Internal Error, I don't know what {} {!r} is.".format(
+                    type(arg),
+                    arg,
+                ),
+            )
     except ValueError as err:
-        raise CmdError("String %r did not parse: %s" % (v, err))
-    exec("attr.%s = v" % (name))
+        raise CmdError(
+            "String {!r} did not parse: {}".format(
+                v,
+                err,
+            ),
+        )
+    exec("attr.{} = {}".format(name))
 
 
 def tmpl_op(s):
@@ -169,33 +187,39 @@ def tmpl_op(s):
         k = k.lower()
         k2 = v[0].lower()
         k3 = v[1].__name__.lower()
-        if (k == s or k.startswith(s) or
+        if (
+            k == s or k.startswith(s) or
             k2 == s or k2.startswith(s) or
-            k3 == s or k3.startswith(s)):
+            k3 == s or k3.startswith(s)
+        ):
             if res is not None:
-                raise CmdError("Ambiguous operation %r" % (s))
+                raise CmdError(
+                    "Ambiguous operation {!r}".format(s),
+                )
             res = v
     if res is None:
-        raise CmdError("Unknown operation %r" % (s))
+        raise CmdError(
+            "Unknown operation {!r}".format(s),
+        )
     return res
 
 
 class Indentor(object):
-    def __init__(self, F):
-        self.F = F
+    def __init__(self, f_obj):
+        self.f_obj = f_obj
         self._next_tab = True
 
     def write(self, v):
         if self._next_tab:
-            self.F.write("\t\t")
+            self.f_obj.write("\t\t")
             self._next_tab = False
 
         if v[-1] == '\n':
             v = v[:-1]
             self._next_tab = True
-        self.F.write(v.replace("\n", "\n\t\t"))
+        self.f_obj.write(v.replace("\n", "\n\t\t"))
         if self._next_tab:
-            self.F.write("\n")
+            self.f_obj.write("\n")
 
 
 def do_print(out, s):
@@ -314,25 +338,26 @@ def cmd_saquery_help(o, cmd, usage):
 
 
 def cmd_saquery(argv, o):
-    """Issue a SubnAdmGetTable() request to the SA for an attribute
-       Usage: %prog [OPTIONS] [ITEM] [ARG] [MEMBER=VALUE]*
+    """
+    Issue a SubnAdmGetTable() request to the SA for an attribute
+    Usage: %prog [OPTIONS] [ITEM] [ARG] [MEMBER=VALUE]*
 
-       This command performs a search at the SA for ITEM things that match
-       the pattern. Each SA search is specified by setting matching parameters
-       in the request. The search to perform can be specified via an option
-       or via the ITEM argument. If an option is specified then ITEM is ignored.
+    This command performs a search at the SA for ITEM things that match
+    the pattern. Each SA search is specified by setting matching parameters
+    in the request. The search to perform can be specified via an option
+    or via the ITEM argument. If an option is specified then ITEM is ignored.
 
-       Each search type supports an optional quick matching ARG which is type
-       specific. The ARG sets fields to match. After ARG is a series of
-       MEMBER=VALUE lines which specify named fields to match. eg
-       nodeInfo.portGUID=0017:77ff:feb6:2ca4 will match NodeRecords with
-       that port GUID.
+    Each search type supports an optional quick matching ARG which is type
+    specific. The ARG sets fields to match. After ARG is a series of
+    MEMBER=VALUE lines which specify named fields to match. eg
+    nodeInfo.portGUID=0017:77ff:feb6:2ca4 will match NodeRecords with
+    that port GUID.
 
-       There are also several option shortcuts that are equivalent to the above
-       with different field names.
+    There are also several option shortcuts that are equivalent to the above
+    with different field names.
 
-       Supported ITEM:
-       """
+    Supported ITEM:
+    """
     # FIXME: selector/*
     LibIBOpts.setup(o, address=False)
     o.add_option("-p", action="store_const", dest="kind",

@@ -16,13 +16,21 @@ def cmd_vendstat(argv, o):
        Usage: %prog TARGET"""
     libibtool.vendstruct.install_vend()
     LibIBOpts.setup(o)
-    o.add_option("-N", action="store_const", dest="kind",
-                 const=vend.MlxGeneralInfo,
-                 help="Show general Mellanox information")
-    o.add_option("--cpi", action="store_const", dest="kind",
-                 const=libibtool.vendstruct.MlxClassPortInfo,
-                 help="Show the Mellanox vendor class port info.")
-    (args, values) = o.parse_args(argv, expected_values=1)
+    o.add_option(
+        "-N",
+        action="store_const",
+        dest="kind",
+        const=vend.MlxGeneralInfo,
+        help="Show general Mellanox information",
+    )
+    o.add_option(
+        "--cpi",
+        action="store_const",
+        dest="kind",
+        const=libibtool.vendstruct.MlxClassPortInfo,
+        help="Show the Mellanox vendor class port info.",
+    )
+    args, values = o.parse_args(argv, expected_values=1)
     lib = LibIBOpts(o, args, values, 1, (tmpl_target,))
 
     if args.kind is None:
@@ -42,22 +50,27 @@ def cmd_vendstat(argv, o):
 def tmpl_ofa_vend(v):
     if v == "ping":
         return vend.OFASysStatPing
-    if v == "host":
+    elif v == "host":
         return vend.OFASysStatHostInfo
-    if v == "cpu":
+    elif v == "cpu":
         return vend.OFASysStatCPUInfo
-    if v == "cpi":
+    elif v == "cpi":
         return libibtool.vendstruct.OFASysStatClassPortInfo
-    raise ValueError("Not one of ping, host, cpi or cpu")
+    else:
+        raise ValueError("Not one of ping, host, cpi or cpu")
 
 
 def handle_packet(umad, buf, path):
     fmt, req = umad.parse_request(buf, path)
     if fmt.__class__ != libibtool.vendstruct.OFASysStatFormat:
-        raise rdma.MADError(req=fmt, req_buf=buf, path=path,
-                            reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
-                            msg="Unsupported format %s" % (
-                                fmt.describe()))
+        raise rdma.MADError(
+            req=fmt,
+            req_buf=buf, path=path,
+            reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
+            msg="Unsupported format {}".format(
+                fmt.describe(),
+            ),
+        )
     if fmt.method == IBA.MAD_METHOD_GET:
         if req.__class__ is vend.OFASysStatPing:
             return umad.send_reply(fmt, req, path)
@@ -81,14 +94,24 @@ def handle_packet(umad, buf, path):
             cpi.trapQKey = req.trapQKey
             return umad.send_reply(fmt, cpi, path)
     else:
-        raise rdma.MADError(req=fmt, req_buf=buf, path=path,
-                            reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
-                            msg="Unsupported method %s" % (
-                                fmt.describe()))
-    raise rdma.MADError(req=fmt, req_buf=buf, path=path,
-                        reply_status=IBA.MAD_STATUS_UNSUP_METHOD_ATTR_COMBO,
-                        msg="Unsupported attribute ID %s" % (
-                            fmt.describe()))
+        raise rdma.MADError(
+            req=fmt,
+            req_buf=buf,
+            path=path,
+            reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
+            msg="Unsupported method {}".format(
+                fmt.describe(),
+            ),
+        )
+    raise rdma.MADError(
+        req=fmt,
+        req_buf=buf,
+        path=path,
+        reply_status=IBA.MAD_STATUS_UNSUP_METHOD_ATTR_COMBO,
+        msg="Unsupported attribute ID {}".format(
+            fmt.describe(),
+        ),
+    )
 
 
 def cmd_ibsysstat(argv, o):
@@ -98,9 +121,13 @@ def cmd_ibsysstat(argv, o):
        This program must be running in server mode on the target end port."""
     libibtool.vendstruct.install_vend()
     LibIBOpts.setup(o)
-    o.add_option("-S", action="store_true", dest="server",
-                 help="Run as a server")
-    (args, values) = o.parse_args(argv)
+    o.add_option(
+        "-S",
+        action="store_true",
+        dest="server",
+        help="Run as a server",
+    )
+    args, values = o.parse_args(argv)
     lib = LibIBOpts(o, args, values, 2, (tmpl_target, tmpl_ofa_vend))
 
     if args.server:
@@ -145,12 +172,22 @@ def cmd_ibping(argv, o):
        ibsysstat must be running in server mode on the target end port."""
     libibtool.vendstruct.install_vend()
     LibIBOpts.setup(o)
-    o.add_option("-c", "--count", action="store", dest="count",
-                 type=int,
-                 help="Stop after count pings.")
-    o.add_option("-f", "--flood", action="store_true", dest="flood",
-                 help="Flood ping, no delay between packets.")
-    (args, values) = o.parse_args(argv, expected_values=1)
+    o.add_option(
+        "-c",
+        "--count",
+        action="store",
+        dest="count",
+        type=int,
+        help="Stop after count pings.",
+    )
+    o.add_option(
+        "-f",
+        "--flood",
+        action="store_true",
+        dest="flood",
+        help="Flood ping, no delay between packets.",
+    )
+    args, values = o.parse_args(argv, expected_values=1)
     lib = LibIBOpts(o, args, values, 1, (tmpl_target,))
 
     with lib.get_umad_for_target(values[0], gmp=True) as umad:
@@ -186,9 +223,19 @@ def cmd_ibping(argv, o):
         except KeyboardInterrupt:
             pass
         print("--- %s statistics ---" % (path))
-        print("%u packets transmitted, %u received, %u%% packet loss, time %.03fms" % (
-            count, count - lost, lost * 100 / count,
-            (rdma.tools.clock_monotonic() - start_time) * 1000))
-        print("rtt min/avg/max = %.03f/%.03f/%.03f ms" % (
-            minrtt * 1000, totalrtt / (count - lost) * 1000, maxrtt * 1000))
+        print(
+            "{:d} packets transmitted, {:d} received, {:d}% packet loss, time {:03f}ms".format(
+                count,
+                count - lost,
+                lost * 100 / count,
+                (rdma.tools.clock_monotonic() - start_time) * 1000,
+            ),
+        )
+        print(
+            "rtt min/avg/max = {:03f}/{:03f}/{:03f} ms".format(
+                minrtt * 1000,
+                totalrtt / (count - lost) * 1000,
+                maxrtt * 1000,
+            ),
+        )
     return lib.done()

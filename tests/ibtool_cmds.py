@@ -15,18 +15,20 @@ class IbtoolCmdsTest(unittest.TestCase):
     cmd_mod = None
 
     @contextmanager
-    def with_assertRaises(self, excClass):
+    def with_assertRaises(self, exc_class):
         """Emulate the python 2.7 assertRaises"""
         try:
             yield
-        except excClass:
+        except exc_class:
             return
         else:
-            if hasattr(excClass, '__name__'):
-                excName = excClass.__name__
+            if hasattr(exc_class, '__name__'):
+                exc_name = exc_class.__name__
             else:
-                excName = str(excClass)
-            raise self.failureException("%s not raised" % excName)
+                exc_name = str(exc_class)
+            raise self.failureException(
+                "{} not raised".format(exc_name),
+            )
 
     @contextmanager
     def ignore_mad_unsupported(self):
@@ -42,18 +44,22 @@ class IbtoolCmdsTest(unittest.TestCase):
     def setUp(self):
         self.extra_opts = None
         if self.cmd_mod is None:
-            fn = os.path.join(os.path.dirname(sys.modules[__name__].__file__),
-                              os.path.pardir,
-                              "ibtool")
+            fn = os.path.join(
+                os.path.dirname(sys.modules[__name__].__file__),
+                os.path.pardir,
+                "ibtool",
+            )
             self.cmd_mod = imp.load_source("__ibtool__", fn)
             self.get_cmd_func = self.cmd_mod.get_cmd_func
 
             self.end_port = rdma.get_end_port()
 
-            self.peer_dr = "0,%u" % (self.end_port.port_id)
+            self.peer_dr = "0,{:d}".format(self.end_port.port_id)
             with rdma.get_umad(self.end_port) as umad:
-                dr = rdma.path.IBDRPath(self.end_port, drPath=b"\0" +
-                                                              chr(self.end_port.port_id).encode("ascii"))
+                dr = rdma.path.IBDRPath(
+                    self.end_port,
+                    drPath=b"\0" + chr(self.end_port.port_id).encode("ascii"),
+                )
                 self.peer_pinf = umad.SubnGet(IBA.SMPPortInfo, dr)
                 self.peer_ninf = umad.SubnGet(IBA.SMPNodeInfo, dr)
 
@@ -67,7 +73,7 @@ class IbtoolCmdsTest(unittest.TestCase):
         sys.stdout.flush()
         try:
             os.system("/opt/ofa64-1.5.1/sbin/" + " ".join("%s" % (I) for I in args))
-        except:
+        except Exception:
             pass
 
     def cmd(self, *args):
@@ -80,7 +86,7 @@ class IbtoolCmdsTest(unittest.TestCase):
             o = self.cmd_mod.MyOptParse(func, top_mod=self.cmd_mod)
             if not func(["%s" % (I) for I in args[1:]], o):
                 raise self.ibtool.CmdError("Command failed")
-        except:
+        except Exception:
             print("Command %r threw exception" % (args,))
             raise
 
@@ -104,15 +110,24 @@ class IbtoolCmdsTest(unittest.TestCase):
         self.cmd("ibaddr", "-g")
         self.cmd("smpdump", "-D", "0,", "0x15")
 
-        for I in ["NI", "ND", "PI", "PKeys", "SL2VL", "VLArb", "GI", "SWI"]:
+        for _cmd in ["NI", "ND", "PI", "PKeys", "SL2VL", "VLArb", "GI", "SWI"]:
             with self.ignore_mad_unsupported():
-                self.cmd("smpquery", I, "-D", "0,")
+                self.cmd("smpquery", _cmd, "-D", "0,")
 
         self.cmd("perfquery")
-        for I in ["-x", "-X", "-S", "-D", "-E", "-F", "--vl-xmit-errs", "--vl-xmit-wait",
-                  "--vl-congestion"]:
+        for _cmd in [
+            "-x",
+            "-X",
+            "-S",
+            "-D",
+            "-E",
+            "-F",
+            "--vl-xmit-errs",
+            "--vl-xmit-wait",
+            "--vl-congestion",
+        ]:
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I)
+                self.cmd("perfquery", _cmd)
         self.cmd("query", "PerformanceGet", "MADClassPortInfo")
         self.cmd("set_nodedesc")
         self.cmd("vendstat", "-N", self.end_port.lid)
@@ -141,38 +156,63 @@ class IbtoolCmdsTest(unittest.TestCase):
 
         self.cmd("smpquery", "si", "-D", self.peer_dr)
 
-        for I in ["NI", "ND", "PI", "PKeys", "SL2VL", "VLArb", "GI", "SI"]:
+        for _cmd in ["NI", "ND", "PI", "PKeys", "SL2VL", "VLArb", "GI", "SI"]:
             with self.ignore_mad_unsupported():
-                self.cmd("smpquery", I, self.peer_pinf.LID)
+                self.cmd("smpquery", _cmd, self.peer_pinf.LID)
             with self.ignore_mad_unsupported():
-                if I != "SI":
-                    self.cmd("smpquery", I, self.end_port.lid)
+                if _cmd != "SI":
+                    self.cmd("smpquery", _cmd, self.end_port.lid)
 
         self.cmd("perfquery")
-        for I in ["-x", "-X", "-S", "-D", "-E", "-F", "--vl-xmit-errs", "--vl-xmit-wait",
-                  "--vl-congestion"]:
+        for _cmd in [
+            "-x",
+            "-X",
+            "-S",
+            "-D",
+            "-E",
+            "-F",
+            "--vl-xmit-errs",
+            "--vl-xmit-wait",
+            "--vl-congestion",
+        ]:
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID, self.peer_ninf.local_port_num)
+                self.cmd("perfquery", _cmd, self.peer_pinf.LID, self.peer_ninf.local_port_num)
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID)
+                self.cmd("perfquery", _cmd, self.peer_pinf.LID)
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID, "-a")
+                self.cmd("perfquery", _cmd, self.peer_pinf.LID, "-a")
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID, "-l")
+                self.cmd("perfquery", _cmd, self.peer_pinf.LID, "-l")
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID, "-r")
+                self.cmd("perfquery", _cmd, self.peer_pinf.LID, "-r")
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_pinf.LID, "-ar")
+                self.cmd("perfquery", _cmd, self.peer_pinf.LID, "-ar")
             with self.ignore_mad_unsupported():
-                self.cmd("perfquery", I, self.peer_dr)
+                self.cmd("perfquery", _cmd, self.peer_dr)
 
             with self.ignore_mad_unsupported():
-                self.cmd("ibswportwatch", "-n2", "-p0.05", I, self.peer_pinf.LID, self.peer_ninf.local_port_num)
+                self.cmd(
+                    "ibswportwatch",
+                    "-n2",
+                    "-p0.05",
+                    _cmd,
+                    self.peer_pinf.LID,
+                    self.peer_ninf.local_port_num,
+                )
             with self.ignore_mad_unsupported():
-                self.cmd("ibswportwatch", "-n2", "-p0.05", I, self.peer_pinf.LID)
+                self.cmd(
+                    "ibswportwatch",
+                    "-n2",
+                    "-p0.05",
+                    _cmd,
+                    self.peer_pinf.LID,
+                )
 
-        for I in ['CPI', 'PR', 'IIR', 'VLAR', 'MCMR', 'NR', 'SR', 'LR', 'MFTR', 'LFTR', 'SL2VL', 'PKTR', 'PIR', 'SWI']:
-            self.cmd("saquery", I)
+        for _cmd in [
+            'CPI', 'PR', 'IIR', 'VLAR', 'MCMR', 'NR', 'SR',
+            'LR', 'MFTR', 'LFTR', 'SL2VL', 'PKTR', 'PIR', 'SWI',
+        ]:
+            self.cmd("saquery", _cmd)
 
         self.cmd("ibportstate", "-D", self.peer_dr, "1", "query")
 
@@ -180,13 +220,21 @@ class IbtoolCmdsTest(unittest.TestCase):
         self.cmd("ibtracert", self.end_port.lid)
         self.cmd("ibtracert", self.peer_ninf.portGUID)
 
-        for I in ("ibchecknode", "ibcheckerrs", "ibdatacounts"):
-            self.cmd(I, self.peer_pinf.LID)
-            self.cmd(I, self.peer_pinf.LID, "-v")
-        for I in ("ibcheckport", "ibcheckportstate", "ibcheckportwidth", "ibcheckerrs",
-                  "ibdatacounts"):
-            self.cmd(I, self.peer_pinf.LID, self.peer_pinf.local_port_num)
-            self.cmd(I, self.peer_pinf.LID, self.peer_pinf.local_port_num, "-v")
+        for _cmd in (
+            "ibchecknode",
+            "ibcheckerrs",
+            "ibdatacounts",
+        ):
+            self.cmd(_cmd, self.peer_pinf.LID)
+            self.cmd(_cmd, self.peer_pinf.LID, "-v")
+        for _cmd in (
+            "ibcheckport",
+            "ibcheckportstate",
+            "ibcheckportwidth", "ibcheckerrs",
+            "ibdatacounts",
+        ):
+            self.cmd(_cmd, self.peer_pinf.LID, self.peer_pinf.local_port_num)
+            self.cmd(_cmd, self.peer_pinf.LID, self.peer_pinf.local_port_num, "-v")
 
     def test_discovery(self):
         self.assertEqual(self.end_port.state, IBA.PORT_STATE_ACTIVE)
@@ -201,11 +249,18 @@ class IbtoolCmdsTest(unittest.TestCase):
         self.cmd("ibprintca", self.end_port.parent.node_guid)
         self.cmd("ibprintswitch", self.peer_ninf.nodeGUID)
 
-        for I in ("ibcheckstate", "ibcheckwidth", "ibchecknet", "ibcheckerrors",
-                  "ibclearcounters", "ibclearerrors", "ibdatacounters",
-                  "ibidsverify"):
-            self.cmd(I)
-            self.cmd(I, "-v")
+        for _cmd in (
+            "ibcheckstate",
+            "ibcheckwidth",
+            "ibchecknet",
+            "ibcheckerrors",
+            "ibclearcounters",
+            "ibclearerrors",
+            "ibdatacounters",
+            "ibidsverify",
+        ):
+            self.cmd(_cmd)
+            self.cmd(_cmd, "-v")
 
     def test_with_link_no_sa(self):
         self.assertEqual(self.end_port.state, IBA.PORT_STATE_ACTIVE)

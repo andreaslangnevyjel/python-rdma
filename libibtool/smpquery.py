@@ -13,7 +13,11 @@ def do_ni(umad, kind, path, attr):
 
 def do_nd(umad, kind, path, attr):
     nd = umad.SubnGet(kind, path, attr)
-    print("Node Description: %r" % (IBA_describe.description(nd.nodeString)))
+    print(
+        "Node Description: {!r}".format(
+            IBA_describe.description(nd.nodeString),
+        ),
+    )
 
 
 def do_pi(umad, kind, path, attr):
@@ -39,18 +43,20 @@ def do_pkeys(umad, kind, path, attr):
         count = ni.partitionCap
 
     pkeys = []
-    for I in range((count + 31) // 32):
-        pkeys.extend(umad.SubnGet(kind, path, (attr << 16) | I).PKeyBlock)
+    for cur_v in range((count + 31) // 32):
+        pkeys.extend(umad.SubnGet(kind, path, (attr << 16) | cur_v).PKeyBlock)
 
-    for num, I in enumerate(pkeys[:count]):
+    for num, cur_v in enumerate(pkeys[:count]):
         if num % 8 == 0:
             if num != 0:
                 print()
-            print("%4u:" % (num), end=' ')
-        print("0x%04x" % (I), end=' ')
+            print("{:4d}:".format(num), end=" ")
+        print("0x{:04x}".format(cur_v), end=" ")
     if count != 0:
         print()
-    print("%u pkeys capacity for this port" % (count))
+    print(
+        "{:d} pkeys capacity for this port".format(count),
+    )
 
 
 def do_sl2vl(umad, kind, path, attr):
@@ -58,47 +64,71 @@ def do_sl2vl(umad, kind, path, attr):
 
     if ni.nodeType == IBA.NODE_SWITCH:
         sl2vl = [None] * (ni.numPorts + 1)
-        for I in range(ni.numPorts + 1):
-            sl2vl[I] = umad.SubnGet(kind, path, I << 8 | attr).SLtoVL
+        for cur_v in range(ni.numPorts + 1):
+            sl2vl[cur_v] = umad.SubnGet(kind, path, cur_v << 8 | attr).SLtoVL
     else:
         attr = ni.local_port_num
         sl2vl = (umad.SubnGet(kind, path, attr).SLtoVL,)
 
     print("# SL2VL table", path)
-    print("#                 SL: |" + "|".join("%2u" % (I) for I in range(16)) + "|")
-    for iport, I in enumerate(sl2vl):
-        print("ports: in %2u, out %2u: |" % (iport, attr) + "|".join("%2u" % (J) for J in I) + "|")
+    print(
+        "#                 SL: |" + "|".join(
+            "{:2d}".format(idx) for idx in range(16)
+        ) + "|",
+    )
+    for iport, cur_v in enumerate(sl2vl):
+        print(
+            "ports: in {:2d}, out {:2d}: |".format(iport, attr) +
+            "|".join("{:2d}".format(sub_v) for sub_v in cur_v) +
+            "|",
+        )
 
 
 def dump_vlarb(umad, path, attr, name, offset, cap):
-    print("# %s priority VL Arbitration Table:" % (name))
+    print("# {} priority VL Arbitration Table:".format(name))
     vl = []
-    for I in range((cap + 31) // 32):
-        vl.extend(umad.SubnGet(IBA.SMPVLArbitrationTable, path,
-                               (offset + I) << 16 | attr).VLWeightBlock)
+    for idx in range((cap + 31) // 32):
+        vl.extend(
+            umad.SubnGet(
+                IBA.SMPVLArbitrationTable,
+                path,
+                (offset + idx) << 16 | attr,
+            ).VLWeightBlock,
+        )
     print("VL    : |" + "|".join("%-4s" % ("0x%x" % ((I >> 8) & 0xF)) for I in vl[:cap]) + "|")
     print("WEIGHT: |" + "|".join("%-4s" % ("0x%x" % (I & 0xFF)) for I in vl[:cap]) + "|")
 
 
-def do_vlarb(umad, kind, path, attr):
+def do_vlarb(umad, _kind, path, attr):
     ni = umad.SubnGet(IBA.SMPNodeInfo, path)
     if attr == 0:
         if ni.nodeType == IBA.NODE_SWITCH:
             si = umad.SubnGet(IBA.SMPSwitchInfo, path)
             if not si.enhancedPort0:
-                print("# No VLArbitration tables (BSP0): %s port %u" % (path, attr))
+                print(
+                    "# No VLArbitration tables (BSP0): {}s port {:d}".format(
+                        path,
+                        attr,
+                    ),
+                )
                 return
 
     pi = umad.SubnGet(IBA.SMPPortInfo, path, attr)
-    print("# VLArbitration tables: %s port %u LowCap %u High Cap %u" % (
-        path, attr, pi.VLArbitrationLowCap, pi.VLArbitrationHighCap))
+    print(
+        "# VLArbitration tables: {} port {:d} LowCap {:d} High Cap {:d}".format(
+            path,
+            attr,
+            pi.VLArbitrationLowCap,
+            pi.VLArbitrationHighCap,
+        ),
+    )
     if pi.VLArbitrationLowCap > 0:
         dump_vlarb(umad, path, attr, "Low", 1, pi.VLArbitrationLowCap)
     if pi.VLArbitrationHighCap > 0:
         dump_vlarb(umad, path, attr, "High", 3, pi.VLArbitrationHighCap)
 
 
-def do_guid(umad, kind, path, attr):
+def do_guid(umad, kind, path, _attr):
     pi = umad.SubnGet(IBA.SMPPortInfo, path)
     count = pi.GUIDCap
 
@@ -110,14 +140,14 @@ def do_guid(umad, kind, path, attr):
         if num % 2 == 0:
             if num != 0:
                 print()
-            print("%4u:" % (num), end=' ')
-        print(I, end=' ')
+            print("{:4d}:".format(num), end=" ")
+        print(I, end=" ")
     if count != 0:
         print()
-    print("%u guids capacity for this port" % (count))
+    print("{:d} guids capacity for this port".format(count))
 
 
-def do_lft(umad, kind, path, attr):
+def do_lft(umad, kind, path, _attr):
     swi = umad.SubnGet(IBA.SMPSwitchInfo, path)
 
     count = swi.linearFDBCap
@@ -129,11 +159,16 @@ def do_lft(umad, kind, path, attr):
         if num % 8 == 0:
             if num != 0:
                 print()
-            print("%3u:" % (num), end=' ')
-        print(I, end=' ')
+            print("{:3d}:".format(num), end=" ")
+        print(I, end=" ")
     if count != 0:
         print()
-    print("%u LFT capacity for this port, top is %u" % (count, swi.linearFDBTop))
+    print(
+        "{:d} LFT capacity for this port, top is {:d}".format(
+            count,
+            swi.linearFDBTop,
+        ),
+    )
 
 
 OPS = {
@@ -145,7 +180,7 @@ OPS = {
     "SL2VLTable": ("SL2VL", IBA.SMPSLToVLMappingTable, do_sl2vl),
     "VLArbitration": ("VLArb", IBA.SMPVLArbitrationTable, do_vlarb),
     "GUIDInfo": ("GI", IBA.SMPGUIDInfo, do_guid),
-    "LinearForwardingTable": ("LFT", IBA.SMPLinearForwardingTable, do_lft)
+    "LinearForwardingTable": ("LFT", IBA.SMPLinearForwardingTable, do_lft),
 }
 
 
@@ -156,14 +191,16 @@ def tmpl_op(s):
         k = k.lower()
         k2 = v[0].lower()
         k3 = v[1].__name__.lower()
-        if (k == s or k.startswith(s) or
+        if (
+            k == s or k.startswith(s) or
             k2 == s or k2.startswith(s) or
-            k3 == s or k3.startswith(s)):
+            k3 == s or k3.startswith(s)
+        ):
             if res is not None:
-                raise CmdError("Ambiguous operation %r" % (s))
+                raise CmdError("Ambiguous operation {!r}".format(s))
             res = v
     if res is None:
-        raise CmdError("Unknown operation %r" % (s))
+        raise CmdError("Unknown operation {!r}".format(s))
     return res
 
 
@@ -173,7 +210,7 @@ def cmd_smpquery_help(o, cmd, usage):
     def doc_op():
         for k, v in OPS.items():
             if v[0]:
-                yield "%s %s" % (k, v[0])
+                yield "{} {}".format(k, v[0])
             else:
                 yield k
 

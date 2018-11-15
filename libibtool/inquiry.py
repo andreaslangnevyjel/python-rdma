@@ -17,50 +17,76 @@ from libibtool.libibopts import *
 def cmd_ibv_devices(argv, o):
     """Display the RDMA devices in the system.
        Usage: %prog"""
-    (args, values) = o.parse_args(argv, expected_values=0)
+    _args, _values = o.parse_args(argv, expected_values=0)
 
-    print("    %-16s\t    node GUID" % ("device"))
-    print("    %-16s\t-------------------" % ("------"))
-    for I in rdma.get_devices():
-        print("    %-16s\t%s" % (I.name, I.node_guid))
+    print(
+        "    {:<16s}t    node GUID".format("device"),
+    )
+    print(
+        "    {:<16s}\t-------------------".format("------"),
+    )
+    for cur_dev in rdma.get_devices():
+        print(
+            "    {:<16s}\t{}".format(cur_dev.name, cur_dev.node_guid),
+        )
     return True
 
 
 def cmd_ibstat(argv, o):
     """Display the RDMA end ports in the system.
        Usage: %prog [-lsp] [DEVICE [PORT]]"""
-    o.add_option("-l", "--list_of_cas", action="store_true", dest="list_cas",
-                 help="List all IB devices names")
-    o.add_option("-s", "--short", action="store_true", dest="short",
-                 help="Do not show port information")
-    o.add_option("-p", "--port_list", action="store_true", dest="ports",
-                 help="Show only port GUIDs")
-    (args, values) = o.parse_args(argv)
+    o.add_option(
+        "-l",
+        "--list_of_cas",
+        action="store_true",
+        dest="list_cas",
+        help="List all IB devices names",
+    )
+    o.add_option(
+        "-s",
+        "--short",
+        action="store_true",
+        dest="short",
+        help="Do not show port information",
+    )
+    o.add_option(
+        "-p",
+        "--port_list",
+        action="store_true", dest="ports",
+        help="Show only port GUIDs",
+    )
+    args, values = o.parse_args(argv)
 
     if args.list_cas:
         if len(values) != 0:
             raise CmdError("Too many arguments")
-        for I in rdma.get_devices():
-            print(I.name)
+        for cur_p in rdma.get_devices():
+            print(cur_p.name)
         return True
 
     if len(values) == 0:
-        end_ports = (I for J in rdma.get_devices() for I in J.end_ports)
+        end_ports = (
+            cur_port for cur_dev in rdma.get_devices() for cur_port in cur_dev.end_ports
+        )
     elif len(values) == 1:
-        end_ports = (I for I in rdma.get_device(values[0]).end_ports)
+        end_ports = (
+            e_port for e_port in rdma.get_device(values[0]).end_ports
+        )
     elif len(values) == 2:
-        end_ports = (rdma.get_end_port("%s/%s" % (values[0], values[1])),)
+        end_ports = (
+            rdma.get_end_port("{}/{}".format(values[0], values[1])),
+        )
     else:
         raise CmdError("Too many arguments")
 
     if args.ports:
-        for I in end_ports:
-            print(I.port_guid)
+        for cur_p in end_ports:
+            print(cur_p.port_guid)
         return True
 
     def show_ca(dev):
-        print("CA %r" % (dev.name))
-        print("\tCA type: %s" % (dev.hca_type))
+        print("CA {!r}".format(dev.name))
+        print("\tCA type: {}".format(dev.hca_type))
         print("\tNumber of ports: %s" % (len(dev.end_ports)))
         print("\tFirmware version: %s" % (IBA_describe.dstr(dev.fw_ver)))
         print("\tHardware version: %s" % (IBA_describe.dstr(dev.hw_ver)))
@@ -79,25 +105,25 @@ def cmd_ibstat(argv, o):
 
     last_ca = None
     if args.short:
-        for I in end_ports:
-            if last_ca != I.parent:
-                show_ca(I.parent)
-                last_ca = I.parent
+        for cur_p in end_ports:
+            if last_ca != cur_p.parent:
+                show_ca(cur_p.parent)
+                last_ca = cur_p.parent
         return True
 
     if isinstance(end_ports, tuple):
-        I = end_ports[0]
-        print("CA: %r" % (I.parent.name))
-        print("Port %u:" % (I.port_id))
-        show_port(I, offset="")
+        cur_p = end_ports[0]
+        print("CA: %r" % (cur_p.parent.name))
+        print("Port %u:" % (cur_p.port_id))
+        show_port(cur_p, offset="")
         return True
 
-    for I in end_ports:
-        if last_ca != I.parent:
-            show_ca(I.parent)
-            last_ca = I.parent
-        print("\tPort %u:" % (I.port_id))
-        show_port(I)
+    for cur_p in end_ports:
+        if last_ca != cur_p.parent:
+            show_ca(cur_p.parent)
+            last_ca = cur_p.parent
+        print("\tPort %u:" % (cur_p.port_id))
+        show_port(cur_p)
     return True
 
 
@@ -153,44 +179,57 @@ def cmd_ibaddr(argv, o):
         pinf = umad.SubnGet(IBA.SMPPortInfo, path, 0)
 
         if args.gid:
-            print("GID %s" % (path.DGID), end=' ')
+            print("GID {}".format(path.DGID), end=' ')
         if args.lid:
-            print("LID start %u end %u" % (pinf.LID, pinf.LID + (1 << pinf.LMC) - 1), end=' ')
+            print(
+                "LID start {:d} end {:d}".format(
+                    pinf.LID,
+                    pinf.LID + (1 << pinf.LMC) - 1,
+                ),
+                end=' ',
+            )
         print()
     return lib.done()
 
 
-methods = set(('SubnGet', 'PerformanceGet', 'SubnAdmGet', 'SubnAdmGetTable',
-               'BMGet', 'CommMgtGet', 'DevMgtGet', 'SNMPGet'))
+methods = {
+    "SubnGet",
+    "PerformanceGet",
+    "SubnAdmGet",
+    "SubnAdmGetTable",
+    "BMGet",
+    "CommMgtGet",
+    "DevMgtGet",
+    "SNMPGet",
+}
 methods.intersection_update(dir(rdma.madtransactor.MADTransactor))
 
 
-def is_valid_attribute(attr):
-    if (getattr(attr, "MAD_LENGTH", None) is None or
-        getattr(attr, "MAD_ATTRIBUTE_ID", None) is None):
+def is_valid_attribute(attr) -> bool:
+    if getattr(attr, "MAD_LENGTH", None) is None or getattr(attr, "MAD_ATTRIBUTE_ID", None) is None:
         return False
-    for I in methods:
-        if getattr(attr, "MAD_%s" % (I.upper()), None) is not None:
+    for meth in methods:
+        if getattr(attr, "MAD_{}".format(meth.upper()), None) is not None:
             return True
     return False
 
 
 def tmpl_method(v):
     if v not in methods:
-        raise CmdError("Invalid method %r" % (v))
+        raise CmdError("Invalid method {!r}".format(v))
     return v
 
 
 def tmpl_attribute(v):
     attr = getattr(rdma.IBA, v, None)
     if attr is None:
-        raise CmdError("Invalid attribute %r" % (v))
+        raise CmdError("Invalid attribute {!r}".format(v))
     if not is_valid_attribute(attr):
-        raise CmdError("Invalid attribute %r" % (v))
+        raise CmdError("Invalid attribute {!r}".format(v))
     return attr
 
 
-def cmd_query_help(o, cmd, usage):
+def cmd_query_help(o, cmd, usage) -> str:
     """Generate the help text by merging in information from OPS."""
 
     def get_attrs():
@@ -198,8 +237,19 @@ def cmd_query_help(o, cmd, usage):
             if is_valid_attribute(v):
                 yield k
 
-    return (usage + "\n    Valid METHOD:\n    " + "\n    ".join("   %s" % (I) for I in sorted(methods)) +
-            "\n    Valid ATTRIBUTE:\n    " + "\n    ".join("   %s" % (I) for I in sorted(get_attrs())))
+    return "".join(
+        [
+            usage,
+            "\n    Valid METHOD:\n    ",
+            "\n    ".join(
+                "   {}".format(cur_meth) for cur_meth in sorted(methods)
+            ),
+            "\n    Valid ATTRIBUTE:\n    ",
+            "\n    ".join(
+                "   {}".format(cur_attr) for cur_attr in sorted(get_attrs())
+            ),
+        ],
+    )
 
 
 def cmd_query(argv, o):
@@ -223,7 +273,7 @@ def cmd_query(argv, o):
     lib = LibIBOpts(o, args, values, 3, (tmpl_method, tmpl_attribute, tmpl_target))
 
     if len(values) == 2:
-        values.append('')
+        values.append("")
     if len(values) < 3:
         raise CmdError("Too few arguments")
 
@@ -233,18 +283,18 @@ def cmd_query(argv, o):
         req = values[1]()
         if values[0].startswith("SubnAdm"):
             req = IBA.ComponentMask(req)
-        for I in args.fields:
+        for cur_f in args.fields:
             try:
-                n, v = I.split("=")
+                n, v = cur_f.split("=")
             except ValueError:
-                raise CmdError("Field %r does not have exactly 1 equals." % (I))
+                raise CmdError("Field {!r} does not have exactly 1 equals.".format(cur_f))
             libibtool.saquery.set_mad_attr(req, n, v)
         ret = meth(req, lib.path, args.attribute_id)
         if isinstance(ret, list):
             out = libibtool.saquery.Indentor(sys.stdout)
-            for num, I in enumerate(ret):
-                print("Reply structure #%u" % (num))
-                I.printer(out, **lib.format_args)
+            for num, cur_f in enumerate(ret):
+                print("Reply structure #{:d}".format(num))
+                cur_f.printer(out, **lib.format_args)
         else:
             ret.printer(sys.stdout, **lib.format_args)
     return lib.done()
@@ -257,12 +307,30 @@ def cmd_sminfo(argv, o):
        This command includes the ability to send a SubnSet(SASMInfo)
        packet formed with a given priority, state, SMKey and Attribute
        Modifier. A set is performed if a ATTR_MOD is provided. See IBA 14.4.1."""
-    o.add_option("-s", "--state", action="store", dest="state", type="int",
-                 help="Set the SM state")
-    o.add_option("-p", "--priority", action="store", dest="priority", type="int",
-                 help="Set the SM priority")
-    o.add_option("--sminfo_smkey", action="store", dest="sminfo_smkey", type="int", default=0,
-                 help="Use this value for the SMPSMInfo.SMKey")
+    o.add_option(
+        "-s",
+        "--state",
+        action="store",
+        dest="state",
+        type="int",
+        help="Set the SM state",
+    )
+    o.add_option(
+        "-p",
+        "--priority",
+        action="store",
+        dest="priority",
+        type="int",
+        help="Set the SM priority",
+    )
+    o.add_option(
+        "--sminfo_smkey",
+        action="store",
+        dest="sminfo_smkey",
+        type="int",
+        default=0,
+        help="Use this value for the SMPSMInfo.SMKey",
+    )
     LibIBOpts.setup(o)
     (args, values) = o.parse_args(argv)
     lib = LibIBOpts(o, args, values, 2, (tmpl_target, tmpl_int))
@@ -283,8 +351,15 @@ def cmd_sminfo(argv, o):
         smlid = path.DLID
         if smlid == IBA.LID_PERMISSIVE:
             smlid = umad.SubnGet(IBA.SMPPortInfo, path).LID
-        print("sminfo: sm lid %u sm guid %s, activity count %u priority %u state %u" % (
-            smlid, sinf.GUID, sinf.actCount, sinf.priority, sinf.SMState))
+        print(
+            "sminfo: sm lid {:d} sm guid {}, activity count {:d} priority {:d} state {:d}".format(
+                smlid,
+                sinf.GUID,
+                sinf.actCount,
+                sinf.priority,
+                sinf.SMState,
+            ),
+        )
 
         if args.smkey is not None:
             sinf.SMKey = args.smkey
@@ -295,8 +370,15 @@ def cmd_sminfo(argv, o):
                 sinf.priority = args.priority
             amod = values[1]
             sinf = umad.SubnSet(sinf, path, amod)
-            print("sminfo: sm lid %u sm guid %s, activity count %u priority %u state %u" % (
-                smlid, sinf.GUID, sinf.actCount, sinf.priority, sinf.SMState))
+            print(
+                "sminfo: sm lid {:d} sm guid {}, activity count {:d} priority {:d} state {:d}".format(
+                    smlid,
+                    sinf.GUID,
+                    sinf.actCount,
+                    sinf.priority,
+                    sinf.SMState,
+                ),
+            )
     return lib.done()
 
 
@@ -308,7 +390,7 @@ def cmd_smpdump(argv, o):
     o.add_option("-p", "--decode", action="store_true", dest="decode",
                  help="Pretty print the entire reply.")
     LibIBOpts.setup(o)
-    (args, values) = o.parse_args(argv)
+    args, values = o.parse_args(argv)
     lib = LibIBOpts(o, args, values, 3, (tmpl_target, tmpl_int, tmpl_int))
 
     if len(values) < 2:
@@ -343,19 +425,23 @@ def cmd_smpdump(argv, o):
                     print()
             if (entry + 1) % 8 != 0:
                 print()
-            print("SMP status: 0x{:04x}".format(
-                umad.reply_fmt.status | (umad.reply_fmt.D << 15)),
+            print(
+                "SMP status: 0x{:04x}".format(
+                    umad.reply_fmt.status | (umad.reply_fmt.D << 15),
+                ),
             )
     return lib.done()
 
 
 def cmd_ibportstate(argv, o):
-    """Manipulate the SMPPortInfo of a port
-       Usage: %prog TARGET PORTNUM OP [OP_ARG]
+    """
+    Manipulate the SMPPortInfo of a port
+    Usage: %prog TARGET PORTNUM OP [OP_ARG]
 
-       OP is one of enable, disable, reset, speed, width, query."""
+    OP is one of enable, disable, reset, speed, width, query.
+    """
     LibIBOpts.setup(o)
-    (args, values) = o.parse_args(argv, )
+    args, values = o.parse_args(argv, )
     lib = LibIBOpts(o, args, values, 4, (tmpl_target, tmpl_int, str, tmpl_int))
 
     if len(values) < 3:
@@ -374,11 +460,13 @@ def cmd_ibportstate(argv, o):
             peer_path = path.copy()
             peer_path.drPath += chr(port_idx)
         else:
-            peer_path = rdma.path.IBDRPath(path.end_port,
-                                           SLID=path.SLID,
-                                           drSLID=path.SLID,
-                                           DLID=path.DLID,
-                                           drPath="\0" + chr(port_idx))
+            peer_path = rdma.path.IBDRPath(
+                path.end_port,
+                SLID=path.SLID,
+                drSLID=path.SLID,
+                DLID=path.DLID,
+                drPath=b"\0" + chr(port_idx),
+            )
         if pinf.portState != IBA.PORT_STATE_DOWN:
             peer_pinf = umad.SubnGet(IBA.SMPPortInfo, peer_path, port_idx)
         else:
@@ -393,12 +481,21 @@ def cmd_ibportstate(argv, o):
 
         if values[2] == "query":
             if peer_pinf is not None:
-                print("# Port info: Lid %u port %u (peer is Lid %u port %u)" % (
-                    pinf.LID, pinf.local_port_num,
-                    peer_pinf.LID, peer_pinf.local_port_num))
+                print(
+                    "# Port info: Lid {:d} port {:d} (peer is Lid {:d} port {:d})".format(
+                        pinf.LID,
+                        pinf.local_port_num,
+                        peer_pinf.LID,
+                        peer_pinf.local_port_num,
+                    ),
+                )
             else:
-                print("# Port info: Lid %u port %u" % (
-                    pinf.LID, pinf.local_port_num))
+                print(
+                    "# Port info: Lid {:d} port {:d}".format(
+                        pinf.LID,
+                        pinf.local_port_num,
+                    ),
+                )
             pinf.printer(sys.stdout, **lib.format_args)
         elif values[2] == "enable" or values[2] == "reset":
             mpinf.portPhysicalState = IBA.PHYS_PORT_STATE_POLLING
@@ -413,7 +510,7 @@ def cmd_ibportstate(argv, o):
             mpinf.linkWidthEnabled = values[3]
             umad.SubnSet(mpinf, path, port_idx)
         else:
-            raise CmdError("Operation %r is not known" % (values[3]))
+            raise CmdError("Operation {!r} is not known".format(values[3]))
     return lib.done()
 
 
@@ -443,26 +540,43 @@ def decode_link(o, bytes):
 
 class UMADHdr(rdma.binstruct.BinStruct):
     MAD_LENGTH = 64
-    MEMBERS = [('agent_id', 32, 1), ('status', 32, 1), ('timeout_ms', 32, 1),
-               ('retries', 32, 1), ('length', 32, 1),
-               ('qpn', 32, 1), ('qkey', 32, 1), ('lid', 16, 1), ('sl', 8, 1),
-               ('path_bits', 8, 1), ('grh_present', 8, 1), ('gid_index', 8, 1), ('hop_limit', 8, 1),
-               ('traffic_class', 8, 1), ('gid', 128, 1), ('flow_label', 32, 1), ('pkey_index', 16, 1),
-               ('reserved_58', 8, 6)]
+    MEMBERS = [
+        ('agent_id', 32, 1),
+        ('status', 32, 1),
+        ('timeout_ms', 32, 1),
+        ('retries', 32, 1),
+        ('length', 32, 1),
+        ('qpn', 32, 1),
+        ('qkey', 32, 1),
+        ('lid', 16, 1),
+        ('sl', 8, 1),
+        ('path_bits', 8, 1),
+        ('grh_present', 8, 1),
+        ('gid_index', 8, 1),
+        ('hop_limit', 8, 1),
+        ('traffic_class', 8, 1),
+        ('gid', 128, 1),
+        ('flow_label', 32, 1),
+        ('pkey_index', 16, 1),
+        ('reserved_58', 8, 6),
+    ]
 
-    def __init__(self, buf=None, offset=0):
+    def __init__(self, buf=None, offset: int=0):
         rdma.binstruct.BinStruct.__init__(self, buf, offset)
         self.buf = buf[offset: offset + self.MAD_LENGTH]
         assert len(self.buf) == self.MAD_LENGTH
 
-    def unpack_from(self, buffer, offset=0):
+    def unpack_from(self, buffer, offset: int=0):
         from socket import htonl as cpu_to_be32
         from socket import htons as cpu_to_be16
 
-        (self.agent_id, self.status, self.timeout_ms, self.retries, self.length,
-         self.qpn, self.qkey, self.lid, self.sl, self.path_bits, self.grh_present, self.gid_index,
-         self.hop_limit, self.traffic_class, self.gid, self.flow_label, self.pkey_index, self.reserved_58) = \
-            struct.unpack_from("=LLLLLLLHBBBBBB16sLH6s", buffer, offset + 0)
+        (
+            self.agent_id, self.status, self.timeout_ms, self.retries, self.length,
+            self.qpn, self.qkey, self.lid, self.sl, self.path_bits, self.grh_present, self.gid_index,
+            self.hop_limit, self.traffic_class, self.gid, self.flow_label, self.pkey_index, self.reserved_58
+        ) = struct.unpack_from(
+            "=LLLLLLLHBBBBBB16sLH6s", buffer, offset + 0,
+        )
 
         self.qpn = cpu_to_be32(self.qpn)
         self.qkey = cpu_to_be32(self.qkey)
@@ -470,16 +584,16 @@ class UMADHdr(rdma.binstruct.BinStruct):
         self.gid = IBA.GID(self.gid, raw=True)
         self.flow_label = cpu_to_be32(self.flow_label)
 
-    def pack_into(self, buffer, offset=0):
+    def pack_into(self, buffer, offset: int=0):
         assert len(buffer) == self.MAD_LENGTH
         buffer[:] = self.buf
 
 
-def decode_umad(o, bytes):
+def decode_umad(o, in_bytes):
     """Assume bytes star ts with a umad header and parse accordingly."""
     if o.verbosity >= 1:
-        UMADHdr(bytes).printer(sys.stdout)
-    return bytes[UMADHdr.MAD_LENGTH:]
+        UMADHdr(in_bytes).printer(sys.stdout)
+    return in_bytes[UMADHdr.MAD_LENGTH:]
 
 
 def cmd_decode_mad(argv, o):
@@ -490,46 +604,70 @@ def cmd_decode_mad(argv, o):
        result must be a single string of hex digits."""
     import libibtool.vendstruct
     libibtool.vendstruct.install_vend()
-    o.add_option("-v", "--verbosity", dest="verbosity", action="count", default=0,
-                 help="Increase the verbosity level of diagnostic messages, each -v increases by 1.")
-    o.add_option("-o", "--offset", dest="offset", action="store", default=0, type=int,
-                 help="Start at this offest before decoding.")
-    o.add_option("-l", dest="lrh", action="store_true",
-                 help="The data starts at the LRH, not the MAD header")
-    o.add_option("--umad", dest="umad", action="store_true",
-                 help="The data includes a kernel umad header, eg it is from /dev/infiniband/umadX")
-    (args, values) = o.parse_args(argv, expected_values=0)
+    o.add_option(
+        "-v",
+        "--verbosity",
+        dest="verbosity",
+        action="count",
+        default=0,
+        help="Increase the verbosity level of diagnostic messages, each -v increases by 1.",
+    )
+    o.add_option(
+        "-o",
+        "--offset",
+        dest="offset",
+        action="store",
+        default=0,
+        type=int,
+        help="Start at this offest before decoding.",
+    )
+    o.add_option(
+        "-l",
+        dest="lrh",
+        action="store_true",
+        help="The data starts at the LRH, not the MAD header",
+    )
+    o.add_option(
+        "--umad",
+        dest="umad",
+        action="store_true",
+        help="The data includes a kernel umad header, eg it is from /dev/infiniband/umadX",
+    )
+    args, values = o.parse_args(argv, expected_values=0)
     o.verbosity = args.verbosity
 
     print("Input the MAD in HEX followed by Ctrl-D")
     inp = "".join(sys.stdin.readlines())
     if inp[0] == '"' or inp[0] == "'":
-        bytes = inp.strip()[1:-1].decode("string_escape")
+        in_bytes = inp.strip()[1:-1].decode("string_escape")
     else:
         inp = inp.replace(" ", "").replace("\n", "").replace("\r", "").replace("\t", "")
         if o.verbosity >= 2:
             print("Input HEX value is:\n  ", repr(inp))
-        bytes = codecs.decode(inp, "hex")
-    bytes = bytes[args.offset:]
+        in_bytes = codecs.decode(inp, "hex")
+    in_bytes = in_bytes[args.offset:]
     if o.verbosity >= 2:
-        print(codecs.encode(bytes, "hex"))
+        print(codecs.encode(in_bytes, "hex"))
 
     if args.umad:
-        bytes = decode_umad(o, bytes)
+        in_bytes = decode_umad(o, in_bytes)
 
     if args.lrh:
-        bytes = decode_link(o, bytes)
+        in_bytes = decode_link(o, in_bytes)
 
-    hdr = IBA.MADHeader(bytes)
+    hdr = IBA.MADHeader(in_bytes)
     if o.verbosity >= 1:
         hdr.printer(sys.stdout)
-    kind = IBA.get_fmt_payload(*rdma.madtransactor.MADTransactor.get_request_match_key(bytes))
+    kind = IBA.get_fmt_payload(*rdma.madtransactor.MADTransactor.get_request_match_key(in_bytes))
     if kind[0] is None:
         if o.verbosity == 0:
             hdr.printer(sys.stdout)
         raise CmdError("Don't know what this mgmtClass/classVersion is.")
-    fmt = kind[0](bytes)
-    print(fmt.__class__.__name__, fmt.describe())
+    fmt = kind[0](in_bytes)
+    print(
+        fmt.__class__.__name__,
+        fmt.describe(),
+    )
     fmt.printer(sys.stdout, header=False)
 
 
@@ -538,12 +676,24 @@ def cmd_set_nodedesc(argv, o):
        Usage: %prog [-v] [NAME]
 
        By default all CAs are altered, use -C or -P to select a single CA."""
-    o.add_option("-v", dest="view_all", action="store_true",
-                 help="Increase the verbosity level of diagnostic messages, each -v increases by 1.")
-    o.add_option("-C", "--Ca", dest="CA",
-                 help="RDMA device to use. Specify a device name or node GUID")
-    o.add_option("-P", "--Port", dest="port",
-                 help="RDMA end port to use. Specify a GID, port GUID, DEVICE/PORT or port number.")
+    o.add_option(
+        "-v",
+        dest="view_all",
+        action="store_true",
+        help="Increase the verbosity level of diagnostic messages, each -v increases by 1.",
+    )
+    o.add_option(
+        "-C",
+        "--Ca",
+        dest="CA",
+        help="RDMA device to use. Specify a device name or node GUID",
+    )
+    o.add_option(
+        "-P",
+        "--Port",
+        dest="port",
+        help="RDMA end port to use. Specify a GID, port GUID, DEVICE/PORT or port number.",
+    )
     (args, values) = o.parse_args(argv)
 
     dev = None
@@ -553,16 +703,21 @@ def cmd_set_nodedesc(argv, o):
         dev = rdma.get_end_port(args.port).parent
 
     if args.view_all or len(values) <= 0:
-        for I in rdma.get_devices():
-            if dev is not None and I != dev:
+        for cur_dev in rdma.get_devices():
+            if dev is not None and cur_dev != dev:
                 continue
-            print("%s: %s" % (I.name, IBA_describe.dstr(I.node_desc)))
+            print(
+                "{}: {}".format(
+                    cur_dev.name,
+                    IBA_describe.dstr(cur_dev.node_desc),
+                ),
+            )
     else:
         name = values[0].decode()
         name = name.encode("utf-8")
-        for I in rdma.get_devices():
-            if dev is not None and I != dev:
+        for cur_dev in rdma.get_devices():
+            if dev is not None and cur_dev != dev:
                 continue
-            with open(os.path.join(I._dir, "node_desc"), "w") as F:
+            with open(os.path.join(cur_dev._dir, "node_desc"), "w") as F:
                 F.write(name)
     return True

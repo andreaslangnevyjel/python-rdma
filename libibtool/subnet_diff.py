@@ -4,6 +4,7 @@
 
 import rdma.IBA_describe as IBA_describe
 from libibtool.libibopts import *
+from typing import Tuple
 
 try:
     import pickle as pickle
@@ -36,10 +37,15 @@ def cmd_subnet_diff(argv, o):
        will compare two cache files. The REFERENCE file is a cache file created
        by ibnetdiscover --cache=FOO --refresh-cache."""
     LibIBOpts.setup(o, address=False, discovery=True)
-    (args, values) = o.parse_args(argv)
+    args, values = o.parse_args(argv)
 
-    need = set(("all_NodeInfo", "all_NodeDescription",
-                "all_PortInfo", "all_topology", "all_LIDs"))
+    need = {
+        "all_NodeInfo",
+        "all_NodeDescription",
+        "all_PortInfo",
+        "all_topology",
+        "all_LIDs",
+    }
 
     if len(values) <= 0:
         raise CmdError("Too few arguments")
@@ -54,32 +60,34 @@ def cmd_subnet_diff(argv, o):
             sched = lib.get_sched(umad)
             sbn = lib.get_subnet(sched, need)
 
-    def diff_set(fn):
+    def diff_set(fn) -> Tuple:
         ep = set(fn(sbn))
         rep = set(fn(rsbn))
-        return (ep.difference(rep), rep.difference(ep), rep, ep)
+        return ep.difference(rep), rep.difference(ep), rep, ep
 
-    def diff_map(fn):
+    def diff_map(fn) -> Tuple:
         ep = dict(fn(sbn))
         rep = dict(fn(rsbn))
         ep_s = set(ep.keys())
         rep_s = set(rep.keys())
         map_diff = {}
-        map_diff.update((I, (ep[I], None))
-                        for I in ep_s.difference(rep_s))
-        map_diff.update((I, (None, rep[I]))
-                        for I in rep_s.difference(ep_s))
-        map_diff.update((I, (ep[I], rep[I]))
-                        for I in ep_s.intersection(rep_s)
-                        if ep[I] != rep[I])
-        return (map_diff, None, rep_s, ep_s)
+        map_diff.update(
+            (_part, (ep[_part], None)) for _part in ep_s.difference(rep_s)
+        )
+        map_diff.update(
+            (_part, (None, rep[_part])) for _part in rep_s.difference(ep_s)
+        )
+        map_diff.update(
+            (_part, (ep[_part], rep[_part])) for _part in ep_s.intersection(rep_s) if ep[_part] != rep[_part]
+        )
+        return map_diff, None, rep_s, ep_s
 
     def report(v, extra, same, printer=str):
         v = sorted(v)
         if v:
             print(extra % (len(v)))
-            for I in v:
-                print("  ", printer(I))
+            for part in v:
+                print("  ", printer(part))
         else:
             print(same)
 

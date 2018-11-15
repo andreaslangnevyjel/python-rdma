@@ -632,19 +632,24 @@ def perform_topo_check(argv, o, funcs):
         node = port.parent
         ep = port.to_end_port()
         failed = False
-        cidx = (0 if kind == KIND_NODE else
-                2 if kind == KIND_PORT else
-                4 if kind == KIND_PERF else
-                6 if kind == KIND_CLEAR else
-                0)
+        cidx = (
+            0 if kind == KIND_NODE else
+            2 if kind == KIND_PORT else
+            4 if kind == KIND_PERF else
+            6 if kind == KIND_CLEAR else
+            0
+        )
         kwargs = {}
         kwargs["ninf"] = node.ninf
         kwargs["pinf"] = port.pinf
         kwargs["port"] = port
         kwargs["sbn"] = sbn
         kwargs["port_idx"] = port_idx
-        kwargs["desc"] = "lid %u port %s" % (ep.LID, port_idx)
-        kwargs["portGUID"] = portGUID = ep.portGUID
+        kwargs["desc"] = "lid {:d} port {}".format(
+            ep.LID,
+            port_idx,
+        )
+        kwargs["port_guid"] = portGUID = ep.portGUID
 
         if (args.only_up and
             (port.pinf.portPhysicalState == IBA.PHYS_PORT_STATE_POLLING or
@@ -654,9 +659,12 @@ def perform_topo_check(argv, o, funcs):
         if kind & (KIND_PERF | KIND_CLEAR):
             kwargs["gpath"] = gpath = getattr(path, "_cached_gmp_path", None)
             if gpath is None:
-                gpath = yield rdma.path.get_mad_path(sched, portGUID,
-                                                     dqpn=1,
-                                                     qkey=IBA.IB_DEFAULT_QP1_QKEY)
+                gpath = yield rdma.path.get_mad_path(
+                    sched,
+                    portGUID,
+                    dqpn=1,
+                    qkey=IBA.IB_DEFAULT_QP1_QKEY,
+                )
                 path._cached_gmp_path = gpath
                 kwargs["gpath"] = gpath
 
@@ -669,7 +677,7 @@ def perform_topo_check(argv, o, funcs):
         except (CmdError, rdma.RDMAError) as e:
             counts[cidx + 1] = counts[cidx + 1] + 1
             sched.result = print_header(node.ninf, ep.pinf, node.desc, port_idx, True, kind)
-            print(red("#error: %s" % (e)))
+            print(red("#error: {}".format(e)))
         else:
             failed = False
             if kind & KIND_PERF and warnings:
@@ -681,8 +689,14 @@ def perform_topo_check(argv, o, funcs):
     counts = [0] * 8
     with lib.get_umad() as umad:
         sched = lib.get_sched(umad)
-        sbn = lib.get_subnet(sched, ("all_NodeInfo", "all_PortInfo",
-                                     "all_NodeDescription"))
+        sbn = lib.get_subnet(
+            sched,
+            (
+                "all_NodeInfo",
+                "all_PortInfo",
+                "all_NodeDescription",
+            ),
+        )
 
         def do(port):
             """This is a coroutine that does the checks for one end port."""
