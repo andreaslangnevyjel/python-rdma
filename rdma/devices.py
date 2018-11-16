@@ -378,16 +378,16 @@ class RDMADevice(SysFSCache):
         with this device. Use this to find the sysfs ID of slave kernel
         interface devices."""
         m = re.compile(matcher)
-        for f_obj in os.listdir(dir_):
-            if not m.match(f_obj):
+        for f_name in os.listdir(dir_):
+            if not m.match(f_name):
                 continue
             try:
-                with open("{}{}/ibdev".format(dir_, f_obj)) as f_obj:
-                    if f_obj.read().strip() != self.name:
+                with open("{}{}/ibdev".format(dir_, f_name)) as i_obj:
+                    if i_obj.read().strip() != self.name:
                         continue
             except IOError:
                 continue
-            yield dir_ + f_obj
+            yield "{}{}".format(dir, f_name)
 
     @property
     def node_type(self):
