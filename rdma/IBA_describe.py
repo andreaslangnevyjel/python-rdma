@@ -201,7 +201,7 @@ def description(value: ByteString) -> str:
     if isinstance(value, bytearray):
         zero = 0
     else:
-        zero = ord(0)
+        zero = chr(0)
     for idx in range(len(value) - 1):
         if value[idx] == zero:
             return value[:idx].decode("UTF-8")
