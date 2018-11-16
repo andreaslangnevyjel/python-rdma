@@ -320,10 +320,10 @@ class Subnet(object):
         if len(self.lids) <= max_lid:
             self.lids.extend(None for _idx in range(len(self.lids), max_lid + 1))
 
-    def _resolve_dr_path(self, path):
+    def _resolve_drPath(self, path):
         """Convert the DR path *path* into an end port. Returns `None` if
         no end port was found."""
-        dr_path = path.drPath
+        drPath = path.drPath
         if path.DLID == IBA.LID_PERMISSIVE:
             start = self.ports.get(path.end_port.port_guid)
         else:
@@ -334,17 +334,17 @@ class Subnet(object):
 
         if start is None:
             return None
-        if len(dr_path) <= 0:
+        if len(drPath) <= 0:
             return start
-        if ord(dr_path[0]) != 0:
+        if ord(drPath[0]) != 0:
             return None
-        if len(dr_path) <= 1:
+        if len(drPath) <= 1:
             return start
         if not isinstance(start, Switch):
-            if ord(dr_path[1]) != start.port_id:
+            if ord(drPath[1]) != start.port_id:
                 return None
-        for idx in range(1, len(dr_path)):
-            aport = start.parent.get_port_nc(ord(dr_path[idx]))
+        for idx in range(1, len(drPath)):
+            aport = start.parent.get_port_nc(ord(drPath[idx]))
             if aport is None:
                 return None
             start = self.topology.get(aport)
@@ -358,7 +358,7 @@ class Subnet(object):
             return ret
 
         if isinstance(path, rdma.path.IBDRPath):
-            ret = self._resolve_dr_path(path)
+            ret = self._resolve_drPath(path)
         else:
             if ret is None and path.DGID is not None:
                 ret = self.ports.get(path.DGID.guid())
@@ -405,10 +405,10 @@ class Subnet(object):
         # LID route to a HCA followed by DR route after does not work, in the local
         # host case I think this is a kernel bug, but other cases seem to be as the
         # spec intends.
-        dr_path = getattr(path, "drPath", b"\0") + chr(port_idx).encode("ascii")
-        if len(dr_path) > 64:
+        drPath = getattr(path, "drPath", b"\0") + chr(port_idx).encode("ascii")
+        if len(drPath) > 64:
             raise rdma.RDMAError(
-                "DR path length limit exceeded, {!}".format(dr_path),
+                "DR path length limit exceeded, {!}".format(drPath),
             )
         if (
             path.DLID == path.end_port.lid and
@@ -416,17 +416,17 @@ class Subnet(object):
             path.DLID != 0
         ):
             # Local loopback
-            return rdma.path.IBDRPath(path.end_port, drPath=dr_path)
+            return rdma.path.IBDRPath(path.end_port, drPath=drPath)
         else:
             if isinstance(path, rdma.path.IBDRPath):
-                ret = path.copy(drPath=dr_path)
+                ret = path.copy(drPath=drPath)
             else:
                 ret = rdma.path.IBDRPath(
                     path.end_port,
                     SLID=path.SLID,
                     drSLID=path.SLID,
                     DLID=path.DLID,
-                    drPath=dr_path,
+                    drPath=drPath,
                     retries=path.retries,
                 )
 
@@ -435,8 +435,8 @@ class Subnet(object):
                 # If we are DR'ing from a non-CA then the only possible legal
                 # thing is to go back out the same port. Dropping the last entry
                 # from the DR list is the same thing.
-                if len(dr_path) >= 3 and ep.port_id == port_idx:
-                    ret.drPath = dr_path[:-2]
+                if len(drPath) >= 3 and ep.port_id == port_idx:
+                    ret.drPath = drPath[:-2]
                 else:
                     # Hum, we know this will fail, try and fix it up with our topology
                     # database..
@@ -448,7 +448,7 @@ class Subnet(object):
                 # local_port_num, but since we are going in and out of the
                 # same port we can just record what it should have been
                 # here.
-                ret._cached_subnet_local_port_num = dr_path[-2]
+                ret._cached_subnet_local_port_num = drPath[-2]
 
             return ret
 
@@ -459,15 +459,15 @@ class Subnet(object):
         nodeGUID=None,
         portGUID=None,
         path=None,
-        lid=None,
-        lmc: int=0,
+        LID=None,
+        LMC: int=0,
     ):
         """Use the provided information about *port* to update the database.
 
         Note: For switches *port_idx* must be 0."""
         assert (port == port.to_end_port())
-        if lid is None and path is not None and not isinstance(path, rdma.path.IBDRPath):
-            lid = path.DLID
+        if LID is None and path is not None and not isinstance(path, rdma.path.IBDRPath):
+            LID = path.DLID
 
         node = port.parent
 
@@ -476,12 +476,12 @@ class Subnet(object):
         if portGUID is not None and port.portGUID is None:
             port.portGUID = portGUID
             self.ports[portGUID] = port
-        if lid is not None:
-            port.LID = lid
-            if lmc is None:
-                lmc = 0
-            self.set_max_lid(lid + (1 << lmc) - 1)
-            for I in IBA.lid_lmc_range(lid, lmc):
+        if LID is not None:
+            port.LID = LID
+            if LMC is None:
+                LMC = 0
+            self.set_max_lid(LID + (1 << LMC) - 1)
+            for I in IBA.lid_lmc_range(LID, LMC):
                 self.lids[I] = port
         if path is not None:
             path._cached_subnet_end_port = port
@@ -502,8 +502,8 @@ class Subnet(object):
         portGUID=None,
         nodeGUID=None,
         path=None,
-        lid=None,
-        lmc: int=0,
+        LID=None,
+        LMC: int=0,
     ):
         """Return a :class:`Port` instance associated with the supplied
         information if it exists or `None`.
@@ -531,10 +531,10 @@ class Subnet(object):
             if port_idx is not None:
                 return node.get_port(port_idx)
 
-        if lid is None and path is not None and not isinstance(path, rdma.path.IBDRPath):
-            lid = path.DLID
-        if lid is not None and lid < len(self.lids):
-            port = self.lids[lid]
+        if LID is None and path is not None and not isinstance(path, rdma.path.IBDRPath):
+            LID = path.DLID
+        if LID is not None and LID < len(self.lids):
+            port = self.lids[LID]
             if port is not None:
                 return port
 
@@ -610,7 +610,7 @@ class Subnet(object):
         self.link_end_port(port, **kwargs)
         return node, port
 
-    def get_node_ninf(self, ninf, path=None, LID=None):
+    def get_node_ninf(self, ninf, path=None, lid=None):
         """Return the :class:`Node` object that holds the associated *ninf*. If
         none exists then one is created. If *path* or *LID* are specified then
         the appropriate information from both is integrated into the database.
@@ -633,7 +633,7 @@ class Subnet(object):
             nodeGUID=ninf.nodeGUID,
             portGUID=ninf.portGUID,
             path=path,
-            LID=LID,
+            LID=lid,
         )
         self.nodes[ninf.nodeGUID] = np[0]
         np[0].ninf = ninf

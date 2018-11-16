@@ -449,24 +449,24 @@ class IBDRPath(IBPath):
         return Path.complete(self) and bool(self.drPath)
 
     @classmethod
-    def _format_dr_path(cls, v) -> str:
+    def _format_drPath(cls, v) -> str:
         return ":".join(
             "{:d}".format(entry) for entry in v
         ) + ":"
 
     def __str__(self) -> str:
         # No LID components
-        dr_path = tuple(entry for entry in self.drPath)
+        drPath = tuple(entry for entry in self.drPath)
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
-            return "DR Path %r" % (dr_path,)
+            return "DR Path %r" % (drPath,)
         # LID route at the start
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID != IBA.LID_PERMISSIVE:
-            return "DR Path %u -> %r" % (self.DLID, dr_path)
+            return "DR Path %u -> %r" % (self.DLID, drPath)
         # LID route at the end
         if self.drDLID != IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
-            return "DR Path %r -> %u" % (dr_path, self.drDLID)
+            return "DR Path %r -> %u" % (drPath, self.drDLID)
         # Double ended
-        return "DR Path %u -> %r -> %u" % (self.DLID, dr_path, self.drDLID)
+        return "DR Path %u -> %r -> %u" % (self.DLID, drPath, self.drDLID)
 
 
 class SAPathNotFoundError(rdma.MADClassError):
@@ -796,8 +796,8 @@ def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
             raise ValueError("Invalid DR path specification %r" % (s,))
         if dr[0] != 0:
             raise ValueError("Invalid DR path specification %r" % (s,))
-        dr_path = b"".join(chr(entry).encode("ascii") for entry in dr)
-        return IBDRPath(default_end_port, drPath=dr_path)
+        drPath = b"".join(chr(entry).encode("ascii") for entry in dr)
+        return IBDRPath(default_end_port, drPath=drPath)
 
     a = s.split('%')
     if len(a) == 2:

@@ -20,7 +20,7 @@ def subnet_ninf_GUID(sched, sbn, node_guid):
     # on a CA. When it does this it must set the portGUID and local_port_num correctly
     # to match the LID in the RID.
     for I in res:
-        np = sbn.get_node_ninf(I.nodeInfo, LID=I.LID)
+        np = sbn.get_node_ninf(I.nodeInfo, lid=I.LID)
         np[0].set_desc(I.nodeDescription.nodeString)
 
 
@@ -34,7 +34,7 @@ def subnet_ninf_SA(sched, sbn, node_type=None):
     if res:
         sbn.set_max_lid(max(I.LID for I in res))
     for I in res:
-        np = sbn.get_node_ninf(I.nodeInfo, LID=I.LID)
+        np = sbn.get_node_ninf(I.nodeInfo, lid=I.LID)
         np[0].set_desc(I.nodeDescription.nodeString)
     if node_type is None:
         sbn.loaded.add("all_NodeInfo")
