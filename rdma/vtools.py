@@ -226,12 +226,14 @@ class CQPoller(object):
                     self._ctx.handle_async_event(ev)
 
     def iterwc(self, count: int=None, timeout: Union[float, int]=None, wakeat=None):
-        """Generator that returns work completions from the CQ. If not `None`
+        """
+        Generator that returns work completions from the CQ. If not `None`
         at most *count* wcs will be returned. *timeout* is the number of
         seconds this function can run for, and *wakeat* is the value of
         :func:`rdma.tools.clock_monotonic` after which iteration stops.
 
-        :rtype: :class:`rdma.ibverbs.wc`"""
+        :rtype: :class:`rdma.ibverbs.wc`
+        """
         self.timedout = False
         if timeout is not None:
             self.wakeat = rdma.tools.clock_monotonic() + timeout

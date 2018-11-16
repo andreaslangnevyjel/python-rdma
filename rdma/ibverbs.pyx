@@ -1075,7 +1075,7 @@ cdef class CQ:
                 "Failed to resize the CQ",
             )
 
-    def poll(self,int limit=-1):
+    def poll(self, int limit=-1):
         """Perform the poll_cq operation, return a list of work requests."""
         cdef c.ibv_wc lwc
         cdef int n
@@ -1086,7 +1086,7 @@ cdef class CQ:
             if n == 0:
                 break
             elif n < 0:
-                raise rdma.SysError(errno,"ibv_poll_cq")
+                raise rdma.SysError(errno, "ibv_poll_cq")
             else:
                 L.append(
                     wc(
@@ -1481,8 +1481,11 @@ cdef class QP:
         self._pd = pd
         self._qp = c.ibv_create_qp(pd._pd, &cinit)
         if self._qp == NULL:
-            raise rdma.SysError(errno,"ibv_create_qp",
-                                "Failed to create queue pair")
+            raise rdma.SysError(
+                errno,
+                "ibv_create_qp",
+                "Failed to create queue pair",
+            )
         self._qp_type = cinit.qp_type
         self._cap = cinit.cap
 
@@ -1574,8 +1577,11 @@ cdef class QP:
 
         rc = c.ibv_modify_qp(self._qp, &cattr, cmask)
         if rc != 0:
-            raise rdma.SysError(errno,"ibv_modify_qp",
-                                "Failed to modify qp")
+            raise rdma.SysError(
+                errno,
+                "ibv_modify_qp",
+                "Failed to modify qp",
+            )
 
         if cmask & c.IBV_QP_CAP:
             self._cap = cattr.cap
@@ -1748,8 +1754,11 @@ cdef class QP:
 
         rc = c.ibv_query_qp(self._qp, &cattr, mask, &cinit)
         if rc != 0:
-            raise rdma.SysError(rc,"ibv_query_qp",
-                                "Failed to query queue pair")
+            raise rdma.SysError(
+                rc,
+                "ibv_query_qp",
+                "Failed to query queue pair",
+            )
 
         cap = qp_cap(max_send_wr=cattr.cap.max_send_wr,
                      max_recv_wr=cattr.cap.max_recv_wr,
@@ -1804,8 +1813,11 @@ cdef class QP:
             raise TypeError("Expected buffer")
         rc = c.ibv_attach_mcast(self._qp,<c.ibv_gid *>dgid,path.DLID)
         if rc != 0:
-            raise rdma.SysError(rc,"ibv_attach_mcast",
-                                "Failed to attach to %r"%(path))
+            raise rdma.SysError(
+                rc,
+                "ibv_attach_mcast",
+                "Failed to attach to %r"%(path),
+            )
         if self._groups is None:
             self._groups = []
         # Relying on verbs to fail on double add
@@ -1823,8 +1835,11 @@ cdef class QP:
             raise TypeError("Expected buffer")
         rc = c.ibv_detach_mcast(self._qp,<c.ibv_gid *>dgid,path.DLID)
         if rc != 0:
-            raise rdma.SysError(rc,"ibv_detach_mcast",
-                                "Failed to detach to %r"%(path))
+            raise rdma.SysError(
+                rc,
+                "ibv_detach_mcast",
+                "Failed to detach to %r"%(path),
+            )
         # Relying on verbs to fail on double remove
         self._groups.remove((path.DGID,path.DLID))
 

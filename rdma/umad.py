@@ -64,12 +64,14 @@ class LazyIBPath(rdma.path.LazyIBPath):
 
 
 class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
-    '''Handle to a UMAD kernel interface. This class supports the context
-    manager protocol.'''
+    """
+    Handle to a UMAD kernel interface. This class supports the context
+    manager protocol.
+    """
     IB_IOCTL_MAGIC = 0x1b
-    IB_USER_MAD_REGISTER_AGENT = rdma.tools._IOC(3, IB_IOCTL_MAGIC, 1, 28)
-    IB_USER_MAD_UNREGISTER_AGENT = rdma.tools._IOC(1, IB_IOCTL_MAGIC, 2, 4)
-    IB_USER_MAD_ENABLE_PKEY = rdma.tools._IOC(0, IB_IOCTL_MAGIC, 3, 0)
+    IB_USER_MAD_REGISTER_AGENT = rdma.tools.ib_ioc(3, IB_IOCTL_MAGIC, 1, 28)
+    IB_USER_MAD_UNREGISTER_AGENT = rdma.tools.ib_ioc(1, IB_IOCTL_MAGIC, 2, 4)
+    IB_USER_MAD_ENABLE_PKEY = rdma.tools.ib_ioc(0, IB_IOCTL_MAGIC, 3, 0)
 
     # typedef struct ib_user_mad {
     #  uint32_t agent_id
@@ -263,8 +265,8 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
     # window where packets are ignored, I suppose I should fixup the callers
     # to allow delegated timeout processing, but grrr......
     def sendto(self, buf, path, agent_id=None):
-        '''Send a MAD packet. *buf* is the raw MAD to send, starting with the first
-        byte of :class:`rdma.IBA.MADHeader`. *path* is the destination.'''
+        """Send a MAD packet. *buf* is the raw MAD to send, starting with the first
+        byte of :class:`rdma.IBA.MADHeader`. *path* is the destination."""
         try:
             addr = path._cached_umad_ah
         except AttributeError:
@@ -287,11 +289,11 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         self.dev.write(self.sbuf)
 
     def recvfrom(self, wakeat):
-        '''Receive a MAD packet. If the value of
+        """Receive a MAD packet. If the value of
         :func:`rdma.tools.clock_monotonic()` exceeds *wakeat* then :class:`None`
         is returned.
 
-        :returns: tuple(buf,path)'''
+        :returns: tuple(buf,path)"""
         buf = bytearray(320)
         first = True
         while True:

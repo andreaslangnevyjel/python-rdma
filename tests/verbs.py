@@ -5,6 +5,7 @@
 import errno
 import mmap
 import sys
+from typing import Tuple
 import unittest
 
 import rdma
@@ -62,7 +63,7 @@ class umad_self_test(unittest.TestCase):
         print(srq.query())
         srq.modify(100)
 
-    def _get_loop(self, pd, qp_type, depth=16):
+    def _get_loop(self, pd, qp_type, depth: int=16) -> Tuple:
         cc = self.ctx.comp_channel()
         cq = self.ctx.cq(2 * depth, cc)
         poller = rdma.vtools.CQPoller(cq)
@@ -87,11 +88,11 @@ class umad_self_test(unittest.TestCase):
         qp_a.establish(path_a)
         # print "Path A is",repr(path_a)
 
-        return (path_a, qp_a, path_b, qp_b, poller, srq, pool)
+        return path_a, qp_a, path_b, qp_b, poller, srq, pool
 
     def _do_loop_test(self, qp_type_name):
         """Test HCA loop back between two QPs as well as SRQ."""
-        qp_type = getattr(ibv, "IBV_QPT_%s" % (qp_type_name))
+        qp_type = getattr(ibv, "IBV_QPT_{}".format(qp_type_name))
         print("Testing QP to QP loop type %u %s" % (qp_type, qp_type_name))
         with self.ctx.pd() as pd:
             path_a, qp_a, path_b, qp_b, poller, srq, pool = \
@@ -213,11 +214,12 @@ class umad_self_test(unittest.TestCase):
                               [wr for I in range(0, depth * 1024)])
 
     def test_wc_raise(self):
-        "Test raising a WCError exception"
+        """
+        Test raising a WCError exception
+        """
         with self.ctx.pd() as pd:
             depth = 16
-            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
-                self._get_loop(pd, ibv.IBV_QPT_UD, depth)
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = self._get_loop(pd, ibv.IBV_QPT_UD, depth)
 
             # Go past the end of our MR during send
             wr = pool.make_send_wr(pool.pop(), 256, path_b)
