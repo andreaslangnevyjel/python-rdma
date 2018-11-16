@@ -112,8 +112,8 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         else:
             raise rdma.RDMAError("Unable to open umad device for %s" % (repr(parent)))
 
-        with open(SYS_INFINIBAND_MAD + "abi_version") as F:
-            self.abi_version = int(F.read().strip())
+        with open(SYS_INFINIBAND_MAD + "abi_version") as f_obj:
+            self.abi_version = int(f_obj.read().strip())
         if self.abi_version < 5:
             raise rdma.RDMAError(
                 "UMAD ABI version is {:d} but we need at least 5.".format(

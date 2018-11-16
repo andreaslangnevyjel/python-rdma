@@ -373,7 +373,7 @@ class RDMADevice(SysFSCache):
         )
         self.phys_port_cnt = len(self.end_ports)
 
-    def _iterate_services_device(self, dir_, matcher):
+    def _iterate_services_device(self, dir_: str, matcher):
         """Iterate over all sysfs files (ie umad, cm, etc) that are associated
         with this device. Use this to find the sysfs ID of slave kernel
         interface devices."""
@@ -387,7 +387,7 @@ class RDMADevice(SysFSCache):
                         continue
             except IOError:
                 continue
-            yield "{}{}".format(dir, f_name)
+            yield "{}{}".format(dir_, f_name)
 
     @property
     def node_type(self):
