@@ -1,3 +1,4 @@
 ibverbs.so
+ibverbs.c
 libibverbs_enums.pxd
 libibverbs_enums.pxi

@@ -9,6 +9,8 @@ import sys
 import codecs
 from typing import List, Dict, Tuple
 import rdma.binstruct
+from rdma.IBA_struct import *
+
 
 #: Node Type Constants
 # see NodeInfo.nodeType
@@ -207,10 +209,14 @@ def conv_lid(s, multicast=False):
         return lid
     if multicast:
         if lid < LID_MULTICAST or lid == LID_PERMISSIVE:
-            raise ValueError("%r is not a multicast LID" % (s))
+            raise ValueError(
+                "{!r} is not a multicast LID".format(s),
+            )
     else:
         if lid >= LID_MULTICAST or lid == LID_RESERVED:
-            raise ValueError("%r is not a unicast LID" % (s))
+            raise ValueError(
+                "{!r} is not a unicast LID".format(s),
+            )
     return lid
 
 
@@ -422,7 +428,7 @@ class ComponentMask(object):
     #: The computed component_mask
     component_mask = 0
 
-    def __init__(self, obj, mask=0):
+    def __init__(self, obj, mask: int=0):
         """*obj* is wrappered"""
         object.__setattr__(self, "component_mask", mask)
         object.__setattr__(self, "_obj", obj)
@@ -475,7 +481,7 @@ class ComponentMask(object):
         return res
 
     def __setattr__(self, name: str, value):
-        if name == 'component_mask':
+        if name == "component_mask":
             return object.__setattr__(self, name, value)
         self._touch(name)
         return setattr(self._obj, name, value)
@@ -521,7 +527,8 @@ def const_str(prefix, value, with_int: int=False, me=sys.modules[__name__]) -> s
                 pass
     if with_int:
         return "{}??({:d})".format(prefix, value)
-    return "{}?{:d}".format(prefix, value)
+    else:
+        return "{}?{:d}".format(prefix, value)
 
 
 def get_fmt_payload(class_id, class_version, attribute_id) -> Tuple:
@@ -537,10 +544,7 @@ def get_fmt_payload(class_id, class_version, attribute_id) -> Tuple:
     return cls, attr
 
 
-from rdma.IBA_struct import *
-
-
-def _make_IBA_link():
+def _make_iba_link():
     """We have a bit of a circular dependency here, make a IBA
     name inside the IBA_struct module so that it can see the
     stuff in this module when its code runs. Fugly, but I
@@ -551,4 +555,4 @@ def _make_IBA_link():
     setattr(_struct, "IBA", me)
 
 
-_make_IBA_link()
+_make_iba_link()

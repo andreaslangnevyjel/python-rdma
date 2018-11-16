@@ -240,11 +240,11 @@ def _array_dump(f_obj, a, buf, mbits, name, offset=0):
         while off < cur_dword * 8 + 32 and idx < max_idx:
             off = off + mbits
             if idx == 0:
-                mb.append("%s=[%u:%r" % (name, idx, a[idx]))
+                mb.append("{}=[{:d}:{!r}".format(name, idx, a[idx]))
             elif idx + 1 == max_idx:
-                mb.append("%u:%r]" % (idx, a[idx]))
+                mb.append("{:d}:{!r}]".format(idx, a[idx]))
             else:
-                mb.append("%u:%r" % (idx, a[idx]))
+                mb.append("{:d}:{!r}".format(idx, a[idx]))
             idx = idx + 1
 
         print(
@@ -442,6 +442,12 @@ def struct_dotted(
         else:
             ref = attr
 
+        def str_conv(value):
+            return dstr(description(value), quotes=True)
+
+        def gid_conv(value):
+            return IBA.GID(prefix=value, guid=IBA.GUID(0))
+
         conv = None
         if isinstance(ref, IBA.GID) or isinstance(ref, IBA.GUID):
             fmt = "{}"
@@ -453,12 +459,12 @@ def struct_dotted(
                 )
             elif fmt == "str":
                 fmt = "{}"
-                conv = lambda value: dstr(description(value), quotes=True)
+                conv = str_conv
             elif fmt == "gid_prefix":
                 fmt = "{}/64"
-                conv = lambda value: IBA.GID(prefix=value, guid=IBA.GUID(0))
+                conv = gid_conv
 
-        if count != 1 and len(attr) == count and conv == None:
+        if count != 1 and len(attr) == count and conv is not None:
             if isinstance(attr[0], rdma.binstruct.BinStruct):
                 for key, v in enumerate(attr):
                     struct_dotted(

@@ -390,7 +390,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         path.reverse()
         return buf, path
 
-    def _execute(self, buf, path, sendOnly: bool=False):
+    def _execute(self, buf, path, send_only: bool=False):
         """Send the fully formed MAD in buf to path and copy the reply
         into buf. Return path of the reply. This is a synchronous method, all
         MADs received during this call are discarded until the reply is seen."""
@@ -421,7 +421,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 return self._gen_error(buf, path)
             raise
 
-        if sendOnly:
+        if send_only:
             return None
 
         rmatch = self._get_reply_match_key(buf)

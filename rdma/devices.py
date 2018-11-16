@@ -4,6 +4,7 @@
 import collections
 import os
 import re
+from typing import Tuple
 
 import rdma
 import rdma.IBA as IBA
@@ -31,9 +32,9 @@ def _conv_int_desc(s):
     the descriptive name for the integer.
 
     :raises ValueError: If the string is invalid."""
-    t = s.split(':')
+    t = s.split(":")
     if len(t) != 2:
-        raise ValueError("%r is not a valid major:minor" % (s))
+        raise ValueError("{!r} is not a valid major:minor".format(s))
     return int(t[0])
 
 
@@ -44,22 +45,28 @@ def _conv_unicode(s: str) -> str:
     else:
         return s
     # The kernel puts a single \n on the description..
-    if s[-1] == '\n':
-        return s[:-1].decode("utf-8")
-    return s.decode("utf-8")
+    # if s[-1] == '\n':
+    #    return s[:-1].decode("utf-8")
+    # return s.decode("utf-8")
 
 
 class SysFSCache(object):
-    """Cache queries from sysfs attributes. This class is used to make
-    the sysfs parsing demand load."""
+    """
+    Cache queries from sysfs attributes. This class is used to make
+    the sysfs parsing demand load.
+    """
 
     def __init__(self, dir_):
-        """*dir_* is the directory the attributes reside in."""
+        """
+        *dir_* is the directory the attributes reside in.
+        """
         self._dir = dir_
         self._cache = {}
 
     def _cached_sysfs(self, name, convert=None):
-        """Read, cache and return the value from sysfs"""
+        """
+        Read, cache and return the value from sysfs
+        """
         if name in self._cache:
             return self._cache[name]
         with open(self._dir + name) as F:
@@ -72,9 +79,9 @@ class SysFSCache(object):
             return s
 
     def _drop(self, names):
-        for I in names:
+        for name in names:
             try:
-                del self._cache[I]
+                del self._cache[name]
             except KeyError:
                 pass
 
@@ -96,8 +103,8 @@ class DemandList(collections.Iterable):
         self._conv = conv
         self._data = {}
         self._okeys = tuple(sorted(iconv(I) for I in os.listdir(path)))
-        for I in self._okeys:
-            self._data[I] = None
+        for key in self._okeys:
+            self._data[key] = None
 
     def __len__(self):
         return len(self._data)
@@ -105,8 +112,8 @@ class DemandList(collections.Iterable):
     def __iter__(self):
         """This class isn't a dictionary, it is an ordered list with maybe non
         integer indexes. So we are returning values not keys."""
-        for I in self._okeys:
-            yield self[I]
+        for key in self._okeys:
+            yield self[key]
 
     def itervalues(self):
         return self.__iter__()
@@ -121,8 +128,8 @@ class DemandList(collections.Iterable):
     def __getitem__(self, idx):
         ret = self._data[idx]
         if ret is None:
-            with open(self._path + "%s" % (idx)) as F:
-                ret = self._conv(F.read())
+            with open(self._path + "{}".format(idx)) as f_obj:
+                ret = self._conv(f_obj.read())
                 self._data[idx] = ret
         return ret
 
@@ -176,7 +183,7 @@ class EndPort(SysFSCache):
     def __init__(self, parent, port_id):
         """*parent* is the owning :class:`RDMADevice` and port_id is the port
         ID number, 0 for switches and > 1 for \*CAs"""
-        SysFSCache.__init__(self, parent._dir + "ports/%u/" % (port_id))
+        SysFSCache.__init__(self, parent._dir + "ports/{:d}/".format(port_id))
         self.parent = parent
         self.port_id = port_id
         self.pkeys = DemandList(self._dir + "pkeys/", _conv_hex)
@@ -186,21 +193,25 @@ class EndPort(SysFSCache):
         return self.parent._iterate_services_device(dir_, matcher)
 
     def _iterate_services_end_port(self, dir_, matcher):
-        """Iterate over all sysfs files that are associated with the
-        device and with this end port."""
+        """
+        Iterate over all sysfs files that are associated with the
+        device and with this end port.
+        """
         for cur_obj in self.parent._iterate_services_device(dir_, matcher):
             try:
-                with open(cur_obj + "/port") as F:
-                    if int(F.read()) != self.port_id:
+                with open(cur_obj + "/port") as f_obj:
+                    if int(f_obj.read()) != self.port_id:
                         continue
             except IOError:
                 continue
             yield cur_obj
 
     def enable_sa_capability(self):
-        """Enable the SA capability mask. This returns an instance that
+        """
+        Enable the SA capability mask. This returns an instance that
         supports the context manager protocol that should be closed once
-        the SA is finished."""
+        the SA is finished.
+        """
         for I in self._iterate_services_end_port(SYS_INFINIBAND_MAD, "issm\d+"):
             return rdma.tools.SysFSDevice(self, I)
         else:
@@ -281,12 +292,17 @@ class EndPort(SysFSCache):
         except AttributeError:
             pass
 
-        self._cached_sa_path = rdma.path.IBPath(self, DLID=self.sm_lid,
-                                                SLID=self.lid,
-                                                SL=self.sm_sl, dqpn=1, sqpn=1,
-                                                qkey=IBA.IB_DEFAULT_QP1_QKEY,
-                                                pkey=IBA.PKEY_DEFAULT,
-                                                packet_life_time=self.subnet_timeout)
+        self._cached_sa_path = rdma.path.IBPath(
+            self,
+            DLID=self.sm_lid,
+            SLID=self.lid,
+            SL=self.sm_sl,
+            dqpn=1,
+            sqpn=1,
+            qkey=IBA.IB_DEFAULT_QP1_QKEY,
+            pkey=IBA.PKEY_DEFAULT,
+            packet_life_time=self.subnet_timeout,
+        )
         return self._cached_sa_path
 
     def lid_change(self):
@@ -351,8 +367,10 @@ class RDMADevice(SysFSCache):
         SysFSCache.__init__(self, SYS_INFINIBAND + name + "/")
         self.name = name
 
-        self.end_ports = DemandList2(self._dir + "ports/",
-                                     lambda x: EndPort(self, x))
+        self.end_ports = DemandList2(
+            self._dir + "ports/",
+            lambda x: EndPort(self, x),
+        )
         self.phys_port_cnt = len(self.end_ports)
 
     def _iterate_services_device(self, dir_, matcher):
@@ -364,8 +382,8 @@ class RDMADevice(SysFSCache):
             if not m.match(f_obj):
                 continue
             try:
-                with open("%s%s/ibdev" % (dir_, f_obj)) as F:
-                    if F.read().strip() != self.name:
+                with open("{}{}/ibdev".format(dir_, f_obj)) as f_obj:
+                    if f_obj.read().strip() != self.name:
                         continue
             except IOError:
                 continue
@@ -418,14 +436,15 @@ class RDMADevice(SysFSCache):
         return self.name
 
     def __repr__(self) -> str:
-        return "<%s.%s object for %s at 0x%x>" % \
-               (self.__class__.__module__,
-                self.__class__.__name__,
-                self,
-                id(self))
+        return "<{}.{} object for {} at 0x{:x}>".format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self,
+            id(self),
+        )
 
 
-def find_port_gid(devices, gid):
+def find_port_gid(devices, gid) -> Tuple:
     """Search the list *devices* for the end port with *gid*.
 
     :returns: (:class:`EndPort`,gid_index)
@@ -435,15 +454,19 @@ def find_port_gid(devices, gid):
         return find_port_guid(devices, gid.guid()), gid
 
     if gid.guid() == IBA.GUID(0):
-        raise rdma.RDMAError("RDMA end port %r not found." % (gid))
+        raise rdma.RDMAError(
+            "RDMA end port {!r} not found.".format(gid),
+        )
 
-    for I in devices:
-        for J in I.end_ports:
+    for dev in devices:
+        for port in dev.end_ports:
             try:
-                return (J, J.gids.index(gid))
+                return port, port.gids.index(gid)
             except ValueError:
                 continue
-    raise rdma.RDMAError("RDMA end port %r not found." % (gid))
+    raise rdma.RDMAError(
+        "RDMA end port {!r} not found.".format(gid),
+    )
 
 
 def find_port_guid(devices, guid):
@@ -455,7 +478,9 @@ def find_port_guid(devices, guid):
         for J in I.end_ports:
             if J.port_guid == guid:
                 return J
-    raise rdma.RDMAError("RDMA end port %r not found." % (guid))
+    raise rdma.RDMAError(
+        "RDMA end port {!r} not found.".format(guid),
+    )
 
 
 def find_node_guid(devices, guid):
@@ -466,7 +491,9 @@ def find_node_guid(devices, guid):
     for cur_dev in devices:
         if cur_dev.node_guid == guid:
             return cur_dev
-    raise rdma.RDMAError("RDMA device %r not found." % (guid))
+    raise rdma.RDMAError(
+        "RDMA device {!r} not found.".format(guid),
+    )
 
 
 def find_port_name(devices, name: str):
