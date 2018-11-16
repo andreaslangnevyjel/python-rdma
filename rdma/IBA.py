@@ -4,13 +4,13 @@
 # NOTE: The docstrings for this module are specially processed in the
 # documentation take some care when editing.
 
+import codecs
 import socket
 import sys
-import codecs
-from typing import List, Dict, Tuple
+from typing import List, Tuple
+
 import rdma.binstruct
 from rdma.IBA_struct import *
-
 
 #: Node Type Constants
 # see NodeInfo.nodeType
@@ -241,7 +241,7 @@ class GUID(bytes):
     that formats to the GUID. :meth:`pack_into` is used to store the GUID in
     network format. Instances are immutable and can be hashed."""
 
-    def __init__(self, s=None, raw: bool=False):
+    def __init__(self, s=None, raw: bool = False):
         """Convert from a string to our GUID representation. *s* is the input
         string and if *raw* is True then *s* must be a length 8 :class:`bytes`.
 
@@ -249,7 +249,7 @@ class GUID(bytes):
         instantiated. *s* can also be an integer.
 
         :raises ValueError: If the string can not be parsed."""
-        pass
+        super().__init__()
 
     def __new__(cls, s=None, raw: bool=False):
         if s is None:
@@ -272,11 +272,11 @@ class GUID(bytes):
 
             v = "".join(_part.zfill(4) for _part in s.strip().split(':'))
             if len(v) != 16:
-                raise ValueError("%r is not a valid GUID" % (s))
+                raise ValueError("{!r} is not a valid GUID".format(s))
             try:
                 return bytes.__new__(cls, codecs.decode(v, "hex"))
             except TypeError:
-                raise ValueError("%r is not a valid GUID" % (s))
+                raise ValueError("{!r} is not a valid GUID".format(s))
 
     def pack_into(self, buf, offset: int=0):
         """ Pack the value into a byte array. """
@@ -499,11 +499,15 @@ class ComponentMask(object):
             if isinstance(res, bytearray) or isinstance(res, list):
                 # It is an array of some sort, just reading from those
                 # flips the bit because I am lazy.
-                self._parent._touch("%s.%s" % (self._name, name))
+                self._parent._touch(
+                    "{}.{}".format(self._name, name),
+                )
             return res
 
         def __setattr__(self, name, value):
-            self._parent._touch("%s.%s" % (self._name, name))
+            self._parent._touch(
+                "{}.{}".format(self._name, name),
+            )
             return setattr(self._obj, name, value)
 
 

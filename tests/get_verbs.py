@@ -6,15 +6,16 @@ import unittest
 import rdma
 
 
-class get_verbs_test(unittest.TestCase):
-    def test_get(self):
-        for I in rdma.get_devices():
-            with rdma.get_verbs(I) as X:
-                print(X)
-            for Q in I.end_ports:
-                with rdma.get_verbs(Q) as X:
-                    print(X)
+class GetVerbsTest(unittest.TestCase):
+    @staticmethod
+    def test_get():
+        for dev in rdma.get_devices():
+            with rdma.get_verbs(dev) as verb:
+                print(verb)
+            for port in dev.end_ports:
+                with rdma.get_verbs(port) as verb:
+                    print(verb)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

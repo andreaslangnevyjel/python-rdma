@@ -8,7 +8,7 @@ import rdma
 import rdma.IBA as IBA
 
 
-class get_end_port_test(unittest.TestCase):
+class GetEndPortTest(unittest.TestCase):
     def test_guid(self):
         """Test IBA.GUID class"""
         pg = IBA.GUID("0002:c903:0000:1491")
@@ -30,25 +30,37 @@ class get_end_port_test(unittest.TestCase):
         ep = dev.end_ports.first()
         self.assertEqual(rdma.get_end_port(), ep)
         self.assertEqual(rdma.get_end_port(dev.name), ep)
-        self.assertEqual(rdma.get_end_port("%s/%s" % (dev.name, ep.port_id)), ep)
+        self.assertEqual(rdma.get_end_port("{}/{}".format(dev.name, ep.port_id)), ep)
         self.assertEqual(rdma.get_end_port(ep.port_guid), ep)
-        self.assertEqual(rdma.get_end_port("%s" % (ep.port_guid)), ep)
+        self.assertEqual(rdma.get_end_port("{}".format(ep.port_guid)), ep)
         self.assertEqual(rdma.get_end_port(ep.default_gid), ep)
-        self.assertEqual(rdma.get_end_port("%s" % (ep.default_gid)), ep)
+        self.assertEqual(rdma.get_end_port("{}".format(ep.default_gid)), ep)
 
     def test_fail(self):
         """Test valid get_end_port calls that fail."""
         devices = rdma.get_devices()
         dev = devices.first()
-        self.assertRaises(rdma.RDMAError,
-                          rdma.get_end_port, IBA.GID("::"))
-        self.assertRaises(rdma.RDMAError,
-                          rdma.get_end_port, IBA.GUID("0000:0000:0000:0000"))
-        self.assertRaises(rdma.RDMAError,
-                          rdma.get_end_port, "xxx")
-        self.assertRaises(rdma.RDMAError,
-                          rdma.get_end_port, "%s/99" % (dev.name))
+        self.assertRaises(
+            rdma.RDMAError,
+            rdma.get_end_port,
+            IBA.GID("::"),
+        )
+        self.assertRaises(
+            rdma.RDMAError,
+            rdma.get_end_port,
+            IBA.GUID("0000:0000:0000:0000"),
+        )
+        self.assertRaises(
+            rdma.RDMAError,
+            rdma.get_end_port,
+            "xxx",
+        )
+        self.assertRaises(
+            rdma.RDMAError,
+            rdma.get_end_port,
+            "{}/99".format(dev.name),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

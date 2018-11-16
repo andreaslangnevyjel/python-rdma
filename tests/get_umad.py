@@ -7,13 +7,14 @@ import unittest
 import rdma
 
 
-class get_umad_test(unittest.TestCase):
-    def test_get(self):
-        for I in rdma.get_devices():
-            for Q in I.end_ports:
-                with rdma.get_umad(Q) as X:
-                    print(X)
+class GetUmadTest(unittest.TestCase):
+    @staticmethod
+    def test_get():
+        for dev in rdma.get_devices():
+            for port in dev.end_ports:
+                with rdma.get_umad(port) as entry:
+                    print(entry)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

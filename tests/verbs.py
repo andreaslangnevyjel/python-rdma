@@ -16,7 +16,7 @@ import rdma.satransactor
 import rdma.vmad
 
 
-class umad_self_test(unittest.TestCase):
+class UmadSelfTest(unittest.TestCase):
     umad = None
     tid = 0
 
@@ -96,10 +96,14 @@ class umad_self_test(unittest.TestCase):
     def _do_loop_test(self, qp_type_name):
         """Test HCA loop back between two QPs as well as SRQ."""
         qp_type = getattr(ibv, "IBV_QPT_{}".format(qp_type_name))
-        print("Testing QP to QP loop type %u %s" % (qp_type, qp_type_name))
+        print(
+            "Testing QP to QP loop type {:d} {}".format(
+                qp_type,
+                qp_type_name,
+            ),
+        )
         with self.ctx.pd() as pd:
-            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
-                self._get_loop(pd, qp_type)
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = self._get_loop(pd, qp_type)
             qp_b.post_send(pool.make_send_wr(pool.pop(), 256, path_b))
             qp_a.post_send(pool.make_send_wr(pool.pop(), 256, path_a))
 
@@ -118,7 +122,7 @@ class umad_self_test(unittest.TestCase):
     def _do_loop_test_mc(self):
         """Test HCA loop back between two QPs as well as SRQ."""
         qp_type = ibv.IBV_QPT_UD
-        print("Testing QP to QP loop type %u UD MULTICAST" % (qp_type))
+        print("Testing QP to QP loop type {:d} UD MULTICAST".format(qp_type))
         with self.ctx.pd() as pd:
             path_a, qp_a, path_b, qp_b, poller, srq, pool = \
                 self._get_loop(pd, qp_type)
@@ -182,13 +186,13 @@ class umad_self_test(unittest.TestCase):
             rdma.path.resolve_path(vmad, path, True)
             path.has_grh = True
             path.hop_limit = 255
-            ret = vmad.subn_adm_get(IBA.MADClassPortInfo, path)
+            _ret = vmad.subn_adm_get(IBA.MADClassPortInfo, path)
             print("SA reply path grh", repr(vmad.reply_path))
 
             # Get a LID path to our immediate peer
             drpath = rdma.path.IBDRPath(
                 self.end_port,
-                drPath=b"\0%c" % (self.end_port.port_id),
+                drPath=b"\0%c" % self.end_port.port_id,
             )
             smad = rdma.satransactor.SATransactor(vmad)
             peer_path = rdma.path.get_mad_path(
@@ -200,15 +204,19 @@ class umad_self_test(unittest.TestCase):
             print("Got peer path", repr(peer_path))
 
             # Try some GMPs to the peer
-            ret = vmad.PerformanceGet(IBA.MADClassPortInfo, peer_path)
+            _ret = vmad.PerformanceGet(IBA.MADClassPortInfo, peer_path)
             print("Got peer reply path", repr(vmad.reply_path))
-            ret = vmad.PerformanceGet(IBA.MADClassPortInfo,
-                                      peer_path.copy(has_grh=True,
-                                                     hop_limit=255))
+            _ret = vmad.PerformanceGet(
+                IBA.MADClassPortInfo,
+                peer_path.copy(
+                    has_grh=True,
+                    hop_limit=255,
+                ),
+            )
             print("Got peer reply path grh", repr(vmad.reply_path))
 
     def test_wr_error(self):
-        "Test failing post_send"
+        # Test failing post_send
         with self.ctx.pd() as pd:
             depth = 16
             path_a, qp_a, path_b, qp_b, poller, srq, pool = \
@@ -217,7 +225,7 @@ class umad_self_test(unittest.TestCase):
             # Overflow the send q
             wr = pool.make_send_wr(pool.pop(), 256, path_b)
             self.assertRaises(ibv.WRError, qp_b.post_send,
-                              [wr for I in range(0, depth * 1024)])
+                              [wr for _i in range(0, depth * 1024)])
 
     def test_wc_raise(self):
         """
@@ -243,7 +251,7 @@ class umad_self_test(unittest.TestCase):
                     pool.finish_wcs(srq, wc)
 
     def test_async_handle(self):
-        "Test async event functionality"
+        # Test async event functionality
         print(ibv.AsyncError((ibv.IBV_EVENT_LID_CHANGE, self.end_port)))
         print(ibv.AsyncError((ibv.IBV_EVENT_QP_FATAL, None)))
 

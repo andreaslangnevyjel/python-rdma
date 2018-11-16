@@ -64,7 +64,9 @@ class IbtoolCmdsTest(unittest.TestCase):
                 self.peer_ninf = umad.subn_get(IBA.SMPNodeInfo, dr)
 
     def xcmd(self, *args):
-        """Run the libib stuff. Switch this out to use diff to compare outputs."""
+        """
+        Run the libib stuff. Switch this out to use diff to compare outputs.
+        """
         if self.extra_opts:
             nargs = args + self.extra_opts
         else:
@@ -72,7 +74,11 @@ class IbtoolCmdsTest(unittest.TestCase):
         print("------------- Execute", nargs, " ------------")
         sys.stdout.flush()
         try:
-            os.system("/opt/ofa64-1.5.1/sbin/" + " ".join("%s" % (I) for I in args))
+            os.system(
+                "/opt/ofa64-1.5.1/sbin/" + " ".join(
+                    "{}".format(_part) for _part in args
+                ),
+            )
         except Exception:
             pass
 
@@ -84,7 +90,7 @@ class IbtoolCmdsTest(unittest.TestCase):
         try:
             func, shown = self.get_cmd_func(args[0], top_mod=self.cmd_mod)
             o = self.cmd_mod.MyOptParse(func, top_mod=self.cmd_mod)
-            if not func(["%s" % (I) for I in args[1:]], o):
+            if not func(["{}".format(_part) for _part in args[1:]], o):
                 raise self.ibtool.CmdError("Command failed")
         except Exception:
             print("Command %r threw exception" % (args,))
@@ -276,5 +282,5 @@ class IbtoolCmdsTest(unittest.TestCase):
         self.test_discovery()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

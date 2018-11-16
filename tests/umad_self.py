@@ -10,7 +10,7 @@ import rdma.IBA as IBA
 import rdma.path
 
 
-class umad_self_test(unittest.TestCase):
+class UmadSelfTest(unittest.TestCase):
     umad = None
 
     def setUp(self):
@@ -32,7 +32,7 @@ class umad_self_test(unittest.TestCase):
 
         self.assertEqual(ports, len(self.end_port.parent.end_ports))
         for I in range(1, ports):
-            inf = self.umad.subn_get(IBA.SMPPortInfo, self.local_path, I)
+            _inf = self.umad.subn_get(IBA.SMPPortInfo, self.local_path, I)
 
         self.assertRaises(rdma.MADError,
                           self.umad.subn_get, IBA.SMPPortInfo,
@@ -42,5 +42,5 @@ class umad_self_test(unittest.TestCase):
         self.assertEqual(self.umad.recvfrom(100), None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

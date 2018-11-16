@@ -79,7 +79,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
         flexability across versions of the library and takes less space."""
         buf = bytearray(self.MAD_LENGTH)
         self.pack_into(buf)
-        return (self.__class__, (bytes(buf),))
+        return self.__class__, (bytes(buf),)
 
     def __cmp__(self, rhs):
         """Bytewise compare of two structures"""
@@ -100,7 +100,10 @@ class BinStruct(object, metaclass=abc.ABCMeta):
             if k.startswith("reserved") or k.endswith("Selector"):
                 continue
 
-            res = cmp(eval("self.{}".format(k)), eval("lhs.{}".format(k)))
+            res = cmp(
+                eval("self.{}".format(k)),
+                eval("lhs.{}".format(k)),
+            )
             if res != 0:
                 return res
         return 0

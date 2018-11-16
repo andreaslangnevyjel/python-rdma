@@ -102,7 +102,7 @@ class DemandList(collections.Iterable):
         self._path = path
         self._conv = conv
         self._data = {}
-        self._okeys = tuple(sorted(iconv(I) for I in os.listdir(path)))
+        self._okeys = tuple(sorted(iconv(entry) for entry in os.listdir(path)))
         for key in self._okeys:
             self._data[key] = None
 
@@ -110,8 +110,10 @@ class DemandList(collections.Iterable):
         return len(self._data)
 
     def __iter__(self):
-        """This class isn't a dictionary, it is an ordered list with maybe non
-        integer indexes. So we are returning values not keys."""
+        """
+        This class isn't a dictionary, it is an ordered list with maybe non
+        integer indexes. So we are returning values not keys.
+        """
         for key in self._okeys:
             yield self[key]
 
@@ -139,9 +141,9 @@ class DemandList(collections.Iterable):
             if v == value:
                 return k
 
-        for I in self._okeys:
-            if self[I] == value:
-                return I
+        for key in self._okeys:
+            if self[key] == value:
+                return key
         raise ValueError("DemandList.index(x): x not in list")
 
     def clear(self):
@@ -152,7 +154,9 @@ class DemandList(collections.Iterable):
 
     def __repr__(self) -> str:
         return "{{{}}}".format(
-            ", ".join("%r: %r" % (k, self[k]) for k in self._okeys)
+            ", ".join(
+                "{!r}: {!r}".format(key, self[key]) for key in self._okeys
+            )
         )
 
 

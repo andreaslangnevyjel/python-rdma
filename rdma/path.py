@@ -11,13 +11,15 @@ import rdma.IBA as IBA
 
 
 class Path(object):
-    """Describe an RDMA path. This also serves to cache the path for cases
+    """
+    Describe an RDMA path. This also serves to cache the path for cases
     that need it in an AH or other format. Paths should be considered final,
     once construction is finished their content must never change. This is to
     prevent cached data in the path from becoming stale.
 
     The :func:`repr` format will produce a string that is valid Python and is also
-    compatible with :func:`from_spec_string`."""
+    compatible with :func:`from_spec_string`.
+    """
 
     #: Number of times a MAD will be resent, or the value of retry_cnt for a
     #: RC QP.
@@ -96,7 +98,8 @@ class Path(object):
 
 
 class IBPath(Path):
-    """Describe a path in an IB network with a LRH and GRH and BTH
+    """
+    Describe a path in an IB network with a LRH and GRH and BTH
 
     Our convention is that a path describes the LRH/GRH/BTH header fields on
     the wire. So a packet being sent from here should have a path with
@@ -108,7 +111,8 @@ class IBPath(Path):
     method specific information (ie a UMAD agent_id) required to use
     it with the method in question. Since this includes the BTH information
     it must also include the DQPN if that is required (eg for unconnected
-    communication)"""
+    communication)
+    """
 
     def __setstate__(self, d):
         for key, val in d.items():
@@ -269,9 +273,11 @@ class IBPath(Path):
 
     @property
     def SLID_bits(self):
-        """Cache and return the LMC portion of the
+        """
+        Cache and return the LMC portion of the
         :attr:`SLID`. Assignment updates the :attr:`SLID` using the value from
-        :attr:`rdma.devices.EndPort.lid`."""
+        :attr:`rdma.devices.EndPort.lid`.
+        """
         # FIXME: Don't think more than this is actually necessary, the mask in
         # done in the kernel, drivers and HW as well. Kept as a placeholder.
         return self.SLID & 0x7F
@@ -282,9 +288,11 @@ class IBPath(Path):
 
     @property
     def DLID_bits(self):
-        """Cache and return the LMC portion of the
+        """
+        Cache and return the LMC portion of the
         :attr:`DLID`. Assignment updates the :attr:`DLID` using the value from
-        :attr:`rdma.devices.EndPort.lid`."""
+        :attr:`rdma.devices.EndPort.lid`.
+        """
         # FIXME: Don't think more than this is actually necessary, the mask in
         # done in the kernel, drivers and HW as well. Kept as a placeholder.
         return self.DLID & 0x7F
@@ -295,11 +303,13 @@ class IBPath(Path):
 
     @property
     def packet_life_time(self):
-        """The packet lifetime value for this path. The lifetime value for the
+        """
+        The packet lifetime value for this path. The lifetime value for the
         path is the expected uni-directional transit time.  If a value has not
         been provided then the port's
         :attr:`rdma.devices.EndPort.subnet_timeout` is used. To convert
-        to seconds use 4.096 uS * 2**(packet_life_time)"""
+        to seconds use 4.096 uS * 2**(packet_life_time)
+        """
         return self.__dict__.get("packet_life_time", self.end_port.subnet_timeout)
 
     @packet_life_time.setter
@@ -320,8 +330,10 @@ class IBPath(Path):
 
     @property
     def qp_timeout(self):
-        """The timeout to use for RC/RD connections. This is 2 *
-        packet_life_time + target_ack_delay. Expressed as float seconds."""
+        """
+        The timeout to use for RC/RD connections. This is 2 *
+        packet_life_time + target_ack_delay. Expressed as float seconds.
+        """
         try:
             return self._cached_qp_timeout
         except AttributeError:
@@ -376,8 +388,10 @@ class IBPath(Path):
     _format_slid = _format_dlid
 
     def set_end_port(self, node):
-        """Set self.end_port to the end port on node that matches the source
-        description in this path"""
+        """
+        Set self.end_port to the end port on node that matches the source
+        description in this path
+        """
         for port in node.end_ports:
             for gid in port.gids:
                 if gid == self.SGID:
@@ -412,8 +426,10 @@ class IBPath(Path):
 
 
 class IBDRPath(IBPath):
-    """Describe a directed route path in an IB network using a VL15 QP0 packet,
-    a LRH and :class:`rdma.IBA.SMPFormatDirected` MADs."""
+    """
+    Describe a directed route path in an IB network using a VL15 QP0 packet,
+    a LRH and :class:`rdma.IBA.SMPFormatDirected` MADs.
+    """
     #: Holds :attr:`rdma.IBA.SMPFormatDirected.drSLID`. Should be the same as SLID.
     drSLID = 0xFFFF
     #: Holds :attr:`rdma.IBA.SMPFormatDirected.drDLID`
@@ -455,18 +471,31 @@ class IBDRPath(IBPath):
         ) + ":"
 
     def __str__(self) -> str:
-        # No LID components
-        drPath = tuple(entry for entry in self.drPath)
+        dr_path = tuple(entry for entry in self.drPath)
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
-            return "DR Path %r" % (drPath,)
-        # LID route at the start
-        if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID != IBA.LID_PERMISSIVE:
-            return "DR Path %u -> %r" % (self.DLID, drPath)
-        # LID route at the end
-        if self.drDLID != IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
-            return "DR Path %r -> %u" % (drPath, self.drDLID)
-        # Double ended
-        return "DR Path %u -> %r -> %u" % (self.DLID, drPath, self.drDLID)
+            # No LID components
+            return "DR Path  {!r}".format(
+                dr_path,
+            )
+        elif self.drDLID == IBA.LID_PERMISSIVE and self.drSLID != IBA.LID_PERMISSIVE:
+            # LID route at the start
+            return "DR Path {:d} -> {!r}".format(
+                self.DLID,
+                dr_path,
+            )
+        elif self.drDLID != IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
+            # LID route at the end
+            return "DR Path {!r} -> {:d}".format(
+                dr_path,
+                self.drDLID,
+            )
+        else:
+            # Double ended
+            return "DR Path {:d} -> {!r} -> {:d}".format(
+                self.DLID,
+                dr_path,
+                self.drDLID,
+            )
 
 
 class SAPathNotFoundError(rdma.MADClassError):
@@ -505,7 +534,8 @@ class LazyIBPath(IBPath):
 
 
 def get_mad_path(mad, ep_addr, **kwargs):
-    """Query the SA and return a path for *ep_addr*.
+    """
+    Query the SA and return a path for *ep_addr*.
 
     This is a simplified query function to return MAD paths from the end port
     associated with *mad* to the destination *ep_addr*.  If *ep_addr* is a
@@ -521,9 +551,9 @@ def get_mad_path(mad, ep_addr, **kwargs):
 
     :raises ValueError: If dest is not appropriate.
     :raises rdma.path.SAPathNotFoundError: If *ep_addr* was not found at the SA.
-    :raises rdma.MADError: If the RPC failed in some way."""
-    ty = type(ep_addr)
-    if ty == str or ty == str:
+    :raises rdma.MADError: If the RPC failed in some way.
+    """
+    if isinstance(ep_addr, str):
         path = from_string(ep_addr, require_ep=mad.end_port)
         for k, v in kwargs.items():
             setattr(path, k, v)
@@ -538,7 +568,8 @@ def get_mad_path(mad, ep_addr, **kwargs):
 
 
 def resolve_path(mad, path, reversible=True, properties=None):
-    """Resolve *path* to a full path for use with a QP. *path* must have at
+    """
+    Resolve *path* to a full path for use with a QP. *path* must have at
     least a DGID or DLID set.
 
     *properties* is a dictionary of additional PR fields to set in the query.
@@ -552,7 +583,8 @@ def resolve_path(mad, path, reversible=True, properties=None):
     *reversible* argument to True.
 
     :raises rdma.path.SAPathNotFoundError: If *ep_addr* was not found at the SA.
-    :raises rdma.MADError: If the RPC failed in some way."""
+    :raises rdma.MADError: If the RPC failed in some way.
+    """
     if mad.is_async:
         return _resolve_path_async(mad, path, reversible, properties)
     return mad.do_async(_resolve_path_async(mad, path, reversible, properties))
@@ -653,11 +685,15 @@ def from_spec_string(s):
     import re
     m = re.match("^(.+?)\(\s*?(.*?)\s*?\)$", s)
     if m is None:
-        raise ValueError("Invalid path specification %r" % (s,))
+        raise ValueError(
+            "Invalid path specification {!r}".format(s,),
+        )
     m = m.groups()
     cls = getattr(sys.modules[__name__], m[0], None)
     if cls is None or not issubclass(cls, Path):
-        raise ValueError("Invalid path specification %r, bad path type" % (s,))
+        raise ValueError(
+            "Invalid path specification {!r}, bad path type".format(s,),
+        )
 
     kwargs = {
         t[0].strip(): t[2].strip() for t in (I.partition('=') for I in m[1].split(','))
@@ -714,12 +750,16 @@ def from_spec_string(s):
                 else:
                     kwargs[k] = rdma.get_end_port(v)
             except rdma.RDMAError as e:
-                raise ValueError("Could not find %r: %s" % (v, e))
+                raise ValueError(
+                    "Could not find {!r}: {}".format(v, e),
+                )
         else:
             try:
                 kwargs[k] = int(v, 0)
             except ValueError:
-                raise ValueError("%r=%r is not a valid integer" % (k, v))
+                raise ValueError(
+                    "{!r}={!r} is not a valid integer".format(k, v),
+                )
     if "end_port" not in kwargs:
         kwargs["end_port"] = None
     return cls(**kwargs)
@@ -743,7 +783,8 @@ def _check_ep(ep, require_dev=None, require_ep=None):
 
 
 def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
-    """Convert the string *s* into an instance of :class:`Path` or
+    """
+    Convert the string *s* into an instance of :class:`Path` or
     derived.
 
     Supported formats for *s* are:
@@ -771,7 +812,8 @@ def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
 
     FUTURE: This may return paths other than IB for other technologies.
 
-    :raises ValueError: If the string can not be parsed."""
+    :raises ValueError: If the string can not be parsed.
+    """
     if require_ep is not None:
         default_end_port = require_ep
 
@@ -796,10 +838,10 @@ def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
             raise ValueError("Invalid DR path specification %r" % (s,))
         if dr[0] != 0:
             raise ValueError("Invalid DR path specification %r" % (s,))
-        drPath = b"".join(chr(entry).encode("ascii") for entry in dr)
-        return IBDRPath(default_end_port, drPath=drPath)
+        dr_path = b"".join(chr(entry).encode("ascii") for entry in dr)
+        return IBDRPath(default_end_port, drPath=dr_path)
 
-    a = s.split('%')
+    a = s.split("%")
     if len(a) == 2:
         dgid = IBA.GID(a[0])
         try:

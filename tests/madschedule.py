@@ -11,7 +11,7 @@ import rdma.path
 import rdma.sched
 
 
-class madschedule_test(unittest.TestCase):
+class MadscheduleTest(unittest.TestCase):
     umad = None
     tid = 0
 
@@ -25,31 +25,35 @@ class madschedule_test(unittest.TestCase):
         self.umad = None
 
     @contextmanager
-    def with_assertRaises(self, excClass):
+    def with_assertRaises(self, exc_class):
         """Emulate the python 2.7 assertRaises"""
         try:
             yield
-        except excClass:
+        except exc_class:
             return
         else:
-            if hasattr(excClass, '__name__'):
-                excName = excClass.__name__
+            if hasattr(exc_class, "__name__"):
+                exc_name = exc_class.__name__
             else:
-                excName = str(excClass)
-            raise self.failureException("%s not raised" % excName)
+                exc_name = str(exc_class)
+            raise self.failureException(
+                "{} not raised".format(exc_name),
+            )
 
     def test_except(self):
-        """Check that exceptions flow up the coroutine call chain."""
+        """
+        Check that exceptions flow up the coroutine call chain.
+        """
 
-        def second(self):
-            self.count = self.count + 1
+        def second(l_self):
+            l_self.count = l_self.count + 1
             raise rdma.RDMAError("moo")
 
-        def first(self):
+        def first(l_self):
             try:
-                yield second(self)
+                yield second(l_self)
             except rdma.RDMAError:
-                self.count = self.count + 1
+                l_self.count = l_self.count + 1
                 raise
 
         self.count = 0
@@ -61,17 +65,25 @@ class madschedule_test(unittest.TestCase):
     def test_except_mad(self):
         """Check that exceptions flow from the MAD decoder."""
 
-        def first(self, sched):
-            inf = yield sched.subn_get(IBA.SMPNodeInfo, self.local_path)
-            with self.with_assertRaises(rdma.MADError):
-                yield sched.subn_get(IBA.SMPPortInfo,
-                                     self.local_path, inf.numPorts + 3)
+        def first(l_self, l_sched):
+            inf = yield l_sched.subn_get(IBA.SMPNodeInfo, l_self.local_path)
+            with l_self.with_assertRaises(rdma.MADError):
+                yield l_sched.subn_get(
+                    IBA.SMPPortInfo,
+                    l_self.local_path,
+                    inf.numPorts + 3,
+                )
 
         sched = rdma.sched.MADSchedule(self.umad)
         sched.run(first(self, sched))
 
     def get_port_info(self, sched, path, port, follow):
-        print("Get port_info %u follow=%r" % (port, follow))
+        print(
+            "Get port_info {:d} follow={!r}".format(
+                port,
+                follow,
+            )
+        )
         pinf = yield sched.subn_get(IBA.SMPPortInfo, path, port)
         print("Done port", port)
         # pinf.printer(sys.stdout)
@@ -88,11 +100,12 @@ class madschedule_test(unittest.TestCase):
             return
         self.guids.add(ninf.nodeGUID)
 
-        print("Got Node %r" % (ninf.nodeGUID))
+        print("Got Node {!r}".format(ninf.nodeGUID))
         if ninf.nodeType == IBA.NODE_SWITCH:
-            sched.mqueue(self.get_port_info(sched, path, I, True) \
-                         for I in range(1, ninf.numPorts + 1))
-            pinf = yield sched.subn_get(IBA.SMPPortInfo, path, 0)
+            sched.mqueue(
+                self.get_port_info(sched, path, _idx, True) for _idx in range(1, ninf.numPorts + 1)
+            )
+            _pinf = yield sched.subn_get(IBA.SMPPortInfo, path, 0)
         else:
             yield self.get_port_info(
                 sched,

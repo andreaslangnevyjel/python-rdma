@@ -13,16 +13,23 @@ structs = set(I for I in IBA.__dict__.values()
               if isinstance(I, type) and issubclass(I, rdma.binstruct.BinStruct))
 
 
-class structs_test(unittest.TestCase):
+class StructsTest(unittest.TestCase):
     def test_component_mask(self):
         # See C15-0.1.27
-        self.assertEqual(IBA.SAPortInfoRecord.COMPONENT_MASK["portInfo.capabilityMask"], 7)
-        self.assertEqual(IBA.SALinearForwardingTableRecord.COMPONENT_MASK["linearForwardingTable.portBlock"], 3)
+        self.assertEqual(
+            IBA.SAPortInfoRecord.COMPONENT_MASK["portInfo.capabilityMask"],
+            7,
+        )
+        self.assertEqual(
+            IBA.SALinearForwardingTableRecord.COMPONENT_MASK["linearForwardingTable.portBlock"],
+            3,
+        )
 
-    def test_odd_size(self):
+    @staticmethod
+    def test_odd_size():
         fmt = IBA.SMPFormatDirected()
-        drPath = bytes(b"0" * 65)
-        fmt.initialPath[:len(drPath)] = drPath
+        dr_path = bytes(b"0" * 65)
+        fmt.initialPath[:len(dr_path)] = dr_path
         test = bytearray(fmt.MAD_LENGTH)
         fmt.pack_into(test)
         assert (len(test) == 257)
@@ -50,16 +57,18 @@ class structs_test(unittest.TestCase):
             attr.pack_into(test)
             self.assertEqual(raw[0:I.MAD_LENGTH], test[0:I.MAD_LENGTH])
 
-    def test_struct_printer_dump(self):
+    @staticmethod
+    def test_struct_printer_dump():
         """Checking printer dump style"""
-        for I in structs:
-            I().printer(sys.stdout)
+        for _struct in structs:
+            _struct().printer(sys.stdout)
 
-    def test_struct_printer_dotted(self):
+    @staticmethod
+    def test_struct_printer_dotted():
         """Checking printer dotted style"""
-        for I in structs:
-            I().printer(sys.stdout, format="dotted")
+        for _struct in structs:
+            _struct().printer(sys.stdout, format="dotted")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

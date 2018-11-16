@@ -62,7 +62,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
         self._replyqueue = collections.deque()
         self._ctx_waiters = collections.defaultdict(list)
 
-    def _sendMAD(self, ctx, work):
+    def _send_mad(self, ctx, work):
         buf = work.buf
         path = work.path
         rep = self._umad._execute(buf, path, send_only=True)
@@ -126,7 +126,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                 else:
                     self._finish_ctx(ctx)
                     return
-            except:
+            except Exception:
                 # Flow exceptions up the stack of generators
                 if ctx._opstack:
                     ctx._op = ctx._opstack.pop()
@@ -160,8 +160,8 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                 continue
 
             try:
-                self._sendMAD(ctx, work)
-            except:
+                self._send_mad(ctx, work)
+            except Exception:
                 ctx._exc = sys.exc_info()
                 continue
             return
@@ -244,7 +244,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                         work.newer,
                         work.completer,
                     )
-                except:
+                except Exception:
                     res[1]._exc = sys.exc_info()
                 self._step(res[1])
             else:
@@ -272,7 +272,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                     work.newer,
                     work.completer,
                 )
-            except:
+            except Exception:
                 ctx._exc = sys.exc_info()
                 self._step(ctx)
             else:

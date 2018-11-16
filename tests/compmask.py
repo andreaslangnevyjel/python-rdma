@@ -7,7 +7,7 @@ import unittest
 import rdma.IBA as IBA
 
 
-class compmask_test(unittest.TestCase):
+class CompmaskTest(unittest.TestCase):
     def test_mask_sapathrecord(self):
         obj = IBA.SAPathRecord()
         cm = IBA.ComponentMask(obj)
@@ -39,5 +39,5 @@ class compmask_test(unittest.TestCase):
         self.assertEqual(cm.component_mask, 1 << 3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

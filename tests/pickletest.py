@@ -2,37 +2,38 @@
 # -*- coding: utf-8 -*-
 
 
+import pickle as pickle
 import unittest
 
-try:
-    import pickle as pickle
-except ImportError:
-    from . import pickle
 import rdma.IBA as IBA
 import rdma.binstruct
 import rdma.subnet
 
 
-class pickle_test(unittest.TestCase):
+class PickleTest(unittest.TestCase):
     def test_basic(self):
-        "Check that all IBA structs can be pickled and unpickled"
-        for I in IBA.__dict__.values():
-            if not isinstance(I, rdma.binstruct.BinStruct):
+        """
+        Check that all IBA structs can be pickled and unpickled
+        """
+        for _val in IBA.__dict__.values():
+            if not isinstance(_val, rdma.binstruct.BinStruct):
                 continue
-            tmp = I()
-            ret = pickle.dumps(I())
+            tmp = _val()
+            ret = pickle.dumps(_val())
             tmp2 = pickle.loads(ret)
             self.assertEqual(tmp.__class__, tmp2.__class__)
 
     def test_subnet(self):
-        "Pickling Subnet objects"
+        """
+        Pickling Subnet objects
+        """
         sbn = rdma.subnet.Subnet()
 
         pinf = IBA.SMPPortInfo()
-        for I in range(1, 100):
-            pinf.LID = I
-            port = sbn.get_port_pinf(pinf, port_idx=0, lid=I)
-            port.portGUID = IBA.GUID(0xDEADBEEF0000 | I)
+        for idx in range(1, 100):
+            pinf.LID = idx
+            port = sbn.get_port_pinf(pinf, port_idx=0, lid=idx)
+            port.portGUID = IBA.GUID(0xDEADBEEF0000 | idx)
             sbn.ports[port.portGUID] = port
 
         ret = pickle.dumps(sbn)
