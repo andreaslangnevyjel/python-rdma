@@ -7,7 +7,7 @@ import io
 import os
 import os.path
 import stat
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 
 import rdma
 
@@ -17,10 +17,10 @@ def ib_ioc(direction: int, type_: int, nr: int, size: int) -> int:
     Emulate the C _IOC macro
     """
     return (
-        (direction << (0 + 8 + 8 + 14)) |  # (_IOC_SIZESHIFT+_IOC_SIZEBITS)
-        (type_ << (0 + 8)) |  # (_IOC_NRSHIFT+_IOC_NRBITS)
         (nr << 0) |
-        (size << ((0 + 8) + 8))   # (_IOC_TYPESHIFT+_IOC_TYPEBITS)
+        (type_ << (0 + 8)) |  # (_IOC_NRSHIFT+_IOC_NRBITS)
+        (size << (0 + 8 + 8)) |  # (_IOC_TYPESHIFT+_IOC_TYPEBITS)
+        (direction << (0 + 8 + 8 + 14))  # (_IOC_SIZESHIFT+_IOC_SIZEBITS)
     )
 
 
@@ -35,7 +35,7 @@ class SysFSDevice(object):
         self._sys_dir = sys_dir
 
     @staticmethod
-    def _try_open(path, dev) -> Union[Tuple, None]:
+    def _try_open(path: str, dev) -> Union[Tuple, None]:
         """
         Try to open a device node that should correspond to character
         device dev. Return None if it did not turn out.
@@ -124,7 +124,7 @@ def clock_monotonic() -> float:
 finfo = collections.namedtuple("finfo", "type mask")
 
 
-def struct(name, fields):
+def struct(name: str, fields: List):
     """Construct a mutable :class:`collections.namedtuple` with a MASK
     tracking feature."""
 

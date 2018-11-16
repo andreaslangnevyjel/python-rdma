@@ -65,7 +65,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
     def _sendMAD(self, ctx, work):
         buf = work.buf
         path = work.path
-        rep = self._umad._execute(buf, path, sendOnly=True)
+        rep = self._umad._execute(buf, path, send_only=True)
         if rep:
             self._replyqueue.append(rep)
 
@@ -288,7 +288,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                 fmt=work.fmt,
                 path=work.path,
             )
-        rep = self._umad._execute(work.buf, work.path, sendOnly=True)
+        rep = self._umad._execute(work.buf, work.path, send_only=True)
         if rep:
             self._replyqueue.append(rep)
         res = (work.path.mad_timeout + rdma.tools.clock_monotonic(), ctx)

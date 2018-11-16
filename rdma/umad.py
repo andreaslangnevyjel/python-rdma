@@ -16,6 +16,7 @@ import rdma.IBA as IBA
 import rdma.madtransactor
 import rdma.path
 import rdma.tools
+from typing import Tuple, Union
 
 SYS_INFINIBAND_MAD = "/sys/class/infiniband_mad/"
 
@@ -84,9 +85,9 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
     # } ib_user_mad_t
     ib_user_mad_t = struct.Struct("=LLLLL44s")
     # typedef struct ib_mad_addr {
-    #  uint32_t qpn; // network
-    #  uint32_t qkey; // network
-    #  uint16_t lid; // network
+    #  uint32_t qpn  // network
+    #  uint32_t qkey  // network
+    #  uint16_t lid  // network
     #  uint8_t sl
     #  uint8_t path_bits
     #  uint8_t grh_present
@@ -94,7 +95,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
     #  uint8_t hop_limit
     #  uint8_t traffic_class
     #  uint8_t gid[16]
-    #  uint32_t flow_label; // network
+    #  uint32_t flow_label  // network
     #  uint16_t pkey_index
     #  uint8_t reserved[6]
     # } ib_mad_addr_t
@@ -114,14 +115,23 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         with open(SYS_INFINIBAND_MAD + "abi_version") as F:
             self.abi_version = int(F.read().strip())
         if self.abi_version < 5:
-            raise rdma.RDMAError("UMAD ABI version is %u but we need at least 5." % (self.abi_version))
+            raise rdma.RDMAError(
+                "UMAD ABI version is {:d} but we need at least 5.".format(
+                    self.abi_version,
+                ),
+            )
         if not self._ioctl_enable_pkey():
-            raise rdma.RDMAError("UMAD ABI is not compatible, we need PKey support.")
+            raise rdma.RDMAError(
+                "UMAD ABI is not compatible, we need PKey support.",
+            )
 
         self.sbuf = bytearray(320)
 
-        fcntl.fcntl(self.dev.fileno(), fcntl.F_SETFL,
-                    fcntl.fcntl(self.dev.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+        fcntl.fcntl(
+            self.dev.fileno(),
+            fcntl.F_SETFL,
+            fcntl.fcntl(self.dev.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK,
+        )
         self._poll = select.poll()
         self._poll.register(self.dev.fileno(), select.POLLIN)
 
@@ -165,8 +175,11 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
             (oui >> 16) & 0xFF, (oui >> 8) & 0xFF, oui & 0xFF,
             rmpp_version,
         )
-        buf = fcntl.ioctl(self.dev.fileno(), self.IB_USER_MAD_REGISTER_AGENT,
-                          buf)
+        buf = fcntl.ioctl(
+            self.dev.fileno(),
+            self.IB_USER_MAD_REGISTER_AGENT,
+            buf,
+        )
         return struct.unpack("=L", buf[:4])[0]
 
     def register_client(self, mgmt_class, class_version, oui=0):
@@ -176,23 +189,39 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
             return self._agent_cache[mgmt_class, class_version, oui]
         except KeyError:
             rmpp_version = 1 if mgmt_class == IBA.MAD_SUBNET_ADMIN else 0
-            qpn = 0 if (mgmt_class == IBA.MAD_SUBNET or
-                        mgmt_class == IBA.MAD_SUBNET_DIRECTED) else 1
-            ret = self._ioctl_register_agent(qpn, mgmt_class, class_version,
-                                             oui, rmpp_version, 0)
+            qpn = 0 if (
+                mgmt_class == IBA.MAD_SUBNET or
+                mgmt_class == IBA.MAD_SUBNET_DIRECTED
+            ) else 1
+            ret = self._ioctl_register_agent(
+                qpn,
+                mgmt_class,
+                class_version,
+                oui,
+                rmpp_version,
+                0,
+            )
             self._agent_cache[mgmt_class, class_version, oui] = ret
             self._agent_id_dqpn[ret] = qpn
             return ret
 
-    def register_server(self, mgmt_class, class_version, oui=0, method_mask=0):
+    def register_server(self, mgmt_class, class_version, oui=0, method_mask: int=0):
         """Register to receive MADs that match the given
         pattern. *method_mask* is a bitmask of the method ID to match, *oui*
         is only used for :class:`rdma.IBA.VendOUIFormat` MADs."""
         rmpp_version = 1 if mgmt_class == IBA.MAD_SUBNET_ADMIN else 0
-        qpn = 0 if (mgmt_class == IBA.MAD_SUBNET or
-                    mgmt_class == IBA.MAD_SUBNET_DIRECTED) else 1
-        ret = self._ioctl_register_agent(qpn, mgmt_class, class_version,
-                                         oui, rmpp_version, method_mask)
+        qpn = 0 if (
+            mgmt_class == IBA.MAD_SUBNET or
+            mgmt_class == IBA.MAD_SUBNET_DIRECTED
+        ) else 1
+        ret = self._ioctl_register_agent(
+            qpn,
+            mgmt_class,
+            class_version,
+            oui,
+            rmpp_version,
+            method_mask,
+        )
         self._agent_id_dqpn[ret] = qpn
         return ret
 
@@ -265,8 +294,10 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
     # window where packets are ignored, I suppose I should fixup the callers
     # to allow delegated timeout processing, but grrr......
     def sendto(self, buf, path, agent_id=None):
-        """Send a MAD packet. *buf* is the raw MAD to send, starting with the first
-        byte of :class:`rdma.IBA.MADHeader`. *path* is the destination."""
+        """
+        Send a MAD packet. *buf* is the raw MAD to send, starting with the first
+        byte of :class:`rdma.IBA.MADHeader`. *path* is the destination.
+        """
         try:
             addr = path._cached_umad_ah
         except AttributeError:
@@ -288,19 +319,21 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         self.sbuf.extend(buf)
         self.dev.write(self.sbuf)
 
-    def recvfrom(self, wakeat):
-        """Receive a MAD packet. If the value of
+    def recvfrom(self, wakeat) -> Union[Tuple, None]:
+        """
+        Receive a MAD packet. If the value of
         :func:`rdma.tools.clock_monotonic()` exceeds *wakeat* then :class:`None`
         is returned.
 
-        :returns: tuple(buf,path)"""
+        :returns: tuple(buf,path)
+        """
         buf = bytearray(320)
         first = True
         while True:
             try:
                 rc = self.dev.readinto(buf)
             except IOError as err:
-                print(buf, type(buf), len(buf))
+                # print(buf, type(buf), len(buf))
                 if err.errno == errno.ENOSPC:
                     # Hmm.. Must be RMPP.. Resize the buffer accordingly.
                     rmpp_data2 = struct.unpack_from(">L", bytes(buf), 32)
@@ -322,8 +355,10 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 continue
 
             path = rdma.path.IBPath(self.parent)
-            (path.umad_agent_id, status, timeout_ms, retries, length,
-             path._cached_umad_ah) = self.ib_user_mad_t.unpack_from(bytes(buf), 0)
+            (
+                path.umad_agent_id, status, timeout_ms, retries, length,
+                path._cached_umad_ah
+            ) = self.ib_user_mad_t.unpack_from(bytes(buf), 0)
             path.dqpn = self._agent_id_dqpn.get(path.umad_agent_id, 0)
             path.__class__ = LazyIBPath
 
@@ -332,9 +367,9 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                     first = True
                     continue
                 raise rdma.RDMAError("umad send failure code=%d for %s" % (status, repr(buf)))
-            return (buf[64:rc], path)
+            return buf[64:rc], path
 
-    def _gen_error(self, buf, path):
+    def _gen_error(self, buf, path) -> Tuple:
         """Sadly the kernel can return EINVAL if it could not process the MAD,
         eg if you ask for PortInfo of the local CA with an invalid attributeID
         the Mellanox driver will return EINVAL rather than construct an error
@@ -350,12 +385,12 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         buf[3] = meth
 
         buf[4] = 0
-        buf[5] = IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER;  # Guessing.
+        buf[5] = IBA.MAD_STATUS_INVALID_ATTR_OR_MODIFIER   # Guessing.
         path = path.copy()
         path.reverse()
-        return (buf, path)
+        return buf, path
 
-    def _execute(self, buf, path, sendOnly=False):
+    def _execute(self, buf, path, sendOnly: bool=False):
         """Send the fully formed MAD in buf to path and copy the reply
         into buf. Return path of the reply. This is a synchronous method, all
         MADs received during this call are discarded until the reply is seen."""
@@ -369,10 +404,13 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 )
             else:
                 agent_id = self.register_client(
-                    ord(buf[1]), ord(buf[2]),
-                    (ord(buf[37]) << 16) |
-                    (ord(buf[38]) << 8) |
-                    ord(buf[39]),
+                    ord(buf[1]),
+                    ord(buf[2]),
+                    (
+                        ord(buf[37]) << 16
+                    ) | (
+                        ord(buf[38]) << 8
+                    ) | ord(buf[39]),
                 )
         else:
             agent_id = None
@@ -411,8 +449,9 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                     )
 
     def __repr__(self) -> str:
-        return "<%s.%s object for %s at 0x%x>" % \
-               (self.__class__.__module__,
-                self.__class__.__name__,
-                self.parent,
-                id(self))
+        return "<{}.{} object for {} at 0x{:x}>".format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.parent,
+            id(self),
+        )

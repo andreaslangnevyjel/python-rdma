@@ -9,6 +9,7 @@ import rdma
 import rdma.devices
 import rdma.ibverbs as ibv
 import rdma.madtransactor
+from typing import Tuple, Union
 import rdma.vtools
 
 
@@ -69,7 +70,11 @@ class VMAD(rdma.madtransactor.MADTransactor):
                 self._cq_sleep(None)
 
         if path.qkey != self.qkey or path.pkey != self.pkey:
-            raise rdma.RDMAError("Destination %r does not match the qkey or pkey of this VMAD instance." % (path))
+            raise rdma.RDMAError(
+                "Destination {!r} does not match the qkey or pkey of this VMAD instance.".format(
+                    path,
+                ),
+            )
 
         buf_idx = self._pool.pop()
         self._pool.copy_to(buf, buf_idx)
@@ -87,7 +92,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
                 self._recvs.appendleft(wc)
         self._pool.finish_wcs(self._qp, wcs)
 
-    def recvfrom(self, wakeat):
+    def recvfrom(self, wakeat) -> Union[Tuple, None]:
         """
         Receive a MAD packet. If the value of
         :func:`rdma.tools.clock_monotonic()` exceeds *wakeat* then :class:`None`
@@ -101,11 +106,14 @@ class VMAD(rdma.madtransactor.MADTransactor):
                 wc = self._recvs.pop()
                 buf = pool.copy_from(wc.wr_id, 40, wc.byte_len)
                 pool.finish_wcs(self._qp, wc)
-                return (buf, ibv.WCPath(self.end_port, wc,
-                                        pool._mem,
-                                        (wc.wr_id & pool.BUF_ID_MASK) * pool.size,
-                                        pkey=self.pkey,
-                                        qkey=self.qkey))
+                return buf, ibv.WCPath(
+                    self.end_port,
+                    wc,
+                    pool._mem,
+                    (wc.wr_id & pool.BUF_ID_MASK) * pool.size,
+                    pkey=self.pkey,
+                    qkey=self.qkey,
+                )
 
             self._cq.req_notify()
             self._cq_drain()
@@ -113,12 +121,12 @@ class VMAD(rdma.madtransactor.MADTransactor):
                 if not self._poller.sleep(wakeat):
                     return None
 
-    def _execute(self, buf, path, sendOnly=False):
+    def _execute(self, buf, path, send_only: bool=False):
         """Send the fully formed MAD in buf to path and copy the reply
         into buf. Return path of the reply. This is a synchronous method, all
         MADs received during this call are discarded until the reply is seen."""
         self.sendto(buf, path)
-        if sendOnly:
+        if send_only:
             return None
         rmatch = self._get_reply_match_key(buf)
         expire = path.mad_timeout + rdma.tools.clock_monotonic()
@@ -137,8 +145,12 @@ class VMAD(rdma.madtransactor.MADTransactor):
                 return ret
             else:
                 if self.trace_func is not None:
-                    self.trace_func(self, rdma.madtransactor.TRACE_UNEXPECTED,
-                                    path=path, ret=ret)
+                    self.trace_func(
+                        self,
+                        rdma.madtransactor.TRACE_UNEXPECTED,
+                        path=path,
+                        ret=ret,
+                    )
 
     def __enter__(self):
         return self

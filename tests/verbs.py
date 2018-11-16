@@ -71,8 +71,11 @@ class umad_self_test(unittest.TestCase):
         pool = rdma.vtools.BufferPool(pd, 2 * depth, 256 + 40)
         pool.post_recvs(srq, depth)
 
-        path_a = rdma.path.IBPath(self.end_port, qkey=999,
-                                  DGID=self.end_port.default_gid)
+        path_a = rdma.path.IBPath(
+            self.end_port,
+            qkey=999,
+            DGID=self.end_port.default_gid,
+        )
         with rdma.get_gmp_mad(self.end_port, verbs=self.ctx) as vmad:
             rdma.path.resolve_path(vmad, path_a)
         qp_a = pd.qp(qp_type, depth, cq, depth, cq, srq=srq)
@@ -140,9 +143,12 @@ class umad_self_test(unittest.TestCase):
             for wc in poller.iterwc(count=6, timeout=0.5):
                 if wc.opcode & ibv.IBV_WC_RECV:
                     recvs = recvs + 1
-                    path = ibv.WCPath(mcpath.end_port, wc,
-                                      pool._mem,
-                                      (wc.wr_id & pool.BUF_ID_MASK) * pool.size)
+                    path = ibv.WCPath(
+                        mcpath.end_port,
+                        wc,
+                        pool._mem,
+                        (wc.wr_id & pool.BUF_ID_MASK) * pool.size,
+                    )
                     self.assertEqual(path.DGID, mcpath.DGID)
                     self.assertEqual(path.SGID, mcpath.SGID)
                     self.assertEqual(path.flow_label, mcpath.flow_label)
@@ -250,8 +256,7 @@ class umad_self_test(unittest.TestCase):
     def test_remote_caused_wc_err(self):
         with self.ctx.pd() as pd:
             depth = 16
-            path_a, qp_a, path_b, qp_b, poller, srq, pool = \
-                self._get_loop(pd, ibv.IBV_QPT_UD, depth)
+            path_a, qp_a, path_b, qp_b, poller, srq, pool = self._get_loop(pd, ibv.IBV_QPT_UD, depth)
 
             # Send a packet larger than we can receive
             qp_b.post_send(pool.make_send_wr(0, 256, path_b))

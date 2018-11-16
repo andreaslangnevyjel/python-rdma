@@ -685,10 +685,14 @@ cdef class Context:
             return False
         return True
 
-    def __str__(self):
-        return "context:%s"%(self.node)
-    def __repr__(self):
-        return "Context('%s',fd=%u)"%(self.node,self._ctx.cmd_fd)
+    def __str__(self) -> str:
+        return "context:{}".format(self.node)
+
+    def __repr__(self) -> str:
+        return "Context('{}',fd={:d})".format(
+            self.node,
+            self._ctx.cmd_fd,
+        )
 
 cdef class PD:
     """Protection domain handle, this is a context manager."""
@@ -1079,8 +1083,8 @@ cdef class CQ:
         """Perform the poll_cq operation, return a list of work requests."""
         cdef c.ibv_wc lwc
         cdef int n
-        cdef list L
-        L = []
+        cdef list r_list
+        r_list = []
         while limit != 0:
             n = c.ibv_poll_cq(self._cq, 1, &lwc)
             if n == 0:
@@ -1088,7 +1092,7 @@ cdef class CQ:
             elif n < 0:
                 raise rdma.SysError(errno, "ibv_poll_cq")
             else:
-                L.append(
+                r_list.append(
                     wc(
                         wr_id=lwc.wr_id,
                         status=lwc.status,
@@ -1107,12 +1111,19 @@ cdef class CQ:
                 )
                 if limit > 0:
                     limit = limit - 1
-        return L
+        return r_list
 
-    def __str__(self):
-        return "cq:%X:%s"%(self._cq.handle,self.ctx.node)
-    def __repr__(self):
-        return "CQ(%r,0x%x)"%(self._context,self._cq.handle)
+    def __str__(self) -> str:
+        return "cq:{:X}:{}".format(
+            self._cq.handle,
+            self.ctx.node,
+        )
+
+    def __repr__(self) -> str:
+        return "CQ({!r},0x{:x})".format(
+            self._context,
+            self._cq.handle,
+        )
 
 cdef class SRQ:
     """Shared Receive queue, this is a context manager."""
@@ -1172,8 +1183,10 @@ cdef class SRQ:
             self._srq = NULL
 
     def modify(self,srq_limit=None,max_wr=None):
-        """Modify the *srq_limit* and *max_wr* values of SRQ. If the
-        argument is `None` it is not changed."""
+        """
+        Modify the *srq_limit* and *max_wr* values of SRQ. If the
+        argument is `None` it is not changed.
+        """
         cdef c.ibv_srq_attr cattr
         cdef int cmask
 
@@ -1195,7 +1208,9 @@ cdef class SRQ:
             )
 
     def query(self):
-        """Return a :class:`rdma.ibverbs.srq_attr`."""
+        """
+        Return a :class:`rdma.ibverbs.srq_attr`.
+        """
         cdef c.ibv_srq_attr cattr
 
         rc = c.ibv_query_srq(self._srq, &cattr)
@@ -1214,8 +1229,10 @@ cdef class SRQ:
         )
 
     def post_recv(self, arg):
-        """*wrlist* may be a single :class:`rdma.ibverbs.recv_wr` or
-        a list of them."""
+        """
+        *wrlist* may be a single :class:`rdma.ibverbs.recv_wr` or
+        a list of them.
+        """
         cdef list wrlist
         cdef unsigned char *mem
         cdef c.ibv_recv_wr dummy_wr
@@ -1280,10 +1297,17 @@ cdef class SRQ:
         finally:
             free(mem)
 
-    def __str__(self):
-        return "srq:%X:%s"%(self._srq.handle,self._pd)
-    def __repr__(self):
-        return "SRQ(%r,0x%x)"%(self._pd,self._srq.handle)
+    def __str__(self) -> str:
+        return "srq:{:X}:{}".format(
+            self._srq.handle,
+            self._pd,
+        )
+
+    def __repr__(self) -> str:
+        return "SRQ({!r},0x{:x})".format(
+            self._pd,
+            self._srq.handle,
+        )
 
 cdef class MR:
     """Memory registration, this is a context manager."""

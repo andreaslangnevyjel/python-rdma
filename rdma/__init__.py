@@ -313,9 +313,11 @@ def get_umad(port, path=None, **kwargs):
 
 
 def get_gmp_mad(port, path=None, verbs=None, **kwargs):
-    """Return a subclass instace of :class:`rdma.madtransactor.MADTransactor`
+    """
+    Return a subclass instace of :class:`rdma.madtransactor.MADTransactor`
     for the associated :class:`rdma.devices.EndPort`. If a verbs instance is already
-    open then it should be passed in as verbs"""
+    open then it should be passed in as verbs
+    """
     import rdma.vmad
     if path is None:
         path = port.sa_path
@@ -333,7 +335,9 @@ def get_gmp_mad(port, path=None, verbs=None, **kwargs):
 
 
 def get_verbs(port, **kwargs):
-    """Create a :class:`rdma.uverbs.UVerbs` instance for the associated
-    :class:`rdma.devices.RDMADevice`/:class:`rdma.devices.EndPort`."""
+    """
+    Create a :class:`rdma.uverbs.UVerbs` instance for the associated
+    :class:`rdma.devices.RDMADevice`/:class:`rdma.devices.EndPort`.
+    """
     import rdma.ibverbs
     return rdma.ibverbs.Context(port, **kwargs)
