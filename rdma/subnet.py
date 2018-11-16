@@ -378,9 +378,14 @@ class Subnet(object):
             if path is not None:
                 return path
 
-        if (end_port.LID is None or end_port.LID == 0 or
-            end_port.LID >= IBA.LID_MULTICAST):
-            raise rdma.RDMAError("Cannot setup a LID routed path to end port %s" % (end_port.portGUID))
+        if (
+            end_port.LID is None or end_port.LID == 0 or end_port.LID >= IBA.LID_MULTICAST
+        ):
+            raise rdma.RDMAError(
+                "Cannot setup a LID routed path to end port {}".format(
+                    end_port.portGUID,
+                ),
+            )
         path = rdma.path.IBPath(
             sched.end_port,
             SLID=sched.end_port.lid,
@@ -400,24 +405,28 @@ class Subnet(object):
         # LID route to a HCA followed by DR route after does not work, in the local
         # host case I think this is a kernel bug, but other cases seem to be as the
         # spec intends.
-        drPath = getattr(path, "drPath", b"\0") + chr(port_idx).encode("ascii")
-        if len(drPath) > 64:
-            raise rdma.RDMAError("DR path length limit exceeded, %r" % (drPath))
-        if (path.DLID == path.end_port.lid and
+        dr_path = getattr(path, "drPath", b"\0") + chr(port_idx).encode("ascii")
+        if len(dr_path) > 64:
+            raise rdma.RDMAError(
+                "DR path length limit exceeded, {!}".format(dr_path),
+            )
+        if (
+            path.DLID == path.end_port.lid and
             path.DLID != IBA.LID_PERMISSIVE and
-            path.DLID != 0):
+            path.DLID != 0
+        ):
             # Local loopback
-            return rdma.path.IBDRPath(path.end_port, drPath=drPath)
+            return rdma.path.IBDRPath(path.end_port, drPath=dr_path)
         else:
             if isinstance(path, rdma.path.IBDRPath):
-                ret = path.copy(drPath=drPath)
+                ret = path.copy(drPath=dr_path)
             else:
                 ret = rdma.path.IBDRPath(
                     path.end_port,
                     SLID=path.SLID,
                     drSLID=path.SLID,
                     DLID=path.DLID,
-                    drPath=drPath,
+                    drPath=dr_path,
                     retries=path.retries,
                 )
 
@@ -426,8 +435,8 @@ class Subnet(object):
                 # If we are DR'ing from a non-CA then the only possible legal
                 # thing is to go back out the same port. Dropping the last entry
                 # from the DR list is the same thing.
-                if len(drPath) >= 3 and ep.port_id == port_idx:
-                    ret.drPath = drPath[:-2]
+                if len(dr_path) >= 3 and ep.port_id == port_idx:
+                    ret.drPath = dr_path[:-2]
                 else:
                     # Hum, we know this will fail, try and fix it up with our topology
                     # database..
@@ -439,7 +448,7 @@ class Subnet(object):
                 # local_port_num, but since we are going in and out of the
                 # same port we can just record what it should have been
                 # here.
-                ret._cached_subnet_local_port_num = drPath[-2]
+                ret._cached_subnet_local_port_num = dr_path[-2]
 
             return ret
 
@@ -450,16 +459,15 @@ class Subnet(object):
         nodeGUID=None,
         portGUID=None,
         path=None,
-        LID=None,
-        LMC=0,
+        lid=None,
+        lmc: int=0,
     ):
         """Use the provided information about *port* to update the database.
 
         Note: For switches *port_idx* must be 0."""
         assert (port == port.to_end_port())
-        if (LID is None and path is not None and
-            not isinstance(path, rdma.path.IBDRPath)):
-            LID = path.DLID
+        if lid is None and path is not None and not isinstance(path, rdma.path.IBDRPath):
+            lid = path.DLID
 
         node = port.parent
 
@@ -468,20 +476,22 @@ class Subnet(object):
         if portGUID is not None and port.portGUID is None:
             port.portGUID = portGUID
             self.ports[portGUID] = port
-        if LID is not None:
-            port.LID = LID
-            if LMC is None:
-                LMC = 0
-            self.set_max_lid(LID + (1 << LMC) - 1)
-            for I in IBA.lid_lmc_range(LID, LMC):
+        if lid is not None:
+            port.LID = lid
+            if lmc is None:
+                lmc = 0
+            self.set_max_lid(lid + (1 << lmc) - 1)
+            for I in IBA.lid_lmc_range(lid, lmc):
                 self.lids[I] = port
         if path is not None:
             path._cached_subnet_end_port = port
             # Since we know it, record the DGID into the path. This produces
             # error messages that include the DGID..
             if portGUID is not None and path.DGID is None:
-                path.DGID = IBA.GID(prefix=IBA.GID_DEFAULT_PREFIX,
-                                    guid=portGUID)
+                path.DGID = IBA.GID(
+                    prefix=IBA.GID_DEFAULT_PREFIX,
+                    guid=portGUID,
+                )
             if self.paths is not None:
                 self.paths[port] = path
         return port
@@ -492,8 +502,8 @@ class Subnet(object):
         portGUID=None,
         nodeGUID=None,
         path=None,
-        LID=None,
-        LMC=0,
+        lid=None,
+        lmc: int=0,
     ):
         """Return a :class:`Port` instance associated with the supplied
         information if it exists or `None`.
@@ -521,11 +531,10 @@ class Subnet(object):
             if port_idx is not None:
                 return node.get_port(port_idx)
 
-        if (LID is None and path is not None and
-            not isinstance(path, rdma.path.IBDRPath)):
-            LID = path.DLID
-        if LID is not None and LID < len(self.lids):
-            port = self.lids[LID]
+        if lid is None and path is not None and not isinstance(path, rdma.path.IBDRPath):
+            lid = path.DLID
+        if lid is not None and lid < len(self.lids):
+            port = self.lids[lid]
             if port is not None:
                 return port
 
@@ -566,13 +575,15 @@ class Subnet(object):
                     break
                 self.lids[I] = zport
 
-    def get_node(self, type_, **kwargs):
-        """Return an existing or new :class:`Node` and :class:`Port` instance
+    def get_node(self, type_, **kwargs) -> Tuple:
+        """
+        Return an existing or new :class:`Node` and :class:`Port` instance
         associated with the end port described by *kwargs*.  *kwargs* is the
         same signature as for :meth:`search_port`. *kwargs* must include
         enough information to link a :class:`Port` to the :class:`Node`.
 
-        :rtype: tuple(:class:`Node`, :class:`Port`)"""
+        :rtype: tuple(:class:`Node`, :class:`Port`)
+        """
         port = self.search_end_port(**kwargs)
 
         if port is None:
@@ -597,7 +608,7 @@ class Subnet(object):
             port = Port(node)
 
         self.link_end_port(port, **kwargs)
-        return (node, port)
+        return node, port
 
     def get_node_ninf(self, ninf, path=None, LID=None):
         """Return the :class:`Node` object that holds the associated *ninf*. If
@@ -659,9 +670,10 @@ class Subnet(object):
             # Okay, requesting port 0.. This is either local_port_num or switch port 0,
             # or unknowable.
             port = self.search_end_port(**kwargs)
-            if (port is None or port.parent is None or
-                port.parent.__class__ == Node):
-                raise ValueError("Trying to get a port before the node type is known.")
+            if port is None or port.parent is None or port.parent.__class__ == Node:
+                raise ValueError(
+                    "Trying to get a port before the node type is known.",
+                )
             node = port.parent
 
             if isinstance(node, Switch):
@@ -795,7 +807,9 @@ class Subnet(object):
                     while target != next(self._iter):
                         continue
                 except StopIteration:
-                    raise ValueError("Cannot reach %r via DR" % (target))
+                    raise ValueError(
+                        "Cannot reach {!r} via DR".format(target),
+                    )
                 prior = self._priors[target]
 
             yield prior

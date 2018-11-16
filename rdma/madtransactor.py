@@ -122,7 +122,7 @@ class MADTransactor(object):
         into buf. Return path of the reply"""
         pass
 
-    def _get_new_tid(self):
+    def get_new_tid(self):
         """Override in derived classes."""
         pass
 
@@ -181,7 +181,7 @@ class MADTransactor(object):
         fmt.mgmtClass = fmt.MAD_CLASS
         fmt.classVersion = fmt.MAD_CLASS_VERSION
         fmt.method = method
-        fmt.transactionID = self._get_new_tid()
+        fmt.transactionID = self.get_new_tid()
         fmt.attributeID = payload.MAD_ATTRIBUTE_ID
         fmt.attribute_modifier = attribute_modifier
 
@@ -337,7 +337,7 @@ class MADTransactor(object):
             return ret
         return rpayload
 
-    def _do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
+    def do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
         """To support the asynchronous MADTransactor models the RPC wrapper
         caller must always return _doMAD(). If for some reason there is some
         post-processing work to do then a completer function must be specified
@@ -357,7 +357,7 @@ class MADTransactor(object):
         else:
             fmt = IBA.SMPFormat()
         fmt.MKey = getattr(path, "MKey", 0)
-        return self._do_mad(fmt, payload, path, attribute_modifier, method)
+        return self.do_mad(fmt, payload, path, attribute_modifier, method)
 
     def subn_get(self, payload, path, attribute_modifier=0):
         return self._subn_do(
@@ -376,7 +376,7 @@ class MADTransactor(object):
         )
 
     def PerformanceGet(self, payload, path, attribute_modifier=0):
-        return self._do_mad(
+        return self.do_mad(
             IBA.PMFormat(),
             payload,
             path,
@@ -385,7 +385,7 @@ class MADTransactor(object):
         )
 
     def PerformanceSet(self, payload, path, attribute_modifier=0):
-        return self._do_mad(
+        return self.do_mad(
             IBA.PMFormat(),
             payload,
             path,
@@ -401,7 +401,7 @@ class MADTransactor(object):
             fmt.componentMask = payload.component_mask
             payload = payload.payload
         fmt.SMKey = getattr(path, "SMKey", 0)
-        return self._do_mad(fmt, payload, path, attribute_modifier, method, completer)
+        return self.do_mad(fmt, payload, path, attribute_modifier, method, completer)
 
     def subn_adm_get(self, payload, path=None, attribute_modifier=0):
         return self._subn_adm_do(
@@ -429,7 +429,7 @@ class MADTransactor(object):
 
     def _vend_do(self, payload, path, attribute_modifier, method):
         fmt = payload.FORMAT()
-        return self._do_mad(
+        return self.do_mad(
             fmt,
             payload,
             path,

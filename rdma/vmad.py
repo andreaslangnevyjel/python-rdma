@@ -171,7 +171,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
         if self._allocated_ctx and self._ctx is not None:
             self._ctx.close()
 
-    def _get_new_tid(self):
+    def get_new_tid(self):
         self._tid = (self._tid + 1) % (1 << 32)
         return self._tid
 

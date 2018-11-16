@@ -5,6 +5,7 @@ import os
 import sys
 import codecs
 
+from typing import Tuple
 import rdma
 import rdma.IBA as IBA
 
@@ -31,8 +32,8 @@ class Path(object):
         if isinstance(end_port, str) or isinstance(end_port, str):
             end_port = rdma.get_end_port(end_port)
         self.end_port = end_port
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
     def copy(self, **kwargs):
         """Return a new path object that is a copy of this one. This takes
@@ -47,32 +48,47 @@ class Path(object):
 
     def drop_cache(self):
         """Release any cached information."""
-        for I in list(self.__dict__.keys()):
-            if I.startswith("_cached"):
-                self.__delattr__(I)
+        for key in list(self.__dict__.keys()):
+            if key.startswith("_cached"):
+                self.__delattr__(key)
 
     def __repr__(self):
         cls = self.__class__
-        keys = ("%s=%s" % (k, getattr(cls, "_format_%s" % (k), lambda x: repr(x))(v))
-                for k, v in sorted(self.__dict__.items())
-                if k[0] != "_" and k != "end_port" and getattr(cls, k, None) != v)
+        keys = (
+            "{}={}".format(
+                key,
+                getattr(
+                    cls,
+                    "_format_{}".format(key),
+                    lambda x: repr(x),
+                )(val)
+            ) for key, val in sorted(
+                self.__dict__.items()
+            ) if key[0] != "_" and key != "end_port" and getattr(cls, key, None) != val
+        )
         if self.end_port is None:
             ep = None
         else:
             ep = str(self.end_port)
-        return "%s(end_port=%r, %s)" % (cls.__name__, ep, ", ".join(keys))
+        return "{}(end_port={!r}, {})".format(
+            cls.__name__,
+            ep,
+            ", ".join(keys),
+        )
 
-    def __reduce__(self):
+    def __reduce__(self) -> Tuple:
         """When we pickle :class:`~rdma.path.IBPath` objects the *end_port*
         attribute is thrown away and not restored."""
         cls = self.__class__
-        d = dict((k, v) for k, v in self.__dict__.items()
-                 if k[0] != "_" and k != "end_port" and getattr(cls, k, None) != v)
+        _dict = {
+            key: val for key, val in self.__dict__.items(
+            ) if key[0] != "_" and key != "end_port" and getattr(cls, key, None) != val
+        }
         if getattr(self, "_forward_path"):
-            d["_forward_path"] = self._forward_path.__reduce__()
+            _dict["_forward_path"] = self._forward_path.__reduce__()
         if getattr(self, "_return_path"):
-            d["_return_path"] = self._return_path.__reduce__()
-        return (cls, (None,), d)
+            _dict["_return_path"] = self._return_path.__reduce__()
+        return cls, (None,), _dict
 
     def complete(self):
         """Return `True` if the path is complete and usable."""
@@ -95,8 +111,8 @@ class IBPath(Path):
     communication)"""
 
     def __setstate__(self, d):
-        for k, v in d.items():
-            setattr(self, k, v)
+        for key, val in d.items():
+            setattr(self, key, val)
 
         # Restore the internal paths when unpickleing
         if isinstance(self._forward_path, tuple):
@@ -145,7 +161,7 @@ class IBPath(Path):
     #: Method specific - override the *agent_id* for :class:`rdma.umad.UMAD`
     umad_agent_id = None
     #: Used to compute :attr:`mad_timeout`
-    resp_time = 20;  # See C13-13.1.1
+    resp_time = 20  # See C13-13.1.1
 
     # QP specific things
     #: Minimum value for `rdma.IBA.HdrAETH.syndrome` for
@@ -180,7 +196,7 @@ class IBPath(Path):
             return False
         return Path.complete(self)
 
-    def reverse(self, for_reply=True):
+    def reverse(self, for_reply: bool=True):
         """Reverse this path in-place according to IBA 13.5.4. If *for_reply*
         is `True` then the reversed path will be usable as a MAD reply,
         otherwise it is simply reversed (the only difference is that reply paths
@@ -210,7 +226,12 @@ class IBPath(Path):
             self._cached_SGID_index = self.end_port.gids.index(self.SGID)
             return self._cached_SGID_index
         except ValueError:
-            raise rdma.RDMAError("GID %s not available on %s" % (self.SGID, self.end_port))
+            raise rdma.RDMAError(
+                "GID {} not available on {}".format(
+                    self.SGID,
+                    self.end_port,
+                ),
+            )
 
     @SGID_index.setter
     def SGID_index(self, value):
@@ -232,7 +253,12 @@ class IBPath(Path):
             try:
                 self._cached_pkey_index = self.end_port.pkeys.index(self.pkey ^ IBA.PKEY_MEMBERSHIP_BIT)
             except ValueError:
-                raise rdma.RDMAError("PKey 0x%x not available on %s" % (self.pkey, self.end_port))
+                raise rdma.RDMAError(
+                    "PKey 0x{:x} not available on {}".format(
+                        self.pkey,
+                        self.end_port,
+                    ),
+                )
 
         return self._cached_pkey_index
 
@@ -287,8 +313,9 @@ class IBPath(Path):
         try:
             return self._cached_mad_timeout
         except AttributeError:
-            self._cached_mad_timeout = 4.096E-6 * (2 ** (self.packet_life_time + 1) +
-                                                   2 ** self.resp_time)
+            self._cached_mad_timeout = 4.096E-6 * (
+                2 ** (self.packet_life_time + 1) + 2 ** self.resp_time
+            )
             return self._cached_mad_timeout
 
     @property
@@ -298,8 +325,9 @@ class IBPath(Path):
         try:
             return self._cached_qp_timeout
         except AttributeError:
-            self._cached_qp_timeout = 4.096E-6 * (2 ** (self.packet_life_time + 1) +
-                                                  2 ** self.dack_resp_time)
+            self._cached_qp_timeout = 4.096E-6 * (
+                2 ** (self.packet_life_time + 1) + 2 ** self.dack_resp_time
+            )
             return self._cached_qp_timeout
 
     def copy_qp_params(self, rhs):
@@ -335,37 +363,52 @@ class IBPath(Path):
 
     @classmethod
     def _format_pkey(cls, v):
-        return "0x%x" % (v)
+        return "0x{:x}".format(v)
 
     _format_qkey = _format_pkey
 
     @classmethod
-    def _format_DLID(cls, v):
+    def _format_dlid(cls, v) -> str:
         if v >= IBA.LID_MULTICAST:
-            return "0x%x" % (v)
+            return "0x{:x}".format(v)
         return str(v)
 
-    _format_SLID = _format_DLID
+    _format_slid = _format_dlid
 
     def set_end_port(self, node):
         """Set self.end_port to the end port on node that matches the source
         description in this path"""
-        for I in node.end_ports:
-            for J in I.gids:
-                if J == self.SGID:
-                    self.end_port = I
+        for port in node.end_ports:
+            for gid in port.gids:
+                if gid == self.SGID:
+                    self.end_port = port
                     return
-        raise rdma.RDMAError("RDMA end port %r not found." % (self.SGID))
+        raise rdma.RDMAError(
+            "RDMA end port {!r} not found.".format(self.SGID),
+        )
 
     def __str__(self):
         if self.has_grh:
-            res = "%s %r -> %s %u TC=%r FL=%r HL=%r" % (
-                self.SGID, self.SLID, self.DGID, self.DLID, self.traffic_class,
-                self.flow_label, self.hop_limit)
+            res = "{} {!r} -> {} {:d} TC={!r} FL={!r} HL={!r}".format(
+                self.SGID,
+                self.SLID,
+                self.DGID,
+                self.DLID,
+                self.traffic_class,
+                self.flow_label,
+                self.hop_limit,
+            )
         else:
-            res = "%r -> %r" % (self.SLID, self.DLID)
-        return "Path %s SL=%r PKey=0x%x DQPN=%r" % (
-            res, self.SL, self.pkey, self.dqpn)
+            res = "{!r} -> {!r}".format(
+                self.SLID,
+                self.DLID,
+            )
+        return "Path {} SL={!r} PKey=0x{:x} DQPN={!r}".format(
+            res,
+            self.SL,
+            self.pkey,
+            self.dqpn,
+        )
 
 
 class IBDRPath(IBPath):
@@ -406,22 +449,24 @@ class IBDRPath(IBPath):
         return Path.complete(self) and bool(self.drPath)
 
     @classmethod
-    def _format_drPath(cls, v) -> str:
-        return ":".join("{:d}".format(entry) for entry in v) + ":"
+    def _format_dr_path(cls, v) -> str:
+        return ":".join(
+            "{:d}".format(entry) for entry in v
+        ) + ":"
 
     def __str__(self) -> str:
         # No LID components
-        drPath = tuple(entry for entry in self.drPath)
+        dr_path = tuple(entry for entry in self.drPath)
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
-            return "DR Path %r" % (drPath,)
+            return "DR Path %r" % (dr_path,)
         # LID route at the start
         if self.drDLID == IBA.LID_PERMISSIVE and self.drSLID != IBA.LID_PERMISSIVE:
-            return "DR Path %u -> %r" % (self.DLID, drPath)
+            return "DR Path %u -> %r" % (self.DLID, dr_path)
         # LID route at the end
         if self.drDLID != IBA.LID_PERMISSIVE and self.drSLID == IBA.LID_PERMISSIVE:
-            return "DR Path %r -> %u" % (drPath, self.drDLID)
+            return "DR Path %r -> %u" % (dr_path, self.drDLID)
         # Double ended
-        return "DR Path %u -> %r -> %u" % (self.DLID, drPath, self.drDLID)
+        return "DR Path %u -> %r -> %u" % (self.DLID, dr_path, self.drDLID)
 
 
 class SAPathNotFoundError(rdma.MADClassError):
@@ -540,12 +585,24 @@ def _resolve_path_async(mad, path, reversible=False, properties=None):
         rep = yield mad.subn_adm_get(q)
     except rdma.MADClassError as err:
         if err.code == IBA.MAD_STATUS_SA_NO_RECORDS:
-            raise SAPathNotFoundError("Failed getting path record for path %r." % (path),
-                                      err)
-        err.message("Failed getting path record for path %r." % (path))
+            raise SAPathNotFoundError(
+                "Failed getting path record for path {!r}".format(
+                    path,
+                ),
+                err,
+            )
+        err.message(
+            "Failed getting path record for path {!r}.".format(
+                path,
+            ),
+        )
         raise
     except rdma.MADError as err:
-        err.message("Failed getting path record for path %r." % (path))
+        err.message(
+            "Failed getting path record for path {!r}.".format(
+                path,
+            ),
+        )
         raise
 
     path.DGID = rep.DGID
@@ -602,9 +659,9 @@ def from_spec_string(s):
     if cls is None or not issubclass(cls, Path):
         raise ValueError("Invalid path specification %r, bad path type" % (s,))
 
-    kwargs = dict((t[0].strip(), t[2].strip())
-                  for t in (I.partition('=')
-                            for I in m[1].split(',')))
+    kwargs = {
+        t[0].strip(): t[2].strip() for t in (I.partition('=') for I in m[1].split(','))
+    }
 
     if len(kwargs) < 1:
         raise ValueError("Invalid path specification %r" % (s,))
@@ -612,7 +669,9 @@ def from_spec_string(s):
         if v == '':
             raise ValueError("Invalid path specification %r" % (s,))
         if not hasattr(cls, k):
-            raise ValueError("Path attribute %r is not known" % (k,))
+            raise ValueError(
+                "Path attribute {!r} is not known".format(k,),
+            )
 
         if v.startswith("GID("):
             v = v[4:-1]
@@ -625,18 +684,26 @@ def from_spec_string(s):
             # Using : because I am too lazy to fix the splitter to respect quotes.
             dr = v.split(":")
             if len(dr) == 1:
-                raise ValueError("Invalid DR path specification %r" % (v,))
+                raise ValueError(
+                    "Invalid DR path specification {!r}".format(v,),
+                )
             if dr[-1] == '':
                 dr = [int(I) for I in dr[:-1]]
             else:
                 dr = [int(I) for I in dr]
-            for I in dr:
-                if I >= 255:
-                    raise ValueError("Invalid DR path specification %r" % (v,))
+            for _part in dr:
+                if _part >= 255:
+                    raise ValueError(
+                        "Invalid DR path specification {!r}".format(v,),
+                    )
                 if len(dr) == 0:
-                    raise ValueError("Invalid DR path specification %r" % (s,))
+                    raise ValueError(
+                        "Invalid DR path specification {!r}".format(s,),
+                    )
                 if dr[0] != 0:
-                    raise ValueError("Invalid DR path specification %r" % (s,))
+                    raise ValueError(
+                        "Invalid DR path specification {!r}".format(s,),
+                    )
             kwargs[k] = b"".join(chr(entry).encode("ascii") for entry in dr)
         elif k == "end_port":
             if v[0] == '"' or v[0] == "'":
@@ -660,9 +727,19 @@ def from_spec_string(s):
 
 def _check_ep(ep, require_dev=None, require_ep=None):
     if require_dev is not None and ep.parent != require_dev:
-        raise ValueError("Path requires device %s, got %s" % (require_dev, ep))
+        raise ValueError(
+            "Path requires device {}, got {}".format(
+                require_dev,
+                ep,
+            ),
+        )
     if require_ep is not None and ep != require_ep:
-        raise ValueError("Path requires end port %s, got %s" % (require_ep, ep))
+        raise ValueError(
+            "Path requires end port {}, got {}".format(
+                require_ep,
+                ep,
+            ),
+        )
 
 
 def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
@@ -712,25 +789,25 @@ def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
             dr = [int(I) for I in dr[:-1]]
         else:
             dr = [int(I) for I in dr]
-        for I in dr:
-            if I >= 255:
+        for dev in dr:
+            if dev >= 255:
                 raise ValueError("Invalid DR path specification %r" % (s,))
         if len(dr) == 0:
             raise ValueError("Invalid DR path specification %r" % (s,))
         if dr[0] != 0:
             raise ValueError("Invalid DR path specification %r" % (s,))
-        drPath = b"".join(chr(entry).encode("ascii") for entry in dr)
-        return IBDRPath(default_end_port, drPath=drPath)
+        dr_path = b"".join(chr(entry).encode("ascii") for entry in dr)
+        return IBDRPath(default_end_port, drPath=dr_path)
 
     a = s.split('%')
     if len(a) == 2:
-        DGID = IBA.GID(a[0])
+        dgid = IBA.GID(a[0])
         try:
             end_port = rdma.get_end_port(a[1])
             _check_ep(end_port, require_dev, require_ep)
         except rdma.RDMAError as e:
-            raise ValueError("Could not find %r: %s" % (a[1], e))
-        return IBPath(end_port, DGID=DGID)
+            raise ValueError("Could not find {!r}: {}".format(a[1], e))
+        return IBPath(end_port, DGID=dgid)
 
     res = rdma.IBA.conv_ep_addr(s)
     if isinstance(res, IBA.GID):
@@ -738,15 +815,15 @@ def from_string(s, default_end_port=None, require_dev=None, require_ep=None):
         # should have a host routing table for this lookup...
         prefix = int(res) >> 64
         if prefix != IBA.GID_DEFAULT_PREFIX and require_ep is None:
-            for I in rdma.get_devices():
-                if I != require_dev and require_dev is not None:
+            for dev in rdma.get_devices():
+                if dev != require_dev and require_dev is not None:
                     continue
-                for J in I.end_ports:
-                    for G in J.gids:
-                        if int(G) >> 64 == prefix:
-                            _check_ep(J, require_dev, require_ep)
-                            return IBPath(J, DGID=res)
+                for port in dev.end_ports:
+                    for gid in port.gids:
+                        if int(gid) >> 64 == prefix:
+                            _check_ep(port, require_dev, require_ep)
+                            return IBPath(port, DGID=res)
         return IBPath(default_end_port, DGID=res)
     if isinstance(res, int) or isinstance(res, int):
         return IBPath(default_end_port, DLID=res)
-    raise ValueError("Invalid destination %r" % (s,))
+    raise ValueError("Invalid destination {!r}".format(s,))

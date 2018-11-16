@@ -92,11 +92,11 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         path._cached_resolved_dlid = start_lid
         self._parent.result = start_lid
 
-    def _get_new_tid(self):
-        return self._parent._get_new_tid()
+    def get_new_tid(self):
+        return self._parent.get_new_tid()
 
-    def _do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
-        return self._parent._do_mad(
+    def do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
+        return self._parent.do_mad(
             fmt,
             payload,
             path,
@@ -105,7 +105,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
             completer,
         )
 
-    def _sa_error(self, rfmt, class_code):
+    def _sa_error(self, _rfmt, class_code):
         """
         IMHO it is an error for the SA to return NO_RECORDS for a valid
         query - just because it has no programmed records for that position.
@@ -155,9 +155,9 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         )
 
     def subn_get(self, payload, path, attribute_modifier=0):
-        ID = payload.MAD_ATTRIBUTE_ID
-        meth = payload.MAD_SUBNGET
-        if ID == IBA.SMPGUIDInfo.MAD_ATTRIBUTE_ID:
+        cur_id = payload.MAD_ATTRIBUTE_ID
+        _meth = payload.MAD_SUBNGET
+        if cur_id == IBA.SMPGUIDInfo.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAGUIDInfoRecord())
             req.LID = self.get_path_lid(path)
             req.blockNum = attribute_modifier
@@ -168,7 +168,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 req.MAD_SUBNADMGET,
                 lambda x: x.GUIDInfo,
             )
-        if ID == IBA.SMPLinearForwardingTable.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPLinearForwardingTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SALinearForwardingTableRecord())
             req.LID = self.get_path_lid(path)
             req.blockNum = attribute_modifier
@@ -182,7 +182,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                     self._sa_error,
                 ),
             )
-        if ID == IBA.SMPMulticastForwardingTable.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPMulticastForwardingTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAMulticastForwardingTableRecord())
             req.LID = self.get_path_lid(path)
             req.blockNum = attribute_modifier & ((1 << 9) - 1)
@@ -197,7 +197,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                     self._sa_error,
                 ),
             )
-        if ID == IBA.SMPNodeDescription.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPNodeDescription.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SANodeRecord())
             req.LID = self.get_path_lid(path)
             return self._subn_adm_do(
@@ -207,7 +207,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 req.MAD_SUBNADMGET,
                 self._finish_nodedesc,
             )
-        if ID == IBA.SMPNodeInfo.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPNodeInfo.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SANodeRecord())
             req.LID = self.get_path_lid(path)
             return self._subn_adm_do(
@@ -218,7 +218,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 self._finish_nodeinfo,
             )
 
-        if ID == IBA.SMPPKeyTable.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPPKeyTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAPKeyTableRecord())
             req.LID = self.get_path_lid(path)
             nt = getattr(path, "_cached_node_type", None)
@@ -236,7 +236,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 ),
             )
 
-        if ID == IBA.SMPPortInfo.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPPortInfo.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAPortInfoRecord())
             req.endportLID = self.get_path_lid(path)
             if (
@@ -265,7 +265,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 req.MAD_SUBNADMGET,
                 lambda x: x.portInfo,
             )
-        if ID == IBA.SMPSLToVLMappingTable.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPSLToVLMappingTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SASLToVLMappingTableRecord())
             req.LID = self.get_path_lid(path)
             req.inputPortNum = (attribute_modifier >> 8) & 0xFF
@@ -280,7 +280,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                     self._sa_error,
                 ),
             )
-        if ID == IBA.SMPSMInfo.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPSMInfo.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SASMInfoRecord())
             req.LID = self.get_path_lid(path)
             return self._subn_adm_do(
@@ -290,7 +290,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 req.MAD_SUBNADMGET,
                 lambda x: x.SMInfo,
             )
-        if ID == IBA.SMPSwitchInfo.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPSwitchInfo.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SASwitchInfoRecord())
             req.LID = self.get_path_lid(path)
             return self._subn_adm_do(
@@ -300,7 +300,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 req.MAD_SUBNADMGET,
                 lambda x: x.switchInfo,
             )
-        if ID == IBA.SMPVLArbitrationTable.MAD_ATTRIBUTE_ID:
+        if cur_id == IBA.SMPVLArbitrationTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAVLArbitrationTableRecord())
             req.LID = self.get_path_lid(path)
             req.outputPortNum = attribute_modifier & 0xFFFF
