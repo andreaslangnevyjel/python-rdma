@@ -12,12 +12,14 @@ import rdma.tools
 
 
 class BufferPool(object):
-    """Hold onto a block of fixed size buffers and provide some helpers for
+    """
+    Hold onto a block of fixed size buffers and provide some helpers for
     using them as send and receive buffers with a QP.
 
     This can be used to provide send buffers for a QP, as well as receive
     buffers for a QP or a SRQ. Generally the *qp* argument to methods of this
-    class can be a :class:`rdma.ibverbs.QP` or :class:`rdma.ibverbs.SRQ`."""
+    class can be a :class:`rdma.ibverbs.QP` or :class:`rdma.ibverbs.SRQ`.
+    """
     #: Constant value to set *wr_id* to when it is not being used.
     NO_WR_ID = 0xFFFFFFFF
     #: Constant value to or into *wr_id* to indicate it was posted as a recv.
@@ -74,14 +76,16 @@ class BufferPool(object):
         qp.post_recv(wr)
 
     def finish_wcs(self, qp, wcs):
-        """Process work completion list *wcs* to recover buffers attached to
+        """
+        Process work completion list *wcs* to recover buffers attached to
         completed work and re-post recv buffers to qp. Every work request with
         an attached buffer must have a signaled completion to recover the
         buffer.
 
         *wcs* may be a single wc.
 
-        :raises rdma.ibverbs.WCError: For WC's marked as error."""
+        :raises rdma.ibverbs.WCError: For WC's marked as error.
+        """
         new_recvs = 0
         err = None
         if isinstance(wcs, ibv.wc):
@@ -108,9 +112,11 @@ class BufferPool(object):
             raise ibv.WCError(err, None, obj=qp, is_rq=rq)
 
     def make_send_wr(self, buf_idx: int, buf_len: int, path=None):
-        """Return a :class:`rdma.ibverbs.send_wr` for *buf_idx* and path.
+        """
+        Return a :class:`rdma.ibverbs.send_wr` for *buf_idx* and path.
         If *path* is `None` then the wr does not contain path information
-        (eg for connected QPs)"""
+        (eg for connected QPs)
+        """
         if path is not None:
             return ibv.send_wr(
                 wr_id=buf_idx,
@@ -130,20 +136,26 @@ class BufferPool(object):
             )
 
     def make_sge(self, buf_idx, buf_len):
-        """Return a :class:`rdma.ibverbs.SGE` for *buf_idx*."""
+        """
+        Return a :class:`rdma.ibverbs.SGE` for *buf_idx*.
+        """
         return self._mr.sge(buf_len, buf_idx * self.size)
 
     def copy_from(self, buf_idx: int, offset: int=0, length=0xFFFFFFFF):
-        """Return a copy of buffer *buf_idx*. *buf_idx* may be a *wr_id*.
+        """
+        Return a copy of buffer *buf_idx*. *buf_idx* may be a *wr_id*.
 
-        :rtype: :class:`bytearray`"""
+        :rtype: :class:`bytearray`
+        """
         buf_idx = buf_idx & self.BUF_ID_MASK
         length = min(length, self.size - offset)
         return bytearray(self._mem[buf_idx * self.size + offset:
                                    buf_idx * self.size + offset + length])
 
     def copy_to(self, buf, buf_idx, offset=0, length=0xFFFFFFFF):
-        """Copy *buf* into the buffer *buf_idx*"""
+        """
+        Copy *buf* into the buffer *buf_idx*
+        """
         blen = len(buf)
         length = min(length, self.size - offset, blen)
         if isinstance(buf, bytearray):
@@ -157,9 +169,11 @@ class BufferPool(object):
 
 
 class CQPoller(object):
-    """Simple wrapper for a :class:`rdma.ibverbs.CQ` and
+    """
+    Simple wrapper for a :class:`rdma.ibverbs.CQ` and
     :class:`rdma.ibverbs.CompChannel` to provide a blocking API for getting
-    work completions."""
+    work completions.
+    """
     _cq = None
     _cc = None
     _poll = None
@@ -171,12 +185,14 @@ class CQPoller(object):
     wakeat = None
 
     def __init__(self, cq, async_events: bool=True, solicited_only: bool=False):
-        """*cq* is the completion queue to read work completions from.
+        """
+        *cq* is the completion queue to read work completions from.
         If the *cq* does not have a completion channel then this will
         spin loop on *cq* otherwise it sleeps on the completion channel.
 
         If *async_events* is `True` then the async event queue will be
-        monitored while sleeping."""
+        monitored while sleeping.
+        """
         self._cq = cq
         self._solicited_only = solicited_only
         cc = cq.comp_chan
@@ -192,7 +208,8 @@ class CQPoller(object):
         return self.iterwc(self)
 
     def sleep(self, wakeat: float):
-        """Go to sleep until the cq gets a completion. *wakeat* is the
+        """
+        Go to sleep until the cq gets a completion. *wakeat* is the
         value of :func:`rdma.tools.clock_monotonic` after which the function
         returns `None`. Returns `True` if the completion channel triggered.
 
@@ -201,7 +218,8 @@ class CQPoller(object):
         Note: It is necessary to call :meth:`rdma.ibverbs.CQ.req_notify`
         on the CQ, then poll the CQ before calling :meth:`sleep`. Otherwise
         the edge triggered nature of the completion channels can cause
-        deadlock."""
+        deadlock.
+        """
         if self._poll is None:
             if wakeat is not None:
                 timeout = wakeat - rdma.tools.clock_monotonic()

@@ -1,22 +1,22 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
+import codecs
 import copy
 import errno
 import fcntl
-import codecs
 import os
 import select
 import struct
 from socket import htonl as cpu_to_be32
 from socket import htons as cpu_to_be16
+from typing import Tuple, Union
 
 import rdma
 import rdma.IBA as IBA
 import rdma.madtransactor
 import rdma.path
 import rdma.tools
-from typing import Tuple, Union
 
 SYS_INFINIBAND_MAD = "/sys/class/infiniband_mad/"
 
@@ -103,14 +103,20 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
     ib_mad_addr_local_t = struct.Struct("=LLHBBxxxx16x4xH6x")
 
     def __init__(self, parent):
-        """*parent* is the owning :class:`rdma.devices.EndPort`."""
+        """
+        *parent* is the owning :class:`rdma.devices.EndPort`.
+        """
         rdma.madtransactor.MADTransactor.__init__(self)
 
         for I in parent._iterate_services_end_port(SYS_INFINIBAND_MAD, r"umad\d+"):
             rdma.tools.SysFSDevice.__init__(self, parent, I)
             break
         else:
-            raise rdma.RDMAError("Unable to open umad device for %s" % (repr(parent)))
+            raise rdma.RDMAError(
+                "Unable to open umad device for {}".format(
+                    repr(parent),
+                ),
+            )
 
         with open(SYS_INFINIBAND_MAD + "abi_version") as f_obj:
             self.abi_version = int(f_obj.read().strip())
@@ -369,12 +375,15 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 raise rdma.RDMAError("umad send failure code=%d for %s" % (status, repr(buf)))
             return buf[64:rc], path
 
-    def _gen_error(self, buf, path) -> Tuple:
-        """Sadly the kernel can return EINVAL if it could not process the MAD,
+    @staticmethod
+    def _gen_error(buf, path) -> Tuple:
+        """
+        Sadly the kernel can return EINVAL if it could not process the MAD,
         eg if you ask for PortInfo of the local CA with an invalid attributeID
         the Mellanox driver will return EINVAL rather than construct an error
         MAD. I consider this to be a bug in the kernel, but we fix it here
-        by constructing an error MAD."""
+        by constructing an error MAD.
+        """
         buf = copy.copy(buf)
 
         meth = buf[3]

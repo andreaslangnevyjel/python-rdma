@@ -20,7 +20,8 @@ class BuildExt(Cython.Distutils.build_ext):
         self.codegen()
         Cython.Distutils.build_ext.build_extensions(self)
 
-    def get_enums(self, f_obj):
+    @staticmethod
+    def get_enums(f_obj):
         s = []
         skip = True
         for I in f_obj.readlines():
@@ -41,7 +42,8 @@ class BuildExt(Cython.Distutils.build_ext):
 
         return enum
 
-    def write_enums_pxd(self, f_obj, enums):
+    @staticmethod
+    def write_enums_pxd(f_obj, enums):
         print(
             "\n\n".join(
                 "\n".join(
@@ -51,11 +53,15 @@ class BuildExt(Cython.Distutils.build_ext):
             file=f_obj,
         )
 
-    def write_enums_pxi(self, f_obj, enums):
+    @staticmethod
+    def write_enums_pxi(f_obj, enums):
         sep = "\n" + " " * 8
         print(
             "\n\n".join(
-                "    enum %s:%s" % (e, sep) + sep.join(v) for e, v in sorted(enums.items())
+                "    enum {}:{}".format(
+                    e,
+                    sep,
+                ) + sep.join(v) for e, v in sorted(enums.items())
             ),
             file=f_obj,
         )
