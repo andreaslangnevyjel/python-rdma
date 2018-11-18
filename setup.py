@@ -88,6 +88,7 @@ ibverbs_module = Extension(
     "rdma.ibverbs",
     ["rdma/ibverbs.pyx"],
     libraries=["ibverbs"],
+    library_dirs=["/usr/lib64"],
     depends=[
         "rdma/libibverbs.pxd",
         "rdma/libibverbs.pxi",
@@ -174,14 +175,20 @@ class SphinxBuild(Command):
 
         if not os.path.exists(self.out_dir):
             if self.dry_run:
-                self.announce("skipping creation of directory %s (dry run)" % self.out_dir)
+                self.announce(
+                    "skipping creation of directory {} (dry run)".format(self.out_dir),
+                )
             else:
-                self.announce("creating directory %s" % self.out_dir)
+                self.announce(
+                    "creating directory {}".format(self.out_dir),
+                )
                 os.makedirs(self.out_dir)
         if self.dry_run:
-            self.announce("skipping %s (dry run)" % " ".join(self.sphinx_args))
+            self.announce(
+                "skipping {} (dry run)".format(" ".join(self.sphinx_args)),
+            )
         else:
-            self.announce("running %s" % " ".join(self.sphinx_args))
+            self.announce("running {}".format(" ".join(self.sphinx_args)))
             opath = sys.path
             try:
                 # We need to point Sphinx at the built library, including
