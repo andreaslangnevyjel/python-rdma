@@ -87,8 +87,8 @@ class BuildExt(Cython.Distutils.build_ext):
 ibverbs_module = Extension(
     "rdma.ibverbs",
     ["rdma/ibverbs.pyx"],
-    libraries=["ibverbs"],
-    library_dirs=["/usr/lib64/libibverbs"],
+    libraries=[":libibverbs.so.1"],
+    library_dirs=["/usr/lib64"],
     depends=[
         "rdma/libibverbs.pxd",
         "rdma/libibverbs.pxi",
