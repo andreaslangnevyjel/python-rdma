@@ -88,7 +88,7 @@ ibverbs_module = Extension(
     "rdma.ibverbs",
     ["rdma/ibverbs.pyx"],
     libraries=["ibverbs"],
-    library_dirs=["/usr/lib64"],
+    library_dirs=["/usr/lib64/libibverbs"],
     depends=[
         "rdma/libibverbs.pxd",
         "rdma/libibverbs.pxi",
