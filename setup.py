@@ -22,18 +22,18 @@ class BuildExt(Cython.Distutils.build_ext):
 
     @staticmethod
     def get_enums(f_obj):
-        s = []
+        ret_f = []
         skip = True
-        for I in f_obj.readlines():
-            if I[0] == "#":
-                skip = I.find("infiniband/verbs.h") == -1
+        for line in f_obj.readlines():
+            if line[0] == "#":
+                skip = line.find("infiniband/verbs.h") == -1
             else:
                 if not skip:
-                    s.append(I)
-        s = "".join(s)
+                    ret_f.append(line)
+        ret_s = "".join(ret_f)
 
         enum = {}
-        for m in re.finditer(r"enum\s+(\w+)\s*{(.*?)}", s, re.DOTALL):
+        for m in re.finditer(r"enum\s+(\w+)\s*{(.*?)}", ret_s, re.DOTALL):
             name = m.group(1)
             constants = [
                 c.partition("=")[0].strip() for c in m.group(2).split(",") if c.strip() != ""
@@ -165,7 +165,11 @@ class SphinxBuild(Command):
         try:
             import sphinx
         except ImportError:
-            log.info("Sphinx not installed -- skipping documentation. (%s)", sys.exc_info()[1])
+            log.info(
+                "Sphinx not installed -- skipping documentation. ({})".format(
+                    sys.exc_info()[1],
+                ),
+            )
             return
 
         if not os.path.exists(self.out_dir):
