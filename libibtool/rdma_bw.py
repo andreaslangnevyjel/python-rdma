@@ -163,7 +163,7 @@ def client_mode(hostname, opt, dev):
 
             end.connect(peerinfo)
             # Synchronize the transition to RTS
-            sock.send("Ready")
+            sock.send(b"Ready")
             sock.recv(1024)
             end.rdma()
 
@@ -237,7 +237,7 @@ def server_mode(opt, dev):
 
                 end.connect(peerinfo)
                 # Synchronize the transition to RTS
-                s.send("ready")
+                s.send(b"ready")
                 s.recv(1024)
                 if opt.bidirectional:
                     end.rdma()

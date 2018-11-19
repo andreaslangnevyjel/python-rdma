@@ -379,7 +379,7 @@ class GID(bytes):
         return int(codecs.encode(self, "hex"), 16)
 
     def __reduce__(self) -> Tuple:
-        return GID, (int(self), True)
+        return GID, ([x for x in self], True)
 
 
 #: All zeros GID value.
