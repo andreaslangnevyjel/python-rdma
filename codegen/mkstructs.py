@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
-# ./mkstructs.py -x iba_transport.xml -x iba_12.xml -x iba_13_4.xml -x iba_13_6.xml -x iba_14.xml -x iba_15.xml -x iba_16_1.xml -x iba_16_3.xml -x iba_16_4.xml -x iba_16_5.xml  -o ../rdma/IBA_struct.py -r ../doc/iba_struct.inc
+# ./mkstructs.py -x iba_transport.xml -x iba_12.xml -x iba_13_4.xml -x iba_13_6.xml -x iba_14.xml -x iba_15.xml
+# -x iba_16_1.xml -x iba_16_3.xml -x iba_16_4.xml -x iba_16_5.xml  -o ../rdma/IBA_struct.py -r ../doc/iba_struct.inc
 
 """This script converts the XML descriptions of IB structures into python
    classes and associated codegen"""
@@ -66,19 +67,19 @@ def safe_update_ctx(path: str):
     except Exception:
         pass
 
-    f = open(tmp, "wt")
-    yield f
-    f.close()
+    l_f_obj = open(tmp, "wt")
+    yield l_f_obj
+    l_f_obj.close()
     os.rename(tmp, path)
 
 
-def rst_tableize(lst, idx):
-    width = max(len(i[idx]) for i in lst)
+def rst_tableize(rst_lst, idx):
+    width = max(len(i[idx]) for i in rst_lst)
     line = "=" * width
     yield line
     first = True
-    for I in lst:
-        yield I[idx].ljust(width)
+    for idx in rst_lst:
+        yield idx[idx].ljust(width)
         if first:
             yield line
             first = False
@@ -89,11 +90,11 @@ class Type(object):
     """Hold a single typed field in the structure"""
     mutable = True
 
-    def __init__(self, xml, off):
-        self.count = int(xml.get("count", "1"))
-        self.bits = int(xml.get("bits"))
-        self.off = xml.get("off")
-        self.fmt = xml.get("display")
+    def __init__(self, in_xml, off):
+        self.count = int(in_xml.get("count", "1"))
+        self.bits = int(in_xml.get("bits"))
+        self.off = in_xml.get("off")
+        self.fmt = in_xml.get("display")
         if self.fmt == "data":
             self.fmt = None
         if self.fmt == "string":
@@ -111,40 +112,39 @@ class Type(object):
         else:
             self.off = off
 
-        self.in_comp_mask = int(xml.get("comp_mask", "1")) != 0
+        self.in_comp_mask = int(in_xml.get("comp_mask", "1")) != 0
 
-        self.type = xml.get("type")
+        self.type = in_xml.get("type")
         if self.type == "HdrIPv6Addr" and self.bits == 128:
             self.type = "struct IBA.GID"
             self.mutable = False
-        if self.type is None and xml.text is not None and \
-            self.bits == 64 and "GUID" in xml.text:
+        if self.type is None and in_xml.text is not None and self.bits == 64 and "GUID" in in_xml.text:
             self.type = "struct IBA.GUID"
             self.mutable = False
 
-    def lenBits(self):
+    def len_bits(self) -> int:
         return self.bits * self.count
 
-    def isObject(self):
-        return self.type and self.type.startswith('struct ')
+    def is_object(self) -> bool:
+        return self.type and self.type.startswith("struct ")
 
-    def initStr(self):
+    def init_str(self) -> str:
         base = "0"
-        if self.isObject():
+        if self.is_object():
             base = self.type[7:] + "()"
         elif self.bits > 64:
             base = "bytearray(%u)" % (self.bits / 8)
         if self.count != 1:
             if self.bits == 8:
                 return "bytearray(%u)" % (self.count)
-            if self.isObject():
+            if self.is_object():
                 return "[%s for I in range(%u)]" % (base, self.count)
             return "[%s]*%u" % (base, self.count)
         return base
 
-    def type_desc(self):
+    def type_desc(self) -> str:
         base = ":class:`int`"
-        if self.isObject():
+        if self.is_object():
             ty = self.type[7:]
             if ty.startswith("IBA."):
                 base = ":class:`~rdma.%s`" % (self.type[7:])
@@ -154,11 +154,11 @@ class Type(object):
             base = ":class:`bytearray` (%u)" % (self.bits / 8)
         if self.count != 1:
             if self.bits == 8:
-                base = ":class:`bytearray` (%u)" % (self.count)
+                base = ":class:`bytearray` ({:d})".format(self.count)
             return "[%s]*%u" % (base, self.count)
         return base
 
-    def make_pack(self, name, idx=0):
+    def make_pack(self, name, idx=0) -> str:
         return "%s.pack_into(buffer,offset + %u)" % (name, self.off / 8 + idx * self.bits / 8)
 
     def make_unpack(self, name, idx=0):
@@ -175,7 +175,7 @@ class Type(object):
                (self.off % self.bits) == 0
 
     def getStruct(self):
-        if self.isObject():
+        if self.is_object():
             return self.type[7:]
         return None
 
@@ -213,16 +213,16 @@ class Struct(object):
         self.packCount = 0
 
         off = 0
-        for I in xml.getiterator("mb"):
-            self.mb.append((I.text or "", Type(I, off)))
-            off = off + self.mb[-1][1].lenBits()
-        assert (sum((I[1].lenBits() for I in self.mb), 0) <= self.size * 8)
+        for cur_el in xml.getiterator("mb"):
+            self.mb.append((cur_el.text or "", Type(cur_el, off)))
+            off = off + self.mb[-1][1].len_bits()
+        assert (sum((cur_el[1].len_bits() for cur_el in self.mb), 0) <= self.size * 8)
 
     def set_reserved(self):
         def to_reserved(s, ty):
             if not s:
                 self.reserved = self.reserved + 1
-                return "reserved_%u" % (ty.off)
+                return "reserved_{:d}".format(ty.off)
             return s
 
         self.reserved = 0
@@ -236,7 +236,7 @@ class Struct(object):
             return
 
         first = self.mb[0]
-        if not (first[0].endswith("Header") and first[1].isObject()):
+        if not (first[0].endswith("Header") and first[1].is_object()):
             return
         parent = structMap[first[1].getStruct()]
 
@@ -249,7 +249,7 @@ class Struct(object):
         # slots that seems like it would just cause confusion.  Certainly the
         # codegen of a single pack/unpack is very desirable.
 
-        assert (sum((I[1].lenBits() for I in self.mb), 0) <= self.size * 8)
+        assert (sum((cur_el[1].len_bits() for cur_el in self.mb), 0) <= self.size * 8)
         self.make_inherit()
 
     def gen_component_mask(self, follow=True):
@@ -264,8 +264,8 @@ class Struct(object):
             elif mbt.in_comp_mask:
                 # serviceData is special, each array elements gets a mask.
                 if name.startswith("serviceData"):
-                    for I in range(mbt.count):
-                        res.append(name + "_%u" % (I))
+                    for idx in range(mbt.count):
+                        res.append(name + "_{:d}".format(idx))
                 else:
                     res.append(name)
         return res
@@ -279,17 +279,17 @@ class Struct(object):
         groups = []
         curGroup = []
         off = 0
-        for I in self.mb:
-            bits = I[1].lenBits()
+        for mb_s in self.mb:
+            bits = mb_s[1].len_bits()
             if bits == 0:
                 continue
-            curGroup.append(I)
+            curGroup.append(mb_s)
 
             if (off == 0 and (off + bits) % 32 == 0) or \
                 (off + bits) % 32 == 0:
                 if reduce(lambda a, b: a and b[1].isAligned(), curGroup, True):
-                    for J in curGroup:
-                        groups.append((J,))
+                    for _group in curGroup:
+                        groups.append((_group,))
                 else:
                     groups.append(curGroup)
                 curGroup = []
@@ -316,44 +316,70 @@ class Struct(object):
             if mbt.count == 1:
                 return (None, (mbt.make_pack(name),
                                mbt.make_unpack(name)),
-                        mbt.lenBits())
+                        mbt.len_bits())
             lst = []
-            for I in range(0, mbt.count):
-                n = "%s[%u]" % (name, I)
-                lst.append((None, (mbt.make_pack(n, I),
-                                   mbt.make_unpack(n, I)),
-                            mbt.lenBits()))
+            for idx in range(0, mbt.count):
+                n = "{}[{:d}]".format(name, idx)
+                lst.append(
+                    (
+                        None,
+                        (
+                            mbt.make_pack(n, idx),
+                            mbt.make_unpack(n, idx),
+                        ),
+                        mbt.len_bits(),
+                    )
+                )
             return lst
         if mbt.type == "HdrIPv6Addr":
-            return ("[:16]", name, bits)
+            return "[:16]", name, bits
         if mbt.count == 1:
             if mbt.type is None and bits > 64:
-                return ("[:%u]" % (bits / 8), name, bits)
-            return (self.bitsToFormat(bits), name, bits)
+                return "[:%u]" % (bits / 8), name, bits
+            else:
+                return self.bitsToFormat(bits), name, bits
         if mbt.bits == 8:
-            return ("[:%u]" % (bits / 8), name, bits)
+            return "[:%u]" % (bits / 8), name, bits
         if mbt.bits == 16 or mbt.bits == 32:
             res = []
-            for I in range(0, mbt.count):
-                res.append((self.bitsToFormat(mbt.bits), "%s[%u]" % (name, I),
-                            mbt.bits))
+            for idx in range(0, mbt.count):
+                res.append(
+                    (
+                        self.bitsToFormat(mbt.bits),
+                        "{}[{:d}]".format(name, idx),
+                        mbt.bits,
+                    )
+                )
             return res
 
         # Must be a bit array
         assert (bits % 8 == 0)
-        return (None, ("rdma.binstruct.pack_array8(buffer,offset+%u,%u,%u,%s)" % \
-                       (mbt.off / 8, mbt.bits, mbt.count, name),
-                       "rdma.binstruct.unpack_array8(buffer,offset+%u,%u,%u,%s)" % \
-                       (mbt.off / 8, mbt.bits, mbt.count, name)),
-                bits)
+        return (
+            None,
+            (
+                "rdma.binstruct.pack_array8(buffer,offset+{:d},{:d},{:d},{})".format(
+                    mbt.off / 8,
+                    mbt.bits,
+                    mbt.count,
+                    name,
+                ),
+                "rdma.binstruct.unpack_array8(buffer,offset+{:d},{:d},{:d},{})".format(
+                    mbt.off / 8,
+                    mbt.bits,
+                    mbt.count,
+                    name,
+                )
+            ),
+            bits,
+        )
 
     def structFormat(self, groups, prefix):
         res = []
-        for I in groups:
-            bits = sum(J[1].lenBits() for J in I)
+        for _group in groups:
+            bits = sum(cur_g[1].len_bits() for cur_g in _group)
             assert (bits == 8 or bits == 16 or bits == 32 or bits % 32 == 0)
-            if len(I) == 1:
-                x = self.formatSinglePack(bits, prefix + I[0][0], I[0][1])
+            if len(_group) == 1:
+                x = self.formatSinglePack(bits, prefix + _group[0][0], _group[0][1])
                 if isinstance(x, list):
                     res.extend(x)
                 else:
@@ -367,7 +393,7 @@ class Struct(object):
             unpack = ["@%s.setter" % (func), "def %s(self,value):" % (func)]
             tmp = []
             off = bits
-            for J in I:
+            for J in _group:
                 off = off - J[1].bits
                 tmp.append("((%s%s & 0x%X) << %u)" % (prefix, J[0], (1 << J[1].bits) - 1, off))
                 unpack.append("    %s%s = (value >> %u) & 0x%X;" % (prefix, J[0], off, (1 << J[1].bits) - 1))
@@ -385,38 +411,44 @@ class Struct(object):
         sfmts = [[]]
         sfmtsOff = []
         fmtsOff = 0
-        for I in fmts:
-            if I[0] is None:
-                pack.append("    %s;" % (I[1][0]))
-                unpack.append("    %s;" % (I[1][1]))
-                off = off + I[2]
+        for idx in fmts:
+            if idx[0] is None:
+                pack.append("    %s;" % (idx[1][0]))
+                unpack.append("    %s;" % (idx[1][1]))
+                off = off + idx[2]
                 continue
-            if I[0][0] == '[':
-                assert off % 8 == 0 and I[2] % 8 == 0
+            if idx[0][0] == "[":
+                assert off % 8 == 0 and idx[2] % 8 == 0
                 pack.append("    buffer[offset + %u:offset + %u] = %s" % \
-                            (off / 8, off / 8 + I[2] / 8, I[1]))
+                            (off / 8, off / 8 + idx[2] / 8, idx[1]))
                 unpack.append("    %s = bytearray(buffer[offset + %u:offset + %u])" % \
-                              (I[1], off / 8, off / 8 + I[2] / 8))
-                off = off + I[2]
+                              (idx[1], off / 8, off / 8 + idx[2] / 8))
+                off = off + idx[2]
                 continue
             if fmtsOff != off and sfmts[-1]:
                 sfmts.append([])
 
             if not sfmts[-1]:
                 sfmtsOff.append(off)
-            sfmts[-1].append(I)
-            off = off + I[2]
+            sfmts[-1].append(idx)
+            off = off + idx[2]
             fmtsOff = off
 
-        for I, off in zip(sfmts, sfmtsOff):
-            pack.append("    struct.pack_into('>%s',buffer,offset+%u,%s);" % \
-                        ("".join(J[0] for J in I),
-                         off / 8,
-                         ",".join(J[1] for J in I)))
-            unpack.append("    (%s,) = struct.unpack_from('>%s',buffer,offset+%u);" % \
-                          (",".join(J[1] for J in I),
-                           "".join(J[0] for J in I),
-                           off / 8))
+        for idx, off in zip(sfmts, sfmtsOff):
+            pack.append(
+                "    struct.pack_into('>{}',buffer,offset+{:d},{});".format(
+                    "".join(J[0] for J in idx),
+                    off / 8,
+                    ",".join(J[1] for J in idx),
+                ),
+            )
+            unpack.append(
+                "    ({},) = struct.unpack_from('>{}',buffer,offset+{:d});".format(
+                    ",".join(J[1] for J in idx),
+                    "".join(J[0] for J in idx),
+                    off / 8,
+                ),
+            )
 
     def get_properties(self):
         yield "MAD_LENGTH", "%u" % (self.size)
@@ -429,17 +461,26 @@ class Struct(object):
             yield "MAD_ATTRIBUTE_ID", "0x%x" % (self.attributeID)
         if self.methods and not self.is_format:
             is_sa = False
-            for I in sorted(self.methods):
-                if I.startswith("SubnAdm"):
+            for cur_method in sorted(self.methods):
+                if cur_method.startswith("SubnAdm"):
                     is_sa = True
-                yield "MAD_%s" % (I.upper()), "0x%x # %s" % (globals()[methodMap[I]],
-                                                             methodMap[I])
+                yield "MAD_{}".format(
+                    cur_method.upper()
+                ), "0x{:x} # {}".format(
+                    globals()[methodMap[cur_method]],
+                    methodMap[cur_method],
+                )
             if is_sa:
                 cm = self.gen_component_mask()
                 if cm:
-                    yield "COMPONENT_MASK", "{%s}" % (", ".join("%r:%u" % (name, I) for I, name in enumerate(cm)))
-        yield "MEMBERS", "[%s]" % (
-            ", ".join("(%r,%r,%r)" % (name, ty.bits, ty.count) for name, ty in self.mb if ty.bits != 0))
+                    yield "COMPONENT_MASK", "{{{}}}".format(
+                        ", ".join("{!r}:{:d}".format(cm_name, idx) for idx, cm_name in enumerate(cm)),
+                    )
+        yield "MEMBERS", "[{}]".format(
+            ", ".join(
+                "({!r},{!r},{!r})".format(_name, ty.bits, ty.count) for _name, ty in self.mb if ty.bits != 0
+            )
+        )
 
     def asPython(self, F):
         self.funcs = []
@@ -447,15 +488,15 @@ class Struct(object):
         if self.mb:
             x = ["def __init__(self,*args):"]
             for name, ty in self.mb:
-                if (ty.isObject() and ty.mutable) or ty.count != 1:
-                    x.append("    self.%s = %s;" % (name, ty.initStr()))
+                if (ty.is_object() and ty.mutable) or ty.count != 1:
+                    x.append("    self.%s = %s;" % (name, ty.init_str()))
             if len(x) != 1:
                 x.append("    rdma.binstruct.BinStruct.__init__(self,*args);")
                 self.funcs.append(x)
             x = ["def zero(self):"]
             for name, ty in self.mb:
-                if ty.lenBits() != 0:
-                    x.append("    self.%s = %s;" % (name, ty.initStr()))
+                if ty.len_bits() != 0:
+                    x.append("    self.%s = %s;" % (name, ty.init_str()))
             self.funcs.append(x)
 
         pack = ["def pack_into(self,buffer,offset=0):"]
@@ -469,7 +510,7 @@ class Struct(object):
         self.funcs.append(pack)
         self.funcs.append(unpack)
 
-        self.slots = ','.join(repr(I[0]) for I in self.mb if I[1].lenBits() != 0)
+        self.slots = ','.join(repr(I[0]) for I in self.mb if I[1].len_bits() != 0)
         if self.is_format:
             print("class %s(rdma.binstruct.BinFormat):" % (self.name), file=F)
         else:
@@ -497,15 +538,15 @@ class Struct(object):
             print("", file=F)
         print("   ", self.desc, file=F)
         print("", file=F)
-        for name, value in self.get_properties():
-            print("    .. attribute:: %s = %s" % (name, value), file=F)
+        for p_name, value in self.get_properties():
+            print("    .. attribute:: %s = %s" % (p_name, value), file=F)
         print("", file=F)
 
         rows = [("Member", "Position", "Type")]
-        for name, ty in self.mb:
-            rows.append((":attr:`%s`" % (name),
+        for p_name, ty in self.mb:
+            rows.append((":attr:`%s`" % (p_name),
                          "%s:%s (%u)" % (self.as_RST_pos(ty.off),
-                                         self.as_RST_pos(ty.off + ty.lenBits()),
+                                         self.as_RST_pos(ty.off + ty.len_bits()),
                                          ty.bits),
                          ty.type_desc()))
         if rows:
@@ -570,7 +611,7 @@ with safe_update_ctx(options.struct_out) as f_obj:
             assert fmts.get(cur_name[0], cur_name[1].fmt) == cur_name[1].fmt
             if cur_name[1].fmt != "%r":
                 fmts[cur_name[0]] = cur_name[1].fmt
-    print("MEMBER_FORMATS = %r;" % (fmts), file=f_obj)
+    print("MEMBER_FORMATS = {!r};".format(fmts), file=f_obj)
 
     res = (I for I in structs if I.is_format)
     print("CLASS_TO_STRUCT = {%s};" % (",\n\t".join("(%u,%u):%s" % (
@@ -585,8 +626,18 @@ with safe_update_ctx(options.struct_out) as f_obj:
     for cur_p in structs:
         if cur_p.format is not None and cur_p.attributeID is not None:
             res[cur_p.format, cur_p.attributeID] = cur_p
-    print("ATTR_TO_STRUCT = {%s};" % (",\n\t".join("(%s,%u):%s" % (
-        k[0], k[1], v.name) for k, v in sorted(res.items()))), file=f_obj)
+    print(
+        "ATTR_TO_STRUCT = {{{}}};".format(
+            ",\n\t".join(
+                "({},{:d}):{}".format(
+                    k[0],
+                    k[1],
+                    v.name,
+                ) for k, v in sorted(res.items())
+            )
+        ),
+        file=f_obj,
+    )
 
 if options.rst_out is not None:
     with safe_update_ctx(options.rst_out) as f_obj:
@@ -594,22 +645,27 @@ if options.rst_out is not None:
             return x == y[:len(x)]
 
 
-        sects = [(("12",), "Communication Management"),
-                 (("13", "4"), "Generic MAD"),
-                 (("13", "6"), "RMPP"),
-                 (("14",), "Subnet Management"),
-                 (("15",), "Subnet Administration"),
-                 (("16", "1"), "Performance Management"),
-                 (("A13", "6"), "Performance Management"),
-                 (("16", "3"), "Device Management"),
-                 (("16", "4"), "SNMP Tunneling"),
-                 (("16", "5"), "Vendor Specific Management")]
+        sects = [
+            (("12",), "Communication Management"),
+            (("13", "4"), "Generic MAD"),
+            (("13", "6"), "RMPP"),
+            (("14",), "Subnet Management"),
+            (("15",), "Subnet Administration"),
+            (("16", "1"), "Performance Management"),
+            (("A13", "6"), "Performance Management"),
+            (("16", "3"), "Device Management"),
+            (("16", "4"), "SNMP Tunneling"),
+            (("16", "5"), "Vendor Specific Management"),
+        ]
         lst = sorted(structs, key=lambda x: x.name)
         done = set()
         last = None
         for cur_p, name in sects:
             if name != last:
-                header = "%s (%s)" % (name, ".".join("%s" % (x) for x in cur_p))
+                header = "{} ({})".format(
+                    name,
+                    ".".join("{}".format(_p) for _p in cur_p),
+                )
                 print(header, file=f_obj)
                 print("^" * len(header), file=f_obj)
                 print(file=f_obj)

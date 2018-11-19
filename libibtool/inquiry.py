@@ -721,6 +721,6 @@ def cmd_set_nodedesc(argv, o):
         for cur_dev in rdma.get_devices():
             if dev is not None and cur_dev != dev:
                 continue
-            with open(os.path.join(cur_dev._dir, "node_desc"), "w") as F:
-                F.write(name)
+            with open(os.path.join(cur_dev._dir, "node_desc"), "w") as f_obj:
+                f_obj.write(name)
     return True

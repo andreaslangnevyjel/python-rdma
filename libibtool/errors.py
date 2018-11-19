@@ -54,9 +54,9 @@ def load_thresholds(fn):
             "linkDownedCounter": 10,
         }
     else:
-        with open(fn, "rt") as F:
+        with open(fn, "rt") as f_obj:
             res = {}
-            for line in F.readlines():
+            for line in f_obj.readlines():
                 line = line.strip()
                 if not line:
                     continue
@@ -417,12 +417,18 @@ def do_show_counts(sched, path, gpath, ninf, pinf, port_guid, port_idx, **kwargs
         n = field[0].upper() + field[1:]
         if not getattr(lib.args, "int_names", True):
             n = libib_name_map_perfquery.get(n, n)
-        print("%s:%s%u" % (n, "." * (33 - len(n)), getattr(ret, field)))
+        print(
+            "{}:{}{:d}".format(
+                n,
+                "." * (33 - len(n)),
+                getattr(ret, field),
+            ),
+        )
 
     if port_idx == 255:
-        print("# Port counters: Lid %u all ports" % (pinf.LID))
+        print("# Port counters: Lid {:d} all ports".format(pinf.LID))
     else:
-        print("# Port counters: Lid %u port %u" % (pinf.LID, ret.portSelect))
+        print("# Port counters: Lid {:d} port {:d}".format(pinf.LID, ret.portSelect))
     do_print("portXmitData")
     do_print("portRcvData")
     do_print("portXmitPkts")

@@ -69,8 +69,8 @@ class SysFSCache(object):
         """
         if name in self._cache:
             return self._cache[name]
-        with open(self._dir + name) as F:
-            s = F.read()
+        with open(self._dir + name) as f_obj:
+            s = f_obj.read()
             if convert:
                 s = convert(s)
             else:
