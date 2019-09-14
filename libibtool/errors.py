@@ -522,7 +522,7 @@ def perform_single_check(argv, o, funcs):
         thresh = load_thresholds(args.load_thresh)
         if args.show_thresh:
             for item in sorted(thresh.items()):
-                print("{}={:d}".format(item))
+                print("{}={:d}".format(*item))
             return True
         if len(values) < 1:
             raise CmdError("Got %u arguments but expected at least 1" % (len(values)))
