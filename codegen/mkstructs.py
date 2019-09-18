@@ -556,7 +556,10 @@ class Struct(object):
         else:
             print("class {}(rdma.binstruct.BinStruct):".format(self.name), file=f_obj)
         print('    """{}"""'.format(self.desc), file=f_obj)
-        print("    __slots__ = (\n        {},\n    )""".format(_slots), file=f_obj)
+        if _slots:
+            print("    __slots__ = (\n        {},\n    )""".format(_slots), file=f_obj)
+        else:
+            print("    __slots__ = ()", file=f_obj)
 
         for name, value in self.get_properties():
             print("    {} = {}".format(name, value), file=f_obj)

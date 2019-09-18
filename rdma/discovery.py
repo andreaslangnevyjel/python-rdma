@@ -340,7 +340,7 @@ class _SubnetTopo(object):
 
         if isinstance(node, rdma.subnet.Switch):
             if peer is not None:
-                aport = node.get_port(ninf.local_port_num)
+                aport = node.get_port(ninf.localPortNum)
                 self.sbn.topology[aport] = peer
                 self.sbn.topology[peer] = aport
 
@@ -355,7 +355,7 @@ class _SubnetTopo(object):
             if peer is not None:
                 self.sbn.topology[port] = peer
                 self.sbn.topology[peer] = port
-            self.sched_ports(node, path, ninf.local_port_num, depth)
+            self.sched_ports(node, path, ninf.localPortNum, depth)
 
 
 def topo_SMP(sched, sbn, get_desc: bool=True):
@@ -442,7 +442,7 @@ def topo_peer_SMP(
             lpn = getattr(
                 peer_path,
                 "_cached_subnet_local_port_num",
-                peer_node.ninf.local_port_num,
+                peer_node.ninf.localPortNum,
             )
             peer_port = sbn.get_port(
                 port_idx=lpn,

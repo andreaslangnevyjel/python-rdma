@@ -616,7 +616,7 @@ class Subnet(object):
         the appropriate information from both is integrated into the database.
 
         :rtype: tuple(:class:`Node`, :class:`Port`)"""
-        port_idx = ninf.local_port_num
+        port_idx = ninf.localPortNum
         if ninf.nodeType == IBA.NODE_SWITCH:
             type_ = Switch
             port_idx = 0
@@ -703,7 +703,7 @@ class Subnet(object):
             lmc = pinf.LMC
         port = self.get_port(
             port_select=port_select,
-            local_port_num=pinf.local_port_num,
+            local_port_num=pinf.localPortNum,
             port_idx=port_idx, path=path,
             LID=lid,
             LMC=lmc,

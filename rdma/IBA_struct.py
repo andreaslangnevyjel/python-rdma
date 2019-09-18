@@ -5121,9 +5121,7 @@ class DMDiagnosticTimeout(rdma.binstruct.BinStruct):
 
 class DMPrepareToTest(rdma.binstruct.BinStruct):
     """Prepare Device for Test (section 16.3.3.7)"""
-    __slots__ = (
-        ,
-    )
+    __slots__ = ()
     MAD_LENGTH = 0
     MAD_ATTRIBUTE_ID = 0x21
     MAD_DEVMGTGET = 0x1  # MAD_METHOD_GET
@@ -5139,9 +5137,7 @@ class DMPrepareToTest(rdma.binstruct.BinStruct):
 
 class DMTestDeviceOnce(rdma.binstruct.BinStruct):
     """Test Device Once (section 16.3.3.8)"""
-    __slots__ = (
-        ,
-    )
+    __slots__ = ()
     MAD_LENGTH = 0
     MAD_ATTRIBUTE_ID = 0x22
     MAD_DEVMGTSET = 0x2  # MAD_METHOD_SET
@@ -5156,9 +5152,7 @@ class DMTestDeviceOnce(rdma.binstruct.BinStruct):
 
 class DMTestDeviceLoop(rdma.binstruct.BinStruct):
     """Test Device Continuously (section 16.3.3.9)"""
-    __slots__ = (
-        ,
-    )
+    __slots__ = ()
     MAD_LENGTH = 0
     MAD_ATTRIBUTE_ID = 0x23
     MAD_DEVMGTSET = 0x2  # MAD_METHOD_SET
