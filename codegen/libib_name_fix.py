@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 
-import sys
 import re
+import sys
 
-MATCH_NORMAL = "([^.]+):\.+(.*)$"
-MATCH_SA = "\W+([^.]+)\.+(.*)$"
+MATCH_NORMAL = r"([^.]+):\.+(.*)$"
+MATCH_SA = r"\W+([^.]+)\.+(.*)$"
 
 
-def matchify(ref, me, match):
+def matchify(ref, l_me, match):
     gr = [_f for _f in [re.match(match, obj) for obj in ref] if _f]
-    gm = [_f for _f in [re.match(match, obj) for obj in me] if _f]
+    gm = [_f for _f in [re.match(match, obj) for obj in l_me] if _f]
     gr = [(obj.groups()[0], obj.groups()[1]) for obj in gr]
     gm = [(obj.groups()[0], obj.groups()[1]) for obj in gm]
 

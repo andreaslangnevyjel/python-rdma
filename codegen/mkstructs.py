@@ -1,12 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/python3-mwct
 # -*- coding: utf-8 -*-
 
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # ./mkstructs.py -x iba_transport.xml -x iba_12.xml -x iba_13_4.xml -x iba_13_6.xml -x iba_14.xml -x iba_15.xml
 # -x iba_16_1.xml -x iba_16_3.xml -x iba_16_4.xml -x iba_16_5.xml  -o ../rdma/IBA_struct.py -r ../doc/iba_struct.inc
 
-"""This script converts the XML descriptions of IB structures into python
-   classes and associated codegen"""
+"""
+This script converts the XML descriptions of IB structures into python
+classes and associated codegen
+"""
 
 import optparse
 import os
@@ -30,6 +32,7 @@ MAD_METHOD_DELETE = 0x15
 MAD_METHOD_RESPONSE = 0x80
 
 methodMap = {}
+
 prefix = (
     "Subn",
     "CommMgt",
@@ -102,7 +105,7 @@ class Type(object):
         if self.fmt is None:
             self.fmt = "%r"
         if self.off is not None:
-            g = re.match("^(\d+)\[(\d+)\]$", self.off)
+            g = re.match(r"^(\d+)\[(\d+)\]$", self.off)
             if g:
                 g = g.groups()
                 self.off = int(g[0]) * 8 + int(g[1])
@@ -204,8 +207,10 @@ class Struct(object):
         if self.attributeID is not None:
             self.attributeID = int(self.attributeID, 0)
 
-        self.is_format = (self.name.endswith("Format") or
-                          self.name.endswith("FormatDirected"))
+        self.is_format = (
+            self.name.endswith("Format") or
+            self.name.endswith("FormatDirected"),
+        )
         self.format = xml.get("format")
 
         self.inherits = {}
@@ -438,7 +443,7 @@ class Struct(object):
             pack.append(
                 "    struct.pack_into('>{}',buffer,offset+{:d},{});".format(
                     "".join(J[0] for J in idx),
-                    off / 8,
+                    int(off / 8),
                     ",".join(J[1] for J in idx),
                 ),
             )
@@ -446,7 +451,7 @@ class Struct(object):
                 "    ({},) = struct.unpack_from('>{}',buffer,offset+{:d});".format(
                     ",".join(J[1] for J in idx),
                     "".join(J[0] for J in idx),
-                    off / 8,
+                    int(off / 8),
                 ),
             )
 
@@ -464,6 +469,7 @@ class Struct(object):
             for cur_method in sorted(self.methods):
                 if cur_method.startswith("SubnAdm"):
                     is_sa = True
+                # print(globals().keys())
                 yield "MAD_{}".format(
                     cur_method.upper()
                 ), "0x{:x} # {}".format(
