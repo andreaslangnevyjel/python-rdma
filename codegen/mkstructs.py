@@ -551,6 +551,8 @@ class Struct(object):
                 "\"{}\"".format(I[0]) for I in self.mb if I[1].len_bits() != 0
             ]
         )
+        # extra empty line
+        print(file=f_obj)
         if self.is_format:
             print("class {}(rdma.binstruct.BinFormat):".format(self.name), file=f_obj)
         else:
@@ -564,6 +566,7 @@ class Struct(object):
         for name, value in self.get_properties():
             print("    {} = {}".format(name, value), file=f_obj)
 
+        print(file=f_obj)
         for I in self.funcs:
             print("   ", "\n    ".join(I), file=f_obj)
             print(file=f_obj)
@@ -655,12 +658,12 @@ with safe_update_ctx(options.struct_out) as gf_obj:
             p = cur_p.format.rpartition('.')
             if p[0]:
                 to_import.add(p[0])
-    print(
-        "import {}".format(
-            ", ".join(sorted(to_import)),
-        ),
-        file=gf_obj,
-    )
+    for import_name in sorted(to_import):
+        print(
+            "import {}".format(import_name),
+            file=gf_obj,
+        )
+    print(file=gf_obj)
     for cur_p in structs:
         cur_p.as_python(gf_obj)
 
