@@ -490,7 +490,7 @@ class LibIBOpts(object):
             import pickle
 
         fn = self.cache_fn
-        if not self.args.drop_cache and fn is not None and os.path.exists(fn):
+        if not self.args.drop_cache and fn is not None and os.path.exists(fn) and False:
             with open(fn, "rb") as F:
                 if self.o.verbosity >= 1:
                     print("D: Loading discovery cache from {!r}".format(fn))

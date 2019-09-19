@@ -487,16 +487,16 @@ def cmd_ibportstate(argv, o):
                 print(
                     "# Port info: Lid {:d} port {:d} (peer is Lid {:d} port {:d})".format(
                         pinf.LID,
-                        pinf.local_port_num,
+                        pinf.localPortNum,
                         peer_pinf.LID,
-                        peer_pinf.local_port_num,
+                        peer_pinf.localPortNum,
                     ),
                 )
             else:
                 print(
                     "# Port info: Lid {:d} port {:d}".format(
                         pinf.LID,
-                        pinf.local_port_num,
+                        pinf.localPortNum,
                     ),
                 )
             pinf.printer(sys.stdout, **lib.format_args)

@@ -445,10 +445,10 @@ class Subnet(object):
                         ret = self.get_path_smp(path, np.to_end_port())
 
                 # When we eat the DR path like this it breaks
-                # local_port_num, but since we are going in and out of the
+                # localPortNum, but since we are going in and out of the
                 # same port we can just record what it should have been
                 # here.
-                ret._cached_subnet_local_port_num = drPath[-2]
+                ret._cached_subnet_localPortNum = drPath[-2]
 
             return ret
 
@@ -642,7 +642,7 @@ class Subnet(object):
     def get_port(
         self,
         port_select=None,
-        local_port_num=None,
+        localPortNum=None,
         port_idx=None,
         **kwargs,
     ):
@@ -652,7 +652,7 @@ class Subnet(object):
         to disambiguate what requested port 0 means.
 
         If at all possible call this with *port_idx* set correctly and nothing
-        else. Otherwise set *local_port_num* to the value returned by the MAD.
+        else. Otherwise set *localPortNum* to the value returned by the MAD.
 
         :rtype: :class:`Port`
         :raises ValueError: If the node type is needed but not known."""
@@ -667,7 +667,7 @@ class Subnet(object):
             else:
                 node, port = self.get_node(Node, port_idx=port_idx, **kwargs)
         else:
-            # Okay, requesting port 0.. This is either local_port_num or switch port 0,
+            # Okay, requesting port 0.. This is either localPortNum or switch port 0,
             # or unknowable.
             port = self.search_end_port(**kwargs)
             if port is None or port.parent is None or port.parent.__class__ == Node:
@@ -679,7 +679,7 @@ class Subnet(object):
             if isinstance(node, Switch):
                 port_idx = 0
             else:
-                port_idx = local_port_num
+                port_idx = localPortNum
             if port_idx is None:
                 self.link_end_port(port, **kwargs)
                 return port
@@ -703,7 +703,7 @@ class Subnet(object):
             lmc = pinf.LMC
         port = self.get_port(
             port_select=port_select,
-            local_port_num=pinf.localPortNum,
+            localPortNum=pinf.localPortNum,
             port_idx=port_idx, path=path,
             LID=lid,
             LMC=lmc,

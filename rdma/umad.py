@@ -372,7 +372,12 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 if status == errno.ETIMEDOUT:
                     first = True
                     continue
-                raise rdma.RDMAError("umad send failure code=%d for %s" % (status, repr(buf)))
+                raise rdma.RDMAError(
+                    "umad send failure code={:d} for {}".format(
+                        status,
+                        repr(buf),
+                    ),
+                )
             return buf[64:rc], path
 
     @staticmethod

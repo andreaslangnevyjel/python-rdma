@@ -110,7 +110,7 @@ class MadscheduleTest(unittest.TestCase):
             yield self.get_port_info(
                 sched,
                 path,
-                ninf.local_port_num,
+                ninf.localPortNum,
                 len(path.drPath) == 1,
             )
 

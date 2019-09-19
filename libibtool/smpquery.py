@@ -67,7 +67,7 @@ def do_sl2vl(umad, kind, path, attr):
         for cur_v in range(ni.numPorts + 1):
             sl2vl[cur_v] = umad.subn_get(kind, path, cur_v << 8 | attr).SLtoVL
     else:
-        attr = ni.local_port_num
+        attr = ni.localPortNum
         sl2vl = (umad.subn_get(kind, path, attr).SLtoVL,)
 
     print("# SL2VL table", path)

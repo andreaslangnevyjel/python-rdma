@@ -17,7 +17,7 @@ def subnet_ninf_GUID(sched, sbn, node_guid):
     res = yield sched.subn_adm_get_table(req)
 
     # The SM can return multiple records that match a nodeGUID, one for each port
-    # on a CA. When it does this it must set the portGUID and local_port_num correctly
+    # on a CA. When it does this it must set the portGUID and localPortNum correctly
     # to match the LID in the RID.
     for I in res:
         np = sbn.get_node_ninf(I.nodeInfo, lid=I.LID)
@@ -441,7 +441,7 @@ def topo_peer_SMP(
         if not use_sa:
             lpn = getattr(
                 peer_path,
-                "_cached_subnet_local_port_num",
+                "_cached_subnet_localPortNum",
                 peer_node.ninf.localPortNum,
             )
             peer_port = sbn.get_port(

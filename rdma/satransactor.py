@@ -17,7 +17,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
     defined. :class:`~rdma.IBA.SMPPortInfo` requires the port number, which is
     often 0. This requires extra work unless the node type is known since the
     SA does not support the same port 0 semantics. Generally using
-    `ninf.local_port_num` as the attribute_modifier works around this.
+    `ninf.localPortNum` as the attributeModifier works around this.
 
     When using the async interface it is not possible to use a
     :class:`~rdma.path.IBDRPath` since that requires multiple MADs to resolve
@@ -95,12 +95,12 @@ class SATransactor(rdma.madtransactor.MADTransactor):
     def get_new_tid(self):
         return self._parent.get_new_tid()
 
-    def do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
+    def do_mad(self, fmt, payload, path, attributeModifier, method, completer=None):
         return self._parent.do_mad(
             fmt,
             payload,
             path,
-            attribute_modifier,
+            attributeModifier,
             method,
             completer,
         )
@@ -142,25 +142,25 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         self.req_path._cached_node_type = rpayload.nodeInfo.nodeType
         return rpayload.nodeInfo
 
-    def _subn_adm_do(self, payload, path, attribute_modifier, method, completer=None):
+    def _subn_adm_do(self, payload, path, attributeModifier, method, completer=None):
         if path is None:
             path = self.sa_path
         return rdma.madtransactor.MADTransactor._subn_adm_do(
             self,
             payload,
             path,
-            attribute_modifier,
+            attributeModifier,
             method,
             completer,
         )
 
-    def subn_get(self, payload, path, attribute_modifier=0):
+    def subn_get(self, payload, path, attributeModifier=0):
         cur_id = payload.MAD_ATTRIBUTE_ID
         _meth = payload.MAD_SUBNGET
         if cur_id == IBA.SMPGUIDInfo.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAGUIDInfoRecord())
             req.LID = self.get_path_lid(path)
-            req.blockNum = attribute_modifier
+            req.blockNum = attributeModifier
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -171,7 +171,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         if cur_id == IBA.SMPLinearForwardingTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SALinearForwardingTableRecord())
             req.LID = self.get_path_lid(path)
-            req.blockNum = attribute_modifier
+            req.blockNum = attributeModifier
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -185,8 +185,8 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         if cur_id == IBA.SMPMulticastForwardingTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAMulticastForwardingTableRecord())
             req.LID = self.get_path_lid(path)
-            req.blockNum = attribute_modifier & ((1 << 9) - 1)
-            req.position = (attribute_modifier >> 12) & 0xF
+            req.blockNum = attributeModifier & ((1 << 9) - 1)
+            req.position = (attributeModifier >> 12) & 0xF
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -223,8 +223,8 @@ class SATransactor(rdma.madtransactor.MADTransactor):
             req.LID = self.get_path_lid(path)
             nt = getattr(path, "_cached_node_type", None)
             if nt is None or nt == IBA.NODE_SWITCH:
-                req.portNum = attribute_modifier >> 16
-            req.blockNum = attribute_modifier & 0xFFFF
+                req.portNum = attributeModifier >> 16
+            req.blockNum = attributeModifier & 0xFFFF
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -240,7 +240,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
             req = IBA.ComponentMask(IBA.SAPortInfoRecord())
             req.endportLID = self.get_path_lid(path)
             if (
-                attribute_modifier == 0 and getattr(
+                attributeModifier == 0 and getattr(
                     path,
                     "_cached_node_type",
                     None,
@@ -257,7 +257,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                     self._finish_port_info_attr0,
                 )
 
-            req.portNum = attribute_modifier
+            req.portNum = attributeModifier
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -268,8 +268,8 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         if cur_id == IBA.SMPSLToVLMappingTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SASLToVLMappingTableRecord())
             req.LID = self.get_path_lid(path)
-            req.inputPortNum = (attribute_modifier >> 8) & 0xFF
-            req.outputPortNum = attribute_modifier & 0xFF
+            req.inputPortNum = (attributeModifier >> 8) & 0xFF
+            req.outputPortNum = attributeModifier & 0xFF
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -303,8 +303,8 @@ class SATransactor(rdma.madtransactor.MADTransactor):
         if cur_id == IBA.SMPVLArbitrationTable.MAD_ATTRIBUTE_ID:
             req = IBA.ComponentMask(IBA.SAVLArbitrationTableRecord())
             req.LID = self.get_path_lid(path)
-            req.outputPortNum = attribute_modifier & 0xFFFF
-            req.blockNum = (attribute_modifier >> 16) & 0xFFFF
+            req.outputPortNum = attributeModifier & 0xFFFF
+            req.blockNum = (attributeModifier >> 16) & 0xFFFF
             return self._subn_adm_do(
                 req,
                 self.sa_path,
@@ -316,7 +316,7 @@ class SATransactor(rdma.madtransactor.MADTransactor):
                 ),
             )
 
-        return self._parent.subn_get(payload, path, attribute_modifier)
+        return self._parent.subn_get(payload, path, attributeModifier)
 
     def __getattr__(self, name):
         """Let us wrapper things with additional members."""

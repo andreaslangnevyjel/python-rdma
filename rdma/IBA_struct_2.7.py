@@ -50,7 +50,7 @@ class HdrRWH(rdma.binstruct.BinStruct):
     MAD_LENGTH = 4
     MEMBERS = [('reserved_0',16,1), ('etherType',16,1)]
     def zero(self):
-        self.reserved_0 = 0;
+self.reserved_0 = 0;hlMS975
         self.etherType = 0;
 
     def pack_into(self,buffer,offset=0):

@@ -179,7 +179,7 @@ def get_perf(sched, path, ninf, port_idx, reset: bool=False, select: int=0xFFFF)
     """Coroutine to get port counters."""
     cnts = IBA.PMPortCounters()
     if port_idx is None:
-        cnts.portSelect = ninf.local_port_num
+        cnts.portSelect = ninf.localPortNum
         if ninf.nodeType == IBA.NODE_SWITCH and cnts.portSelect == 0:
             cnts.portSelect = 1
     else:
@@ -293,7 +293,7 @@ def do_check_port(sched, path, desc, ninf, pinf, port_idx, port, sbn, **_kwargs)
     if ninf.nodeType != IBA.NODE_SWITCH:
         check_eq(
             pinf,
-            "local_port_num",
+            "localPortNum",
             port_idx,
             desc=desc,
         )
@@ -545,7 +545,7 @@ def perform_single_check(argv, o, funcs):
         if kinds & (KIND_PERF | KIND_PORT):
             kwargs["port_idx"] = port_idx = values[1]
         else:
-            port_idx = ninf.local_port_num
+            port_idx = ninf.localPortNum
 
         if kinds & KIND_PORT:
             kwargs["pinf"] = pinf = umad.subn_get(IBA.SMPPortInfo, path, values[1])
