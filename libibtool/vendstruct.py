@@ -36,7 +36,7 @@ def install_vend():
     Since the vendor MADs can collide we prefer to only setup the dumper
     if they are going to be used.
     """
-    import libibtool.vend as vend
+    from . import vend
     formats = set(key[0] for key in vend.ATTR_TO_STRUCT.keys())
     for fmt in formats:
         vend.ATTR_TO_STRUCT[

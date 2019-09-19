@@ -2,14 +2,12 @@
 # -*- coding: utf-8 -*-
 
 
-import rdma.IBA_describe as IBA_describe
-from libibtool.libibopts import *
 from typing import Tuple
 
-try:
-    import pickle as pickle
-except ImportError:
-    import pickle
+import rdma.IBA_describe as IBA_describe
+from .libibopts import *
+
+import pickle
 
 
 def load_cache(lib, fn, need):
@@ -18,7 +16,7 @@ def load_cache(lib, fn, need):
     with open(fn, "r") as F:
         try:
             sbn = pickle.load(F)
-        except:
+        except Exception:
             e = sys.exc_info()[1]
             raise CmdError("The file %r is not a valid cache file, could not unpickle - %s: %s" % (
                 fn, type(e).__name__, e))

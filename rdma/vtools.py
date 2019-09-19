@@ -118,6 +118,7 @@ class BufferPool(object):
         (eg for connected QPs)
         """
         if path is not None:
+            print("*", path)
             return ibv.send_wr(
                 wr_id=buf_idx,
                 sg_list=self.make_sge(buf_idx, buf_len),

@@ -5,7 +5,7 @@ import time
 
 import rdma.path
 import rdma.tools
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def sum_result(results):
@@ -316,8 +316,8 @@ def cmd_ibswportwatch(argv, o):
 
             q = Querier(umad, lib.path, args, lib.format_args)
             if args.mode == 2:
-                import libibtool.errors
-                q.thresh = libibtool.errors.load_thresholds(args.load_thresh)
+                from . import errors
+                q.thresh = errors.load_thresholds(args.load_thresh)
             cnts = args.kind()
             q.setup(cnts, values[1])
             sched = lib.get_sched(umad, lib.path)

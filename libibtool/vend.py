@@ -2,8 +2,8 @@
 
 import struct
 
-import libibtool.vendstruct
 import rdma.binstruct
+import vendstruct
 
 
 class MlxGeneralInfo(rdma.binstruct.BinStruct):
@@ -14,7 +14,7 @@ class MlxGeneralInfo(rdma.binstruct.BinStruct):
         "fw_init_file_version", "reserved_608", "hw_major", "hw_minor", "hw_sub_minor", "reserved_640",
     )
     MAD_LENGTH = 108
-    FORMAT = libibtool.vendstruct.MlxFormat
+    FORMAT = vendstruct.MlxFormat
     MAD_ATTRIBUTE_ID = 0x17
     MAD_VENDGET = 0x1  # MAD_METHOD_GET
     MEMBERS = [
@@ -111,7 +111,7 @@ class OFASysStatPing(rdma.binstruct.BinStruct):
     """None (section None)"""
     __slots__ = ("cookie", )
     MAD_LENGTH = 64
-    FORMAT = libibtool.vendstruct.OFASysStatFormat
+    FORMAT = vendstruct.OFASysStatFormat
     MAD_ATTRIBUTE_ID = 0x10
     MAD_VENDGET = 0x1  # MAD_METHOD_GET
     MEMBERS = [
@@ -132,7 +132,7 @@ class OFASysStatHostInfo(rdma.binstruct.BinStruct):
     """None (section None)"""
     __slots__ = ("data_str",)
     MAD_LENGTH = 216
-    FORMAT = libibtool.vendstruct.OFASysStatFormat
+    FORMAT = vendstruct.OFASysStatFormat
     MAD_ATTRIBUTE_ID = 0x11
     MAD_VENDGET = 0x1  # MAD_METHOD_GET
     MEMBERS = [
@@ -157,7 +157,7 @@ class OFASysStatCPUInfo(rdma.binstruct.BinStruct):
     """None (section None)"""
     __slots__ = ("data_str",)
     MAD_LENGTH = 216
-    FORMAT = libibtool.vendstruct.OFASysStatFormat
+    FORMAT = vendstruct.OFASysStatFormat
     MAD_ATTRIBUTE_ID = 0x112
     MAD_VENDGET = 0x1  # MAD_METHOD_GET
     MEMBERS = [
@@ -183,8 +183,8 @@ MEMBER_FORMATS = {"data_str": "str"}
 CLASS_TO_STRUCT = {}
 
 ATTR_TO_STRUCT = {
-    (libibtool.vendstruct.MlxFormat, 23): MlxGeneralInfo,
-    (libibtool.vendstruct.OFASysStatFormat, 16): OFASysStatPing,
-    (libibtool.vendstruct.OFASysStatFormat, 17): OFASysStatHostInfo,
-    (libibtool.vendstruct.OFASysStatFormat, 274): OFASysStatCPUInfo,
+    (vendstruct.MlxFormat, 23): MlxGeneralInfo,
+    (vendstruct.OFASysStatFormat, 16): OFASysStatPing,
+    (vendstruct.OFASysStatFormat, 17): OFASysStatHostInfo,
+    (vendstruct.OFASysStatFormat, 274): OFASysStatCPUInfo,
 }

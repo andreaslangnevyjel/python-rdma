@@ -6,7 +6,7 @@ import time
 
 import rdma.IBA_describe as IBA_describe
 import rdma.subnet
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def as_node_name(node) -> str:

@@ -1,7 +1,7 @@
 # Copyright 2015 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def set_guid(lid, guid, slot):

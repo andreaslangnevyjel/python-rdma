@@ -12,7 +12,7 @@ import rdma.ibverbs as ibv
 
 import rdma.path
 import rdma.vtools
-from libibtool.libibopts import *
+from .libibopts import *
 
 infotype = namedtuple("infotype", "path addr rkey size iters")
 

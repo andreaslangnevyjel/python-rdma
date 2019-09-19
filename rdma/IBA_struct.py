@@ -58,7 +58,7 @@ class HdrLRH(rdma.binstruct.BinStruct):
         struct.pack_into(">LL", buffer, offset + 0, self._pack_0_32, self._pack_1_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32, self._pack_1_32) = struct.unpack_from(">LL", buffer, offset + 0)
+        (self._pack_0_32, self._pack_1_32,) = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class HdrRWH(rdma.binstruct.BinStruct):
@@ -80,7 +80,7 @@ class HdrRWH(rdma.binstruct.BinStruct):
         struct.pack_into(">HH", buffer, offset + 0, self.reserved_0, self.etherType)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.etherType) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self.reserved_0, self.etherType,) = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class HdrGRH(rdma.binstruct.BinStruct):
@@ -128,7 +128,7 @@ class HdrGRH(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.SGID = IBA.GID(buffer[offset + 8:offset + 24], raw=True)
         self.DGID = IBA.GID(buffer[offset + 24:offset + 40], raw=True)
-        (self._pack_0_32, self.payLen, self.nxtHdr, self.hopLmt) = struct.unpack_from(">LHBB", buffer, offset + 0)
+        (self._pack_0_32, self.payLen, self.nxtHdr, self.hopLmt,) = struct.unpack_from(">LHBB", buffer, offset + 0)
 
 
 class HdrBTH(rdma.binstruct.BinStruct):
@@ -203,7 +203,7 @@ class HdrBTH(rdma.binstruct.BinStruct):
         struct.pack_into(">LLL", buffer, offset + 0, self._pack_0_32, self._pack_1_32, self._pack_2_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32, self._pack_1_32, self._pack_2_32) = struct.unpack_from(">LLL", buffer, offset + 0)
+        (self._pack_0_32, self._pack_1_32, self._pack_2_32,) = struct.unpack_from(">LLL", buffer, offset + 0)
 
 
 class HdrRDETH(rdma.binstruct.BinStruct):
@@ -234,7 +234,7 @@ class HdrRDETH(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self._pack_0_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class HdrDETH(rdma.binstruct.BinStruct):
@@ -267,7 +267,7 @@ class HdrDETH(rdma.binstruct.BinStruct):
         struct.pack_into(">LL", buffer, offset + 0, self.QKey, self._pack_0_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.QKey, self._pack_0_32) = struct.unpack_from(">LL", buffer, offset + 0)
+        (self.QKey, self._pack_0_32,) = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class HdrRETH(rdma.binstruct.BinStruct):
@@ -291,7 +291,7 @@ class HdrRETH(rdma.binstruct.BinStruct):
         struct.pack_into(">QLL", buffer, offset + 0, self.VA, self.RKey, self.DMALen)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.VA, self.RKey, self.DMALen) = struct.unpack_from(">QLL", buffer, offset + 0)
+        (self.VA, self.RKey, self.DMALen,) = struct.unpack_from(">QLL", buffer, offset + 0)
 
 
 class HdrAtomicETH(rdma.binstruct.BinStruct):
@@ -317,7 +317,7 @@ class HdrAtomicETH(rdma.binstruct.BinStruct):
         struct.pack_into(">QLQQ", buffer, offset + 0, self.VA, self.RKey, self.swapData, self.cmpData)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.VA, self.RKey, self.swapData, self.cmpData) = struct.unpack_from(">QLQQ", buffer, offset + 0)
+        (self.VA, self.RKey, self.swapData, self.cmpData,) = struct.unpack_from(">QLQQ", buffer, offset + 0)
 
 
 class HdrAETH(rdma.binstruct.BinStruct):
@@ -348,7 +348,7 @@ class HdrAETH(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self._pack_0_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class HdrAtomicAckETH(rdma.binstruct.BinStruct):
@@ -368,7 +368,7 @@ class HdrAtomicAckETH(rdma.binstruct.BinStruct):
         struct.pack_into(">Q", buffer, offset + 0, self.origRData)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.origRData) = struct.unpack_from(">Q", buffer, offset + 0)
+        (self.origRData,) = struct.unpack_from(">Q", buffer, offset + 0)
 
 
 class HdrImmDt(rdma.binstruct.BinStruct):
@@ -388,7 +388,7 @@ class HdrImmDt(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self.immediateData)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.immediateData) = struct.unpack_from(">L", buffer, offset + 0)
+        (self.immediateData,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class HdrIETH(rdma.binstruct.BinStruct):
@@ -408,7 +408,7 @@ class HdrIETH(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self.RKey)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.RKey) = struct.unpack_from(">L", buffer, offset + 0)
+        (self.RKey,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class HdrFlowControl(rdma.binstruct.BinStruct):
@@ -445,7 +445,7 @@ class HdrFlowControl(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self._pack_0_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class CMFormat(rdma.binstruct.BinFormat):
@@ -489,7 +489,7 @@ class CMFormat(rdma.binstruct.BinFormat):
 
     def unpack_from(self, buffer, offset: int=0):
         self.data = bytearray(buffer[offset + 24:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
 
 
 class CMPath(rdma.binstruct.BinStruct):
@@ -567,8 +567,8 @@ class CMPath(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.SGID = IBA.GID(buffer[offset + 4:offset + 20], raw=True)
         self.DGID = IBA.GID(buffer[offset + 20:offset + 36], raw=True)
-        (self.SLID, self.DLID) = struct.unpack_from(">HH", buffer, offset + 0)
-        (self._pack_0_32, self._pack_1_32) = struct.unpack_from(">LL", buffer, offset + 36)
+        (self.SLID, self.DLID,) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self._pack_0_32, self._pack_1_32,) = struct.unpack_from(">LL", buffer, offset + 36)
 
 
 class CMREQ(rdma.binstruct.BinStruct):
@@ -706,8 +706,8 @@ class CMREQ(rdma.binstruct.BinStruct):
         self.primaryPath.unpack_from(buffer, offset + 52)
         self.alternatePath.unpack_from(buffer, offset + 96)
         self.privateData = bytearray(buffer[offset + 140:offset + 232])
-        (self.LCID, self.reserved_32, self.serviceID) = struct.unpack_from(">LLQ", buffer, offset + 0)
-        (self.localCMQKey, self.localQKey, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32, self._pack_4_32) = struct.unpack_from(">LLLLLLL", buffer, offset + 24)
+        (self.LCID, self.reserved_32, self.serviceID,) = struct.unpack_from(">LLQ", buffer, offset + 0)
+        (self.localCMQKey, self.localQKey, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32, self._pack_4_32,) = struct.unpack_from(">LLLLLLL", buffer, offset + 24)
 
 
 class CMMRA(rdma.binstruct.BinStruct):
@@ -757,7 +757,7 @@ class CMMRA(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.privateData = bytearray(buffer[offset + 12:offset + 232])
-        (self.LCID, self.RCID, self._pack_0_32) = struct.unpack_from(">LLL", buffer, offset + 0)
+        (self.LCID, self.RCID, self._pack_0_32,) = struct.unpack_from(">LLL", buffer, offset + 0)
 
 
 class CMREJ(rdma.binstruct.BinStruct):
@@ -811,7 +811,7 @@ class CMREJ(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.ARI = bytearray(buffer[offset + 12:offset + 84])
         self.privateData = bytearray(buffer[offset + 84:offset + 232])
-        (self.LCID, self.RCID, self._pack_0_32) = struct.unpack_from(">LLL", buffer, offset + 0)
+        (self.LCID, self.RCID, self._pack_0_32,) = struct.unpack_from(">LLL", buffer, offset + 0)
 
 
 class CMREP(rdma.binstruct.BinStruct):
@@ -912,7 +912,7 @@ class CMREP(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.LGUID = IBA.GUID(buffer[offset + 28:offset + 36], raw=True)
         self.privateData = bytearray(buffer[offset + 36:offset + 232])
-        (self.LCID, self.RCID, self.localQKey, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32) = struct.unpack_from(">LLLLLLL", buffer, offset + 0)
+        (self.LCID, self.RCID, self.localQKey, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32,) = struct.unpack_from(">LLLLLLL", buffer, offset + 0)
 
 
 class CMRTU(rdma.binstruct.BinStruct):
@@ -940,7 +940,7 @@ class CMRTU(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.privateData = bytearray(buffer[offset + 8:offset + 232])
-        (self.LCID, self.RCID) = struct.unpack_from(">LL", buffer, offset + 0)
+        (self.LCID, self.RCID,) = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class CMDREQ(rdma.binstruct.BinStruct):
@@ -981,7 +981,7 @@ class CMDREQ(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.privateData = bytearray(buffer[offset + 12:offset + 232])
-        (self.LCID, self.RCID, self._pack_0_32) = struct.unpack_from(">LLL", buffer, offset + 0)
+        (self.LCID, self.RCID, self._pack_0_32,) = struct.unpack_from(">LLL", buffer, offset + 0)
 
 
 class CMDREP(rdma.binstruct.BinStruct):
@@ -1009,7 +1009,7 @@ class CMDREP(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.privateData = bytearray(buffer[offset + 8:offset + 232])
-        (self.LCID, self.RCID) = struct.unpack_from(">LL", buffer, offset + 0)
+        (self.LCID, self.RCID,) = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class CMLAP(rdma.binstruct.BinStruct):
@@ -1117,8 +1117,8 @@ class CMLAP(rdma.binstruct.BinStruct):
         self.altSGID = IBA.GID(buffer[offset + 24:offset + 40], raw=True)
         self.altDGID = IBA.GID(buffer[offset + 40:offset + 56], raw=True)
         self.privateData = bytearray(buffer[offset + 64:offset + 232])
-        (self.LCID, self.RCID, self.QKey, self._pack_0_32, self.reserved_128, self.altSLID, self.altDLID) = struct.unpack_from(">LLLLLHH", buffer, offset + 0)
-        (self._pack_1_32, self._pack_2_32) = struct.unpack_from(">LL", buffer, offset + 56)
+        (self.LCID, self.RCID, self.QKey, self._pack_0_32, self.reserved_128, self.altSLID, self.altDLID,) = struct.unpack_from(">LLLLLHH", buffer, offset + 0)
+        (self._pack_1_32, self._pack_2_32,) = struct.unpack_from(">LL", buffer, offset + 56)
 
 
 class CMAPR(rdma.binstruct.BinStruct):
@@ -1156,7 +1156,7 @@ class CMAPR(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.additionalInfo = bytearray(buffer[offset + 12:offset + 84])
         self.privateData = bytearray(buffer[offset + 84:offset + 232])
-        (self.LCID, self.RCID, self.additionalInfoLength, self.APstatus, self.reserved_80) = struct.unpack_from(">LLBBH", buffer, offset + 0)
+        (self.LCID, self.RCID, self.additionalInfoLength, self.APstatus, self.reserved_80,) = struct.unpack_from(">LLBBH", buffer, offset + 0)
 
 
 class CMSIDR_REQ(rdma.binstruct.BinStruct):
@@ -1186,7 +1186,7 @@ class CMSIDR_REQ(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.privateData = bytearray(buffer[offset + 16:offset + 232])
-        (self.requestID, self.reserved_32, self.serviceID) = struct.unpack_from(">LLQ", buffer, offset + 0)
+        (self.requestID, self.reserved_32, self.serviceID,) = struct.unpack_from(">LLQ", buffer, offset + 0)
 
 
 class CMSIDR_REP(rdma.binstruct.BinStruct):
@@ -1237,7 +1237,7 @@ class CMSIDR_REP(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.classPortinfo.unpack_from(buffer, offset + 20)
         self.privateData = bytearray(buffer[offset + 92:offset + 232])
-        (self.requestID, self._pack_0_32, self.serviceID, self.QKey) = struct.unpack_from(">LLQL", buffer, offset + 0)
+        (self.requestID, self._pack_0_32, self.serviceID, self.QKey,) = struct.unpack_from(">LLQL", buffer, offset + 0)
 
 
 class MADHeader(rdma.binstruct.BinStruct):
@@ -1275,7 +1275,7 @@ class MADHeader(rdma.binstruct.BinStruct):
         struct.pack_into(">BBBBHHQHHL", buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
 
 
 class MADHeaderDirected(rdma.binstruct.BinStruct):
@@ -1328,7 +1328,7 @@ class MADHeaderDirected(rdma.binstruct.BinStruct):
         struct.pack_into(">BBBBLQHHL", buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBLQHHL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBLQHHL", buffer, offset + 0)
 
 
 class MADClassPortInfo(rdma.binstruct.BinStruct):
@@ -1480,9 +1480,9 @@ class MADClassPortInfo(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.redirectGID = IBA.GID(buffer[offset + 8:offset + 24], raw=True)
         self.trapGID = IBA.GID(buffer[offset + 40:offset + 56], raw=True)
-        (self.baseVersion, self.classVersion, self.capabilityMask, self._pack_0_32) = struct.unpack_from(">BBHL", buffer, offset + 0)
-        (self._pack_1_32, self.redirectLID, self.redirectPKey, self._pack_2_32, self.redirectQKey) = struct.unpack_from(">LHHLL", buffer, offset + 24)
-        (self._pack_3_32, self.trapLID, self.trapPKey, self._pack_4_32, self.trapQKey) = struct.unpack_from(">LHHLL", buffer, offset + 56)
+        (self.baseVersion, self.classVersion, self.capabilityMask, self._pack_0_32,) = struct.unpack_from(">BBHL", buffer, offset + 0)
+        (self._pack_1_32, self.redirectLID, self.redirectPKey, self._pack_2_32, self.redirectQKey,) = struct.unpack_from(">LHHLL", buffer, offset + 24)
+        (self._pack_3_32, self.trapLID, self.trapPKey, self._pack_4_32, self.trapQKey,) = struct.unpack_from(">LHHLL", buffer, offset + 56)
 
 
 class MADInformInfo(rdma.binstruct.BinStruct):
@@ -1564,7 +1564,7 @@ class MADInformInfo(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.GID = IBA.GID(buffer[offset + 0:offset + 16], raw=True)
-        (self.LIDRangeBegin, self.LIDRangeEnd, self.reserved_160, self.isGeneric, self.subscribe, self.type, self.trapNumber, self._pack_0_32, self._pack_1_32) = struct.unpack_from(">HHHBBHHLL", buffer, offset + 16)
+        (self.LIDRangeBegin, self.LIDRangeEnd, self.reserved_160, self.isGeneric, self.subscribe, self.type, self.trapNumber, self._pack_0_32, self._pack_1_32,) = struct.unpack_from(">HHHBBHHLL", buffer, offset + 16)
 
 
 class RMPPHeader(rdma.binstruct.BinStruct):
@@ -1616,7 +1616,7 @@ class RMPPHeader(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.MADHeader.unpack_from(buffer, offset + 0)
-        (self._pack_0_32, self.data1, self.data2) = struct.unpack_from(">LLL", buffer, offset + 24)
+        (self._pack_0_32, self.data1, self.data2,) = struct.unpack_from(">LLL", buffer, offset + 24)
 
 
 class RMPPShortHeader(rdma.binstruct.BinStruct):
@@ -1664,7 +1664,7 @@ class RMPPShortHeader(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.MADHeader.unpack_from(buffer, offset + 0)
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 24)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 24)
 
 
 class RMPPData(rdma.binstruct.BinStruct):
@@ -1698,7 +1698,7 @@ class RMPPData(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.RMPPHeader.unpack_from(buffer, offset + 0)
         self.data = bytearray(buffer[offset + 36:offset + 256])
-        (self.segmentNumber, self.payLoadLength) = struct.unpack_from(">LL", buffer, offset + 28)
+        (self.segmentNumber, self.payLoadLength,) = struct.unpack_from(">LL", buffer, offset + 28)
 
 
 class RMPPAck(rdma.binstruct.BinStruct):
@@ -1732,7 +1732,7 @@ class RMPPAck(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.RMPPHeader.unpack_from(buffer, offset + 0)
         self.reserved_288 = bytearray(buffer[offset + 36:offset + 256])
-        (self.segmentNumber, self.newWindowLast) = struct.unpack_from(">LL", buffer, offset + 28)
+        (self.segmentNumber, self.newWindowLast,) = struct.unpack_from(">LL", buffer, offset + 28)
 
 
 class RMPPAbort(rdma.binstruct.BinStruct):
@@ -1766,7 +1766,7 @@ class RMPPAbort(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.RMPPHeader.unpack_from(buffer, offset + 0)
         self.errorData = bytearray(buffer[offset + 36:offset + 256])
-        (self.reserved_224, self.reserved_256) = struct.unpack_from(">LL", buffer, offset + 28)
+        (self.reserved_224, self.reserved_256,) = struct.unpack_from(">LL", buffer, offset + 28)
 
 
 class RMPPStop(rdma.binstruct.BinStruct):
@@ -1800,7 +1800,7 @@ class RMPPStop(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.RMPPHeader.unpack_from(buffer, offset + 0)
         self.errorData = bytearray(buffer[offset + 36:offset + 256])
-        (self.reserved_224, self.reserved_256) = struct.unpack_from(">LL", buffer, offset + 28)
+        (self.reserved_224, self.reserved_256,) = struct.unpack_from(">LL", buffer, offset + 28)
 
 
 class SMPLIDPortBlock(rdma.binstruct.BinStruct):
@@ -1840,7 +1840,7 @@ class SMPLIDPortBlock(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self._pack_0_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class SMPFormat(rdma.binstruct.BinFormat):
@@ -1894,7 +1894,7 @@ class SMPFormat(rdma.binstruct.BinFormat):
         self.reserved_256 = bytearray(buffer[offset + 32:offset + 64])
         self.data = bytearray(buffer[offset + 64:offset + 128])
         self.reserved_1024 = bytearray(buffer[offset + 128:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self.MKey) = struct.unpack_from(">BBBBHHQHHLQ", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self.MKey,) = struct.unpack_from(">BBBBHHQHHLQ", buffer, offset + 0)
 
 
 class SMPFormatDirected(rdma.binstruct.BinFormat):
@@ -1976,7 +1976,7 @@ class SMPFormatDirected(rdma.binstruct.BinFormat):
         self.data = bytearray(buffer[offset + 64:offset + 128])
         self.initialPath = bytearray(buffer[offset + 128:offset + 192])
         self.returnPath = bytearray(buffer[offset + 192:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self.MKey, self.drSLID, self.drDLID) = struct.unpack_from(">BBBBLQHHLQHH", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self._pack_0_32, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self.MKey, self.drSLID, self.drDLID,) = struct.unpack_from(">BBBBLQHHLQHH", buffer, offset + 0)
 
 
 class SMPNodeDescription(rdma.binstruct.BinStruct):
@@ -2062,8 +2062,8 @@ class SMPNodeInfo(rdma.binstruct.BinStruct):
         self.systemImageGUID = IBA.GUID(buffer[offset + 4:offset + 12], raw=True)
         self.nodeGUID = IBA.GUID(buffer[offset + 12:offset + 20], raw=True)
         self.portGUID = IBA.GUID(buffer[offset + 20:offset + 28], raw=True)
-        (self.baseVersion, self.classVersion, self.nodeType, self.numPorts) = struct.unpack_from(">BBBB", buffer, offset + 0)
-        (self.partitionCap, self.deviceID, self.revision, self._pack_0_32) = struct.unpack_from(">HHLL", buffer, offset + 28)
+        (self.baseVersion, self.classVersion, self.nodeType, self.numPorts,) = struct.unpack_from(">BBBB", buffer, offset + 0)
+        (self.partitionCap, self.deviceID, self.revision, self._pack_0_32,) = struct.unpack_from(">HHLL", buffer, offset + 28)
 
 
 class SMPSwitchInfo(rdma.binstruct.BinStruct):
@@ -2152,7 +2152,7 @@ class SMPSwitchInfo(rdma.binstruct.BinStruct):
         struct.pack_into(">HHHHLHHL", buffer, offset + 0, self.linearFDBCap, self.randomFDBCap, self.multicastFDBCap, self.linearFDBTop, self._pack_0_32, self.LIDsPerPort, self.partitionEnforcementCap, self._pack_1_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.linearFDBCap, self.randomFDBCap, self.multicastFDBCap, self.linearFDBTop, self._pack_0_32, self.LIDsPerPort, self.partitionEnforcementCap, self._pack_1_32) = struct.unpack_from(">HHHHLHHL", buffer, offset + 0)
+        (self.linearFDBCap, self.randomFDBCap, self.multicastFDBCap, self.linearFDBTop, self._pack_0_32, self.LIDsPerPort, self.partitionEnforcementCap, self._pack_1_32,) = struct.unpack_from(">HHHHLHHL", buffer, offset + 0)
 
 
 class SMPGUIDInfo(rdma.binstruct.BinStruct):
@@ -2415,7 +2415,7 @@ class SMPPortInfo(rdma.binstruct.BinStruct):
         struct.pack_into(">QQHHLHHBBBBLLLHHLLLL", buffer, offset + 0, self.MKey, self.GIDPrefix, self.LID, self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod, self.localPortNum, self.linkWidthEnabled, self.linkWidthSupported, self.linkWidthActive, self._pack_0_32, self._pack_1_32, self._pack_2_32, self.MKeyViolations, self.PKeyViolations, self._pack_3_32, self._pack_4_32, self._pack_5_32, self._pack_6_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.MKey, self.GIDPrefix, self.LID, self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod, self.localPortNum, self.linkWidthEnabled, self.linkWidthSupported, self.linkWidthActive, self._pack_0_32, self._pack_1_32, self._pack_2_32, self.MKeyViolations, self.PKeyViolations, self._pack_3_32, self._pack_4_32, self._pack_5_32, self._pack_6_32) = struct.unpack_from(">QQHHLHHBBBBLLLHHLLLL", buffer, offset + 0)
+        (self.MKey, self.GIDPrefix, self.LID, self.masterSMLID, self.capabilityMask, self.diagCode, self.MKeyLeasePeriod, self.localPortNum, self.linkWidthEnabled, self.linkWidthSupported, self.linkWidthActive, self._pack_0_32, self._pack_1_32, self._pack_2_32, self.MKeyViolations, self.PKeyViolations, self._pack_3_32, self._pack_4_32, self._pack_5_32, self._pack_6_32,) = struct.unpack_from(">QQHHLHHBBBBLLLHHLLLL", buffer, offset + 0)
 
 
 class SMPPKeyTable(rdma.binstruct.BinStruct):
@@ -2442,7 +2442,7 @@ class SMPPKeyTable(rdma.binstruct.BinStruct):
         struct.pack_into(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0, self.PKeyBlock[0], self.PKeyBlock[1], self.PKeyBlock[2], self.PKeyBlock[3], self.PKeyBlock[4], self.PKeyBlock[5], self.PKeyBlock[6], self.PKeyBlock[7], self.PKeyBlock[8], self.PKeyBlock[9], self.PKeyBlock[10], self.PKeyBlock[11], self.PKeyBlock[12], self.PKeyBlock[13], self.PKeyBlock[14], self.PKeyBlock[15], self.PKeyBlock[16], self.PKeyBlock[17], self.PKeyBlock[18], self.PKeyBlock[19], self.PKeyBlock[20], self.PKeyBlock[21], self.PKeyBlock[22], self.PKeyBlock[23], self.PKeyBlock[24], self.PKeyBlock[25], self.PKeyBlock[26], self.PKeyBlock[27], self.PKeyBlock[28], self.PKeyBlock[29], self.PKeyBlock[30], self.PKeyBlock[31])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.PKeyBlock[0], self.PKeyBlock[1], self.PKeyBlock[2], self.PKeyBlock[3], self.PKeyBlock[4], self.PKeyBlock[5], self.PKeyBlock[6], self.PKeyBlock[7], self.PKeyBlock[8], self.PKeyBlock[9], self.PKeyBlock[10], self.PKeyBlock[11], self.PKeyBlock[12], self.PKeyBlock[13], self.PKeyBlock[14], self.PKeyBlock[15], self.PKeyBlock[16], self.PKeyBlock[17], self.PKeyBlock[18], self.PKeyBlock[19], self.PKeyBlock[20], self.PKeyBlock[21], self.PKeyBlock[22], self.PKeyBlock[23], self.PKeyBlock[24], self.PKeyBlock[25], self.PKeyBlock[26], self.PKeyBlock[27], self.PKeyBlock[28], self.PKeyBlock[29], self.PKeyBlock[30], self.PKeyBlock[31]) = struct.unpack_from(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self.PKeyBlock[0], self.PKeyBlock[1], self.PKeyBlock[2], self.PKeyBlock[3], self.PKeyBlock[4], self.PKeyBlock[5], self.PKeyBlock[6], self.PKeyBlock[7], self.PKeyBlock[8], self.PKeyBlock[9], self.PKeyBlock[10], self.PKeyBlock[11], self.PKeyBlock[12], self.PKeyBlock[13], self.PKeyBlock[14], self.PKeyBlock[15], self.PKeyBlock[16], self.PKeyBlock[17], self.PKeyBlock[18], self.PKeyBlock[19], self.PKeyBlock[20], self.PKeyBlock[21], self.PKeyBlock[22], self.PKeyBlock[23], self.PKeyBlock[24], self.PKeyBlock[25], self.PKeyBlock[26], self.PKeyBlock[27], self.PKeyBlock[28], self.PKeyBlock[29], self.PKeyBlock[30], self.PKeyBlock[31],) = struct.unpack_from(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class SMPSLToVLMappingTable(rdma.binstruct.BinStruct):
@@ -2496,7 +2496,7 @@ class SMPVLArbitrationTable(rdma.binstruct.BinStruct):
         struct.pack_into(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0, self.VLWeightBlock[0], self.VLWeightBlock[1], self.VLWeightBlock[2], self.VLWeightBlock[3], self.VLWeightBlock[4], self.VLWeightBlock[5], self.VLWeightBlock[6], self.VLWeightBlock[7], self.VLWeightBlock[8], self.VLWeightBlock[9], self.VLWeightBlock[10], self.VLWeightBlock[11], self.VLWeightBlock[12], self.VLWeightBlock[13], self.VLWeightBlock[14], self.VLWeightBlock[15], self.VLWeightBlock[16], self.VLWeightBlock[17], self.VLWeightBlock[18], self.VLWeightBlock[19], self.VLWeightBlock[20], self.VLWeightBlock[21], self.VLWeightBlock[22], self.VLWeightBlock[23], self.VLWeightBlock[24], self.VLWeightBlock[25], self.VLWeightBlock[26], self.VLWeightBlock[27], self.VLWeightBlock[28], self.VLWeightBlock[29], self.VLWeightBlock[30], self.VLWeightBlock[31])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.VLWeightBlock[0], self.VLWeightBlock[1], self.VLWeightBlock[2], self.VLWeightBlock[3], self.VLWeightBlock[4], self.VLWeightBlock[5], self.VLWeightBlock[6], self.VLWeightBlock[7], self.VLWeightBlock[8], self.VLWeightBlock[9], self.VLWeightBlock[10], self.VLWeightBlock[11], self.VLWeightBlock[12], self.VLWeightBlock[13], self.VLWeightBlock[14], self.VLWeightBlock[15], self.VLWeightBlock[16], self.VLWeightBlock[17], self.VLWeightBlock[18], self.VLWeightBlock[19], self.VLWeightBlock[20], self.VLWeightBlock[21], self.VLWeightBlock[22], self.VLWeightBlock[23], self.VLWeightBlock[24], self.VLWeightBlock[25], self.VLWeightBlock[26], self.VLWeightBlock[27], self.VLWeightBlock[28], self.VLWeightBlock[29], self.VLWeightBlock[30], self.VLWeightBlock[31]) = struct.unpack_from(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self.VLWeightBlock[0], self.VLWeightBlock[1], self.VLWeightBlock[2], self.VLWeightBlock[3], self.VLWeightBlock[4], self.VLWeightBlock[5], self.VLWeightBlock[6], self.VLWeightBlock[7], self.VLWeightBlock[8], self.VLWeightBlock[9], self.VLWeightBlock[10], self.VLWeightBlock[11], self.VLWeightBlock[12], self.VLWeightBlock[13], self.VLWeightBlock[14], self.VLWeightBlock[15], self.VLWeightBlock[16], self.VLWeightBlock[17], self.VLWeightBlock[18], self.VLWeightBlock[19], self.VLWeightBlock[20], self.VLWeightBlock[21], self.VLWeightBlock[22], self.VLWeightBlock[23], self.VLWeightBlock[24], self.VLWeightBlock[25], self.VLWeightBlock[26], self.VLWeightBlock[27], self.VLWeightBlock[28], self.VLWeightBlock[29], self.VLWeightBlock[30], self.VLWeightBlock[31],) = struct.unpack_from(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class SMPLinearForwardingTable(rdma.binstruct.BinStruct):
@@ -2607,7 +2607,7 @@ class SMPMulticastForwardingTable(rdma.binstruct.BinStruct):
         struct.pack_into(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0, self.portMaskBlock[0], self.portMaskBlock[1], self.portMaskBlock[2], self.portMaskBlock[3], self.portMaskBlock[4], self.portMaskBlock[5], self.portMaskBlock[6], self.portMaskBlock[7], self.portMaskBlock[8], self.portMaskBlock[9], self.portMaskBlock[10], self.portMaskBlock[11], self.portMaskBlock[12], self.portMaskBlock[13], self.portMaskBlock[14], self.portMaskBlock[15], self.portMaskBlock[16], self.portMaskBlock[17], self.portMaskBlock[18], self.portMaskBlock[19], self.portMaskBlock[20], self.portMaskBlock[21], self.portMaskBlock[22], self.portMaskBlock[23], self.portMaskBlock[24], self.portMaskBlock[25], self.portMaskBlock[26], self.portMaskBlock[27], self.portMaskBlock[28], self.portMaskBlock[29], self.portMaskBlock[30], self.portMaskBlock[31])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.portMaskBlock[0], self.portMaskBlock[1], self.portMaskBlock[2], self.portMaskBlock[3], self.portMaskBlock[4], self.portMaskBlock[5], self.portMaskBlock[6], self.portMaskBlock[7], self.portMaskBlock[8], self.portMaskBlock[9], self.portMaskBlock[10], self.portMaskBlock[11], self.portMaskBlock[12], self.portMaskBlock[13], self.portMaskBlock[14], self.portMaskBlock[15], self.portMaskBlock[16], self.portMaskBlock[17], self.portMaskBlock[18], self.portMaskBlock[19], self.portMaskBlock[20], self.portMaskBlock[21], self.portMaskBlock[22], self.portMaskBlock[23], self.portMaskBlock[24], self.portMaskBlock[25], self.portMaskBlock[26], self.portMaskBlock[27], self.portMaskBlock[28], self.portMaskBlock[29], self.portMaskBlock[30], self.portMaskBlock[31]) = struct.unpack_from(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self.portMaskBlock[0], self.portMaskBlock[1], self.portMaskBlock[2], self.portMaskBlock[3], self.portMaskBlock[4], self.portMaskBlock[5], self.portMaskBlock[6], self.portMaskBlock[7], self.portMaskBlock[8], self.portMaskBlock[9], self.portMaskBlock[10], self.portMaskBlock[11], self.portMaskBlock[12], self.portMaskBlock[13], self.portMaskBlock[14], self.portMaskBlock[15], self.portMaskBlock[16], self.portMaskBlock[17], self.portMaskBlock[18], self.portMaskBlock[19], self.portMaskBlock[20], self.portMaskBlock[21], self.portMaskBlock[22], self.portMaskBlock[23], self.portMaskBlock[24], self.portMaskBlock[25], self.portMaskBlock[26], self.portMaskBlock[27], self.portMaskBlock[28], self.portMaskBlock[29], self.portMaskBlock[30], self.portMaskBlock[31],) = struct.unpack_from(">HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class SMPSMInfo(rdma.binstruct.BinStruct):
@@ -2652,7 +2652,7 @@ class SMPSMInfo(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.GUID = IBA.GUID(buffer[offset + 0:offset + 8], raw=True)
-        (self.SMKey, self.actCount, self._pack_0_32) = struct.unpack_from(">QLL", buffer, offset + 8)
+        (self.SMKey, self.actCount, self._pack_0_32,) = struct.unpack_from(">QLL", buffer, offset + 8)
 
 
 class SMPVendorDiag(rdma.binstruct.BinStruct):
@@ -2680,7 +2680,7 @@ class SMPVendorDiag(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.diagData = bytearray(buffer[offset + 4:offset + 64])
-        (self.nextIndex, self.reserved_16) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self.nextIndex, self.reserved_16,) = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class SMPLedInfo(rdma.binstruct.BinStruct):
@@ -2714,7 +2714,7 @@ class SMPLedInfo(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self._pack_0_32)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class SMPNoticeTrap(rdma.binstruct.BinStruct):
@@ -2777,7 +2777,7 @@ class SMPNoticeTrap(rdma.binstruct.BinStruct):
         struct.pack_into(">LHHLHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0, self._pack_0_32, self.trapNumber, self.issuerLID, self._pack_1_32, self.dataDetails2[0], self.dataDetails2[1], self.dataDetails2[2], self.dataDetails2[3], self.dataDetails2[4], self.dataDetails2[5], self.dataDetails2[6], self.dataDetails2[7], self.dataDetails2[8], self.dataDetails2[9], self.dataDetails2[10], self.dataDetails2[11], self.dataDetails2[12], self.dataDetails2[13], self.dataDetails2[14], self.dataDetails2[15], self.dataDetails2[16], self.dataDetails2[17], self.dataDetails2[18], self.dataDetails2[19], self.dataDetails2[20], self.dataDetails2[21], self.dataDetails2[22], self.dataDetails2[23], self.dataDetails2[24], self.dataDetails2[25])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32, self.trapNumber, self.issuerLID, self._pack_1_32, self.dataDetails2[0], self.dataDetails2[1], self.dataDetails2[2], self.dataDetails2[3], self.dataDetails2[4], self.dataDetails2[5], self.dataDetails2[6], self.dataDetails2[7], self.dataDetails2[8], self.dataDetails2[9], self.dataDetails2[10], self.dataDetails2[11], self.dataDetails2[12], self.dataDetails2[13], self.dataDetails2[14], self.dataDetails2[15], self.dataDetails2[16], self.dataDetails2[17], self.dataDetails2[18], self.dataDetails2[19], self.dataDetails2[20], self.dataDetails2[21], self.dataDetails2[22], self.dataDetails2[23], self.dataDetails2[24], self.dataDetails2[25]) = struct.unpack_from(">LHHLHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self._pack_0_32, self.trapNumber, self.issuerLID, self._pack_1_32, self.dataDetails2[0], self.dataDetails2[1], self.dataDetails2[2], self.dataDetails2[3], self.dataDetails2[4], self.dataDetails2[5], self.dataDetails2[6], self.dataDetails2[7], self.dataDetails2[8], self.dataDetails2[9], self.dataDetails2[10], self.dataDetails2[11], self.dataDetails2[12], self.dataDetails2[13], self.dataDetails2[14], self.dataDetails2[15], self.dataDetails2[16], self.dataDetails2[17], self.dataDetails2[18], self.dataDetails2[19], self.dataDetails2[20], self.dataDetails2[21], self.dataDetails2[22], self.dataDetails2[23], self.dataDetails2[24], self.dataDetails2[25],) = struct.unpack_from(">LHHLHHHHHHHHHHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class SAHeader(rdma.binstruct.BinStruct):
@@ -2851,7 +2851,7 @@ class SAHeader(rdma.binstruct.BinStruct):
         struct.pack_into(">BBBBHHQHHLLLLQHHQ", buffer, offset + 0, self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask) = struct.unpack_from(">BBBBHHQHHLLLLQHHQ", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask,) = struct.unpack_from(">BBBBHHQHHLLLLQHHQ", buffer, offset + 0)
 
 
 class SAFormat(rdma.binstruct.BinFormat):
@@ -2929,7 +2929,7 @@ class SAFormat(rdma.binstruct.BinFormat):
 
     def unpack_from(self, buffer, offset: int=0):
         self.data = bytearray(buffer[offset + 56:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask) = struct.unpack_from(">BBBBHHQHHLLLLQHHQ", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self.SMKey, self.attributeOffset, self.reserved_368, self.componentMask,) = struct.unpack_from(">BBBBHHQHHLLLLQHHQ", buffer, offset + 0)
 
 
 class SANodeRecord(rdma.binstruct.BinStruct):
@@ -2984,7 +2984,7 @@ class SANodeRecord(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.nodeInfo.unpack_from(buffer, offset + 4)
         self.nodeDescription.unpack_from(buffer, offset + 44)
-        (self.LID, self.reserved_16) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self.LID, self.reserved_16,) = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class SAPortInfoRecord(rdma.binstruct.BinStruct):
@@ -3079,7 +3079,7 @@ class SAPortInfoRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.portInfo.unpack_from(buffer, offset + 4)
-        (self.endportLID, self.portNum, self.reserved_24) = struct.unpack_from(">HBB", buffer, offset + 0)
+        (self.endportLID, self.portNum, self.reserved_24,) = struct.unpack_from(">HBB", buffer, offset + 0)
 
 
 class SASLToVLMappingTableRecord(rdma.binstruct.BinStruct):
@@ -3123,7 +3123,7 @@ class SASLToVLMappingTableRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.SLToVLMappingTable.unpack_from(buffer, offset + 8)
-        (self.LID, self.inputPortNum, self.outputPortNum, self.reserved_32) = struct.unpack_from(">HBBL", buffer, offset + 0)
+        (self.LID, self.inputPortNum, self.outputPortNum, self.reserved_32,) = struct.unpack_from(">HBBL", buffer, offset + 0)
 
 
 class SASwitchInfoRecord(rdma.binstruct.BinStruct):
@@ -3180,7 +3180,7 @@ class SASwitchInfoRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.switchInfo.unpack_from(buffer, offset + 4)
-        (self.LID, self.reserved_16) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self.LID, self.reserved_16,) = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class SALinearForwardingTableRecord(rdma.binstruct.BinStruct):
@@ -3221,7 +3221,7 @@ class SALinearForwardingTableRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.linearForwardingTable.unpack_from(buffer, offset + 8)
-        (self.LID, self.blockNum, self.reserved_32) = struct.unpack_from(">HHL", buffer, offset + 0)
+        (self.LID, self.blockNum, self.reserved_32,) = struct.unpack_from(">HHL", buffer, offset + 0)
 
 
 class SARandomForwardingTableRecord(rdma.binstruct.BinStruct):
@@ -3262,7 +3262,7 @@ class SARandomForwardingTableRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.randomForwardingTable.unpack_from(buffer, offset + 8)
-        (self.LID, self.blockNum, self.reserved_32) = struct.unpack_from(">HHL", buffer, offset + 0)
+        (self.LID, self.blockNum, self.reserved_32,) = struct.unpack_from(">HHL", buffer, offset + 0)
 
 
 class SAMulticastForwardingTableRecord(rdma.binstruct.BinStruct):
@@ -3320,7 +3320,7 @@ class SAMulticastForwardingTableRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.multicastForwardingTable.unpack_from(buffer, offset + 8)
-        (self._pack_0_32, self.reserved_32) = struct.unpack_from(">LL", buffer, offset + 0)
+        (self._pack_0_32, self.reserved_32,) = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class SAVLArbitrationTableRecord(rdma.binstruct.BinStruct):
@@ -3364,7 +3364,7 @@ class SAVLArbitrationTableRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.VLArbitrationTable.unpack_from(buffer, offset + 8)
-        (self.LID, self.outputPortNum, self.blockNum, self.reserved_32) = struct.unpack_from(">HBBL", buffer, offset + 0)
+        (self.LID, self.outputPortNum, self.blockNum, self.reserved_32,) = struct.unpack_from(">HBBL", buffer, offset + 0)
 
 
 class SASMInfoRecord(rdma.binstruct.BinStruct):
@@ -3407,7 +3407,7 @@ class SASMInfoRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.SMInfo.unpack_from(buffer, offset + 4)
-        (self.LID, self.reserved_16) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self.LID, self.reserved_16,) = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class SAInformInfoRecord(rdma.binstruct.BinStruct):
@@ -3469,7 +3469,7 @@ class SAInformInfoRecord(rdma.binstruct.BinStruct):
         self.subscriberGID = IBA.GID(buffer[offset + 0:offset + 16], raw=True)
         self.informInfo.unpack_from(buffer, offset + 24)
         self.reserved_480 = bytearray(buffer[offset + 60:offset + 80])
-        (self.enumeration, self.reserved_144, self.reserved_160) = struct.unpack_from(">HHL", buffer, offset + 16)
+        (self.enumeration, self.reserved_144, self.reserved_160,) = struct.unpack_from(">HHL", buffer, offset + 16)
 
 
 class SALinkRecord(rdma.binstruct.BinStruct):
@@ -3507,7 +3507,7 @@ class SALinkRecord(rdma.binstruct.BinStruct):
         struct.pack_into(">HBBHH", buffer, offset + 0, self.fromLID, self.fromPort, self.toPort, self.toLID, self.reserved_48)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.fromLID, self.fromPort, self.toPort, self.toLID, self.reserved_48) = struct.unpack_from(">HBBHH", buffer, offset + 0)
+        (self.fromLID, self.fromPort, self.toPort, self.toLID, self.reserved_48,) = struct.unpack_from(">HBBHH", buffer, offset + 0)
 
 
 class SAGUIDInfoRecord(rdma.binstruct.BinStruct):
@@ -3553,7 +3553,7 @@ class SAGUIDInfoRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.GUIDInfo.unpack_from(buffer, offset + 8)
-        (self.LID, self.blockNum, self.reserved_24, self.reserved_32) = struct.unpack_from(">HBBL", buffer, offset + 0)
+        (self.LID, self.blockNum, self.reserved_24, self.reserved_32,) = struct.unpack_from(">HBBL", buffer, offset + 0)
 
 
 class SAServiceRecord(rdma.binstruct.BinStruct):
@@ -3657,9 +3657,9 @@ class SAServiceRecord(rdma.binstruct.BinStruct):
         self.serviceName = bytearray(buffer[offset + 48:offset + 112])
         self.serviceData8 = bytearray(buffer[offset + 112:offset + 128])
         rdma.binstruct.unpack_array8(buffer,offset+160,64,2,self.serviceData64)
-        (self.serviceID) = struct.unpack_from(">Q", buffer, offset + 0)
-        (self.servicePKey, self.reserved_208, self.serviceLease) = struct.unpack_from(">HHL", buffer, offset + 24)
-        (self.serviceData16[0], self.serviceData16[1], self.serviceData16[2], self.serviceData16[3], self.serviceData16[4], self.serviceData16[5], self.serviceData16[6], self.serviceData16[7], self.serviceData32[0], self.serviceData32[1], self.serviceData32[2], self.serviceData32[3]) = struct.unpack_from(">HHHHHHHHLLLL", buffer, offset + 128)
+        (self.serviceID,) = struct.unpack_from(">Q", buffer, offset + 0)
+        (self.servicePKey, self.reserved_208, self.serviceLease,) = struct.unpack_from(">HHL", buffer, offset + 24)
+        (self.serviceData16[0], self.serviceData16[1], self.serviceData16[2], self.serviceData16[3], self.serviceData16[4], self.serviceData16[5], self.serviceData16[6], self.serviceData16[7], self.serviceData32[0], self.serviceData32[1], self.serviceData32[2], self.serviceData32[3],) = struct.unpack_from(">HHHHHHHHLLLL", buffer, offset + 128)
 
 
 class SAPKeyTableRecord(rdma.binstruct.BinStruct):
@@ -3712,7 +3712,7 @@ class SAPKeyTableRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.PKeyTable.unpack_from(buffer, offset + 8)
-        (self.LID, self.blockNum, self._pack_0_32) = struct.unpack_from(">HHL", buffer, offset + 0)
+        (self.LID, self.blockNum, self._pack_0_32,) = struct.unpack_from(">HHL", buffer, offset + 0)
 
 
 class SAPathRecord(rdma.binstruct.BinStruct):
@@ -3863,8 +3863,8 @@ class SAPathRecord(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.DGID = IBA.GID(buffer[offset + 8:offset + 24], raw=True)
         self.SGID = IBA.GID(buffer[offset + 24:offset + 40], raw=True)
-        (self.serviceID) = struct.unpack_from(">Q", buffer, offset + 0)
-        (self.DLID, self.SLID, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32, self.reserved_480) = struct.unpack_from(">HHLLLLL", buffer, offset + 40)
+        (self.serviceID,) = struct.unpack_from(">Q", buffer, offset + 0)
+        (self.DLID, self.SLID, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32, self.reserved_480,) = struct.unpack_from(">HHLLLLL", buffer, offset + 40)
 
 
 class SAMCMemberRecord(rdma.binstruct.BinStruct):
@@ -3994,7 +3994,7 @@ class SAMCMemberRecord(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.MGID = IBA.GID(buffer[offset + 0:offset + 16], raw=True)
         self.portGID = IBA.GID(buffer[offset + 16:offset + 32], raw=True)
-        (self.QKey, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32) = struct.unpack_from(">LLLLL", buffer, offset + 32)
+        (self.QKey, self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32,) = struct.unpack_from(">LLLLL", buffer, offset + 32)
 
 
 class SATraceRecord(rdma.binstruct.BinStruct):
@@ -4049,7 +4049,7 @@ class SATraceRecord(rdma.binstruct.BinStruct):
         struct.pack_into(">QHBBQQQQBBH", buffer, offset + 0, self.GIDPrefix, self.IDGeneration, self.reserved_80, self.nodeType, self.nodeID, self.chassisID, self.entryPortID, self.exitPortID, self.entryPort, self.exitPort, self.reserved_368)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.GIDPrefix, self.IDGeneration, self.reserved_80, self.nodeType, self.nodeID, self.chassisID, self.entryPortID, self.exitPortID, self.entryPort, self.exitPort, self.reserved_368) = struct.unpack_from(">QHBBQQQQBBH", buffer, offset + 0)
+        (self.GIDPrefix, self.IDGeneration, self.reserved_80, self.nodeType, self.nodeID, self.chassisID, self.entryPortID, self.exitPortID, self.entryPort, self.exitPort, self.reserved_368,) = struct.unpack_from(">QHBBQQQQBBH", buffer, offset + 0)
 
 
 class SAMultiPathRecord(rdma.binstruct.BinStruct):
@@ -4202,7 +4202,7 @@ class SAMultiPathRecord(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.SDGID = IBA.GID(buffer[offset + 24:offset + 40], raw=True)
-        (self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32, self._pack_4_32, self.reserved_160) = struct.unpack_from(">LLLLLL", buffer, offset + 0)
+        (self._pack_0_32, self._pack_1_32, self._pack_2_32, self._pack_3_32, self._pack_4_32, self.reserved_160,) = struct.unpack_from(">LLLLLL", buffer, offset + 0)
 
 
 class SAServiceAssociationRecord(rdma.binstruct.BinStruct):
@@ -4285,7 +4285,7 @@ class PMFormat(rdma.binstruct.BinFormat):
     def unpack_from(self, buffer, offset: int=0):
         self.reserved_192 = bytearray(buffer[offset + 24:offset + 64])
         self.data = bytearray(buffer[offset + 64:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
 
 
 class PMPortSamplesCtl(rdma.binstruct.BinStruct):
@@ -4450,7 +4450,7 @@ class PMPortSamplesCtl(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.reserved_640 = bytearray(buffer[offset + 80:offset + 192])
-        (self._pack_0_32, self._pack_1_32, self._pack_2_32, self.optionMask, self.vendorMask, self.sampleStart, self.sampleInterval, self.tag, self.counterSelect0, self.counterSelect1, self.counterSelect2, self.counterSelect3, self.counterSelect4, self.counterSelect5, self.counterSelect6, self.counterSelect7, self.counterSelect8, self.counterSelect9, self.counterSelect10, self.counterSelect11, self.counterSelect12, self.counterSelect13, self.counterSelect14, self.reserved_544, self.samplesOnlyOptionMask) = struct.unpack_from(">LLLQQLLHHHHHHHHHHHHHHHHLQ", buffer, offset + 0)
+        (self._pack_0_32, self._pack_1_32, self._pack_2_32, self.optionMask, self.vendorMask, self.sampleStart, self.sampleInterval, self.tag, self.counterSelect0, self.counterSelect1, self.counterSelect2, self.counterSelect3, self.counterSelect4, self.counterSelect5, self.counterSelect6, self.counterSelect7, self.counterSelect8, self.counterSelect9, self.counterSelect10, self.counterSelect11, self.counterSelect12, self.counterSelect13, self.counterSelect14, self.reserved_544, self.samplesOnlyOptionMask,) = struct.unpack_from(">LLLQQLLHHHHHHHHHHHHHHHHLQ", buffer, offset + 0)
 
 
 class PMPortSamplesRes(rdma.binstruct.BinStruct):
@@ -4492,7 +4492,7 @@ class PMPortSamplesRes(rdma.binstruct.BinStruct):
         struct.pack_into(">LLLLLLLLLLLLLLLL", buffer, offset + 0, self._pack_0_32, self.counter[0], self.counter[1], self.counter[2], self.counter[3], self.counter[4], self.counter[5], self.counter[6], self.counter[7], self.counter[8], self.counter[9], self.counter[10], self.counter[11], self.counter[12], self.counter[13], self.counter[14])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self._pack_0_32, self.counter[0], self.counter[1], self.counter[2], self.counter[3], self.counter[4], self.counter[5], self.counter[6], self.counter[7], self.counter[8], self.counter[9], self.counter[10], self.counter[11], self.counter[12], self.counter[13], self.counter[14]) = struct.unpack_from(">LLLLLLLLLLLLLLLL", buffer, offset + 0)
+        (self._pack_0_32, self.counter[0], self.counter[1], self.counter[2], self.counter[3], self.counter[4], self.counter[5], self.counter[6], self.counter[7], self.counter[8], self.counter[9], self.counter[10], self.counter[11], self.counter[12], self.counter[13], self.counter[14],) = struct.unpack_from(">LLLLLLLLLLLLLLLL", buffer, offset + 0)
 
 
 class PMPortCounters(rdma.binstruct.BinStruct):
@@ -4569,7 +4569,7 @@ class PMPortCounters(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHHBBHHHHLHHLLLLL", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.symbolErrorCounter, self.linkErrorRecoveryCounter, self.linkDownedCounter, self.portRcvErrors, self.portRcvRemotePhysicalErrors, self.portRcvSwitchRelayErrors, self.portXmitDiscards, self._pack_0_32, self.reserved_160, self.VL15Dropped, self.portXmitData, self.portRcvData, self.portXmitPkts, self.portRcvPkts, self.portXmitWait)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.symbolErrorCounter, self.linkErrorRecoveryCounter, self.linkDownedCounter, self.portRcvErrors, self.portRcvRemotePhysicalErrors, self.portRcvSwitchRelayErrors, self.portXmitDiscards, self._pack_0_32, self.reserved_160, self.VL15Dropped, self.portXmitData, self.portRcvData, self.portXmitPkts, self.portRcvPkts, self.portXmitWait) = struct.unpack_from(">BBHHBBHHHHLHHLLLLL", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.symbolErrorCounter, self.linkErrorRecoveryCounter, self.linkDownedCounter, self.portRcvErrors, self.portRcvRemotePhysicalErrors, self.portRcvSwitchRelayErrors, self.portXmitDiscards, self._pack_0_32, self.reserved_160, self.VL15Dropped, self.portXmitData, self.portRcvData, self.portXmitPkts, self.portRcvPkts, self.portXmitWait,) = struct.unpack_from(">BBHHBBHHHHLHHLLLLL", buffer, offset + 0)
 
 
 class PMPortRcvErrorDetails(rdma.binstruct.BinStruct):
@@ -4608,7 +4608,7 @@ class PMPortRcvErrorDetails(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHHHHHHH", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.portLocalPhysicalErrors, self.portMalformedPacketErrors, self.portBufferOverrunErrors, self.portDLIDMappingErrors, self.portVLMappingErrors, self.portLoopingErrors)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.portLocalPhysicalErrors, self.portMalformedPacketErrors, self.portBufferOverrunErrors, self.portDLIDMappingErrors, self.portVLMappingErrors, self.portLoopingErrors) = struct.unpack_from(">BBHHHHHHH", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.portLocalPhysicalErrors, self.portMalformedPacketErrors, self.portBufferOverrunErrors, self.portDLIDMappingErrors, self.portVLMappingErrors, self.portLoopingErrors,) = struct.unpack_from(">BBHHHHHHH", buffer, offset + 0)
 
 
 class PMPortXmitDiscardDetails(rdma.binstruct.BinStruct):
@@ -4643,7 +4643,7 @@ class PMPortXmitDiscardDetails(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHHHHH", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.portInactiveDiscards, self.portNeighborMTUDiscards, self.portSwLifetimeLimitDiscards, self.portSwHOQLimitDiscards)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.portInactiveDiscards, self.portNeighborMTUDiscards, self.portSwLifetimeLimitDiscards, self.portSwHOQLimitDiscards) = struct.unpack_from(">BBHHHHH", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.portInactiveDiscards, self.portNeighborMTUDiscards, self.portSwLifetimeLimitDiscards, self.portSwHOQLimitDiscards,) = struct.unpack_from(">BBHHHHH", buffer, offset + 0)
 
 
 class PMPortOpRcvCounters(rdma.binstruct.BinStruct):
@@ -4674,7 +4674,7 @@ class PMPortOpRcvCounters(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHLL", buffer, offset + 0, self.opCode, self.portSelect, self.counterSelect, self.portOpRcvPkts, self.portOpRcvData)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.opCode, self.portSelect, self.counterSelect, self.portOpRcvPkts, self.portOpRcvData) = struct.unpack_from(">BBHLL", buffer, offset + 0)
+        (self.opCode, self.portSelect, self.counterSelect, self.portOpRcvPkts, self.portOpRcvData,) = struct.unpack_from(">BBHLL", buffer, offset + 0)
 
 
 class PMPortFlowCtlCounters(rdma.binstruct.BinStruct):
@@ -4705,7 +4705,7 @@ class PMPortFlowCtlCounters(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHLL", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.portXmitFlowPkts, self.portRcvFlowPkts)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.portXmitFlowPkts, self.portRcvFlowPkts) = struct.unpack_from(">BBHLL", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.portXmitFlowPkts, self.portRcvFlowPkts,) = struct.unpack_from(">BBHLL", buffer, offset + 0)
 
 
 class PMPortVLOpPackets(rdma.binstruct.BinStruct):
@@ -4738,7 +4738,7 @@ class PMPortVLOpPackets(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0, self.opCode, self.portSelect, self.counterSelect, self.portVLOpPackets[0], self.portVLOpPackets[1], self.portVLOpPackets[2], self.portVLOpPackets[3], self.portVLOpPackets[4], self.portVLOpPackets[5], self.portVLOpPackets[6], self.portVLOpPackets[7], self.portVLOpPackets[8], self.portVLOpPackets[9], self.portVLOpPackets[10], self.portVLOpPackets[11], self.portVLOpPackets[12], self.portVLOpPackets[13], self.portVLOpPackets[14], self.portVLOpPackets[15])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.opCode, self.portSelect, self.counterSelect, self.portVLOpPackets[0], self.portVLOpPackets[1], self.portVLOpPackets[2], self.portVLOpPackets[3], self.portVLOpPackets[4], self.portVLOpPackets[5], self.portVLOpPackets[6], self.portVLOpPackets[7], self.portVLOpPackets[8], self.portVLOpPackets[9], self.portVLOpPackets[10], self.portVLOpPackets[11], self.portVLOpPackets[12], self.portVLOpPackets[13], self.portVLOpPackets[14], self.portVLOpPackets[15]) = struct.unpack_from(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self.opCode, self.portSelect, self.counterSelect, self.portVLOpPackets[0], self.portVLOpPackets[1], self.portVLOpPackets[2], self.portVLOpPackets[3], self.portVLOpPackets[4], self.portVLOpPackets[5], self.portVLOpPackets[6], self.portVLOpPackets[7], self.portVLOpPackets[8], self.portVLOpPackets[9], self.portVLOpPackets[10], self.portVLOpPackets[11], self.portVLOpPackets[12], self.portVLOpPackets[13], self.portVLOpPackets[14], self.portVLOpPackets[15],) = struct.unpack_from(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class PMPortVLOpData(rdma.binstruct.BinStruct):
@@ -4771,7 +4771,7 @@ class PMPortVLOpData(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0, self.opCode, self.portSelect, self.counterSelect, self.portVLOpData[0], self.portVLOpData[1], self.portVLOpData[2], self.portVLOpData[3], self.portVLOpData[4], self.portVLOpData[5], self.portVLOpData[6], self.portVLOpData[7], self.portVLOpData[8], self.portVLOpData[9], self.portVLOpData[10], self.portVLOpData[11], self.portVLOpData[12], self.portVLOpData[13], self.portVLOpData[14], self.portVLOpData[15])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.opCode, self.portSelect, self.counterSelect, self.portVLOpData[0], self.portVLOpData[1], self.portVLOpData[2], self.portVLOpData[3], self.portVLOpData[4], self.portVLOpData[5], self.portVLOpData[6], self.portVLOpData[7], self.portVLOpData[8], self.portVLOpData[9], self.portVLOpData[10], self.portVLOpData[11], self.portVLOpData[12], self.portVLOpData[13], self.portVLOpData[14], self.portVLOpData[15]) = struct.unpack_from(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0)
+        (self.opCode, self.portSelect, self.counterSelect, self.portVLOpData[0], self.portVLOpData[1], self.portVLOpData[2], self.portVLOpData[3], self.portVLOpData[4], self.portVLOpData[5], self.portVLOpData[6], self.portVLOpData[7], self.portVLOpData[8], self.portVLOpData[9], self.portVLOpData[10], self.portVLOpData[11], self.portVLOpData[12], self.portVLOpData[13], self.portVLOpData[14], self.portVLOpData[15],) = struct.unpack_from(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0)
 
 
 class PMPortVLXmitFlowCtlUpdateErrors(rdma.binstruct.BinStruct):
@@ -4806,7 +4806,7 @@ class PMPortVLXmitFlowCtlUpdateErrors(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         rdma.binstruct.unpack_array8(buffer,offset+4,2,16,self.portVLXmitFlowCtlUpdateErrors)
-        (self.reserved_0, self.portSelect, self.counterSelect) = struct.unpack_from(">BBH", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect,) = struct.unpack_from(">BBH", buffer, offset + 0)
 
 
 class PMPortVLXmitWaitCounters(rdma.binstruct.BinStruct):
@@ -4839,7 +4839,7 @@ class PMPortVLXmitWaitCounters(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.portVLXmitWait[0], self.portVLXmitWait[1], self.portVLXmitWait[2], self.portVLXmitWait[3], self.portVLXmitWait[4], self.portVLXmitWait[5], self.portVLXmitWait[6], self.portVLXmitWait[7], self.portVLXmitWait[8], self.portVLXmitWait[9], self.portVLXmitWait[10], self.portVLXmitWait[11], self.portVLXmitWait[12], self.portVLXmitWait[13], self.portVLXmitWait[14], self.portVLXmitWait[15])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.portVLXmitWait[0], self.portVLXmitWait[1], self.portVLXmitWait[2], self.portVLXmitWait[3], self.portVLXmitWait[4], self.portVLXmitWait[5], self.portVLXmitWait[6], self.portVLXmitWait[7], self.portVLXmitWait[8], self.portVLXmitWait[9], self.portVLXmitWait[10], self.portVLXmitWait[11], self.portVLXmitWait[12], self.portVLXmitWait[13], self.portVLXmitWait[14], self.portVLXmitWait[15]) = struct.unpack_from(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.portVLXmitWait[0], self.portVLXmitWait[1], self.portVLXmitWait[2], self.portVLXmitWait[3], self.portVLXmitWait[4], self.portVLXmitWait[5], self.portVLXmitWait[6], self.portVLXmitWait[7], self.portVLXmitWait[8], self.portVLXmitWait[9], self.portVLXmitWait[10], self.portVLXmitWait[11], self.portVLXmitWait[12], self.portVLXmitWait[13], self.portVLXmitWait[14], self.portVLXmitWait[15],) = struct.unpack_from(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class PMSwPortVLCongestion(rdma.binstruct.BinStruct):
@@ -4872,7 +4872,7 @@ class PMSwPortVLCongestion(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.swPortVLCongestion[0], self.swPortVLCongestion[1], self.swPortVLCongestion[2], self.swPortVLCongestion[3], self.swPortVLCongestion[4], self.swPortVLCongestion[5], self.swPortVLCongestion[6], self.swPortVLCongestion[7], self.swPortVLCongestion[8], self.swPortVLCongestion[9], self.swPortVLCongestion[10], self.swPortVLCongestion[11], self.swPortVLCongestion[12], self.swPortVLCongestion[13], self.swPortVLCongestion[14], self.swPortVLCongestion[15])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.swPortVLCongestion[0], self.swPortVLCongestion[1], self.swPortVLCongestion[2], self.swPortVLCongestion[3], self.swPortVLCongestion[4], self.swPortVLCongestion[5], self.swPortVLCongestion[6], self.swPortVLCongestion[7], self.swPortVLCongestion[8], self.swPortVLCongestion[9], self.swPortVLCongestion[10], self.swPortVLCongestion[11], self.swPortVLCongestion[12], self.swPortVLCongestion[13], self.swPortVLCongestion[14], self.swPortVLCongestion[15]) = struct.unpack_from(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.swPortVLCongestion[0], self.swPortVLCongestion[1], self.swPortVLCongestion[2], self.swPortVLCongestion[3], self.swPortVLCongestion[4], self.swPortVLCongestion[5], self.swPortVLCongestion[6], self.swPortVLCongestion[7], self.swPortVLCongestion[8], self.swPortVLCongestion[9], self.swPortVLCongestion[10], self.swPortVLCongestion[11], self.swPortVLCongestion[12], self.swPortVLCongestion[13], self.swPortVLCongestion[14], self.swPortVLCongestion[15],) = struct.unpack_from(">BBHHHHHHHHHHHHHHHHH", buffer, offset + 0)
 
 
 class PMPortSamplesResExt(rdma.binstruct.BinStruct):
@@ -4930,7 +4930,7 @@ class PMPortSamplesResExt(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         rdma.binstruct.unpack_array8(buffer,offset+8,64,15,self.counter)
-        (self._pack_0_32, self._pack_1_32) = struct.unpack_from(">LL", buffer, offset + 0)
+        (self._pack_0_32, self._pack_1_32,) = struct.unpack_from(">LL", buffer, offset + 0)
 
 
 class PMPortCountersExt(rdma.binstruct.BinStruct):
@@ -4975,7 +4975,7 @@ class PMPortCountersExt(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHLQQQQQQQQ", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.reserved_32, self.portXmitData, self.portRcvData, self.portXmitPkts, self.portRcvPkts, self.portUnicastXmitPkts, self.portUnicastRcvPkts, self.portMulticastXmitPkts, self.portMulticastRcvPkts)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.reserved_32, self.portXmitData, self.portRcvData, self.portXmitPkts, self.portRcvPkts, self.portUnicastXmitPkts, self.portUnicastRcvPkts, self.portMulticastXmitPkts, self.portMulticastRcvPkts) = struct.unpack_from(">BBHLQQQQQQQQ", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.reserved_32, self.portXmitData, self.portRcvData, self.portXmitPkts, self.portRcvPkts, self.portUnicastXmitPkts, self.portUnicastRcvPkts, self.portMulticastXmitPkts, self.portMulticastRcvPkts,) = struct.unpack_from(">BBHLQQQQQQQQ", buffer, offset + 0)
 
 
 class PMPortXmitDataSL(rdma.binstruct.BinStruct):
@@ -5008,7 +5008,7 @@ class PMPortXmitDataSL(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.portXmitDataSL[0], self.portXmitDataSL[1], self.portXmitDataSL[2], self.portXmitDataSL[3], self.portXmitDataSL[4], self.portXmitDataSL[5], self.portXmitDataSL[6], self.portXmitDataSL[7], self.portXmitDataSL[8], self.portXmitDataSL[9], self.portXmitDataSL[10], self.portXmitDataSL[11], self.portXmitDataSL[12], self.portXmitDataSL[13], self.portXmitDataSL[14], self.portXmitDataSL[15])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.portXmitDataSL[0], self.portXmitDataSL[1], self.portXmitDataSL[2], self.portXmitDataSL[3], self.portXmitDataSL[4], self.portXmitDataSL[5], self.portXmitDataSL[6], self.portXmitDataSL[7], self.portXmitDataSL[8], self.portXmitDataSL[9], self.portXmitDataSL[10], self.portXmitDataSL[11], self.portXmitDataSL[12], self.portXmitDataSL[13], self.portXmitDataSL[14], self.portXmitDataSL[15]) = struct.unpack_from(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.portXmitDataSL[0], self.portXmitDataSL[1], self.portXmitDataSL[2], self.portXmitDataSL[3], self.portXmitDataSL[4], self.portXmitDataSL[5], self.portXmitDataSL[6], self.portXmitDataSL[7], self.portXmitDataSL[8], self.portXmitDataSL[9], self.portXmitDataSL[10], self.portXmitDataSL[11], self.portXmitDataSL[12], self.portXmitDataSL[13], self.portXmitDataSL[14], self.portXmitDataSL[15],) = struct.unpack_from(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0)
 
 
 class PMPortRcvDataSL(rdma.binstruct.BinStruct):
@@ -5041,7 +5041,7 @@ class PMPortRcvDataSL(rdma.binstruct.BinStruct):
         struct.pack_into(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0, self.reserved_0, self.portSelect, self.counterSelect, self.portRcvDataSL[0], self.portRcvDataSL[1], self.portRcvDataSL[2], self.portRcvDataSL[3], self.portRcvDataSL[4], self.portRcvDataSL[5], self.portRcvDataSL[6], self.portRcvDataSL[7], self.portRcvDataSL[8], self.portRcvDataSL[9], self.portRcvDataSL[10], self.portRcvDataSL[11], self.portRcvDataSL[12], self.portRcvDataSL[13], self.portRcvDataSL[14], self.portRcvDataSL[15])
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.reserved_0, self.portSelect, self.counterSelect, self.portRcvDataSL[0], self.portRcvDataSL[1], self.portRcvDataSL[2], self.portRcvDataSL[3], self.portRcvDataSL[4], self.portRcvDataSL[5], self.portRcvDataSL[6], self.portRcvDataSL[7], self.portRcvDataSL[8], self.portRcvDataSL[9], self.portRcvDataSL[10], self.portRcvDataSL[11], self.portRcvDataSL[12], self.portRcvDataSL[13], self.portRcvDataSL[14], self.portRcvDataSL[15]) = struct.unpack_from(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0)
+        (self.reserved_0, self.portSelect, self.counterSelect, self.portRcvDataSL[0], self.portRcvDataSL[1], self.portRcvDataSL[2], self.portRcvDataSL[3], self.portRcvDataSL[4], self.portRcvDataSL[5], self.portRcvDataSL[6], self.portRcvDataSL[7], self.portRcvDataSL[8], self.portRcvDataSL[9], self.portRcvDataSL[10], self.portRcvDataSL[11], self.portRcvDataSL[12], self.portRcvDataSL[13], self.portRcvDataSL[14], self.portRcvDataSL[15],) = struct.unpack_from(">BBHLLLLLLLLLLLLLLLL", buffer, offset + 0)
 
 
 class DMFormat(rdma.binstruct.BinFormat):
@@ -5089,7 +5089,7 @@ class DMFormat(rdma.binstruct.BinFormat):
     def unpack_from(self, buffer, offset: int=0):
         self.reserved_192 = bytearray(buffer[offset + 24:offset + 64])
         self.data = bytearray(buffer[offset + 64:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
 
 
 class DMServiceEntry(rdma.binstruct.BinStruct):
@@ -5117,7 +5117,7 @@ class DMServiceEntry(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.serviceName = bytearray(buffer[offset + 0:offset + 40])
-        (self.serviceID) = struct.unpack_from(">Q", buffer, offset + 40)
+        (self.serviceID,) = struct.unpack_from(">Q", buffer, offset + 40)
 
 
 class DMIOUnitInfo(rdma.binstruct.BinStruct):
@@ -5163,7 +5163,7 @@ class DMIOUnitInfo(rdma.binstruct.BinStruct):
 
     def unpack_from(self, buffer, offset: int=0):
         self.controllerList = bytearray(buffer[offset + 4:offset + 132])
-        (self._pack_0_32) = struct.unpack_from(">L", buffer, offset + 0)
+        (self._pack_0_32,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class DMIOControllerProfile(rdma.binstruct.BinStruct):
@@ -5261,7 +5261,7 @@ class DMIOControllerProfile(rdma.binstruct.BinStruct):
     def unpack_from(self, buffer, offset: int=0):
         self.GUID = IBA.GUID(buffer[offset + 0:offset + 8], raw=True)
         self.IDString = bytearray(buffer[offset + 64:offset + 128])
-        (self._pack_0_32, self.deviceID, self.deviceVersion, self.reserved_144, self._pack_1_32, self.subsystemID, self.IOClass, self.IOSubclass, self.protocol, self.protocolVersion, self.reserved_288, self.reserved_304, self.sendMessageDepth, self.reserved_336, self.RDMAReadDepth, self.sendMessageSize, self.RDMATransferSize, self.controllerOperationsMask, self.reserved_424, self.serviceEntries, self.reserved_440, self.reserved_448) = struct.unpack_from(">LLHHLLHHHHHHHBBLLBBBBQ", buffer, offset + 8)
+        (self._pack_0_32, self.deviceID, self.deviceVersion, self.reserved_144, self._pack_1_32, self.subsystemID, self.IOClass, self.IOSubclass, self.protocol, self.protocolVersion, self.reserved_288, self.reserved_304, self.sendMessageDepth, self.reserved_336, self.RDMAReadDepth, self.sendMessageSize, self.RDMATransferSize, self.controllerOperationsMask, self.reserved_424, self.serviceEntries, self.reserved_440, self.reserved_448,) = struct.unpack_from(">LLHHLLHHHHHHHBBLLBBBBQ", buffer, offset + 8)
 
 
 class DMServiceEntries(rdma.binstruct.BinStruct):
@@ -5315,7 +5315,7 @@ class DMDiagnosticTimeout(rdma.binstruct.BinStruct):
         struct.pack_into(">L", buffer, offset + 0, self.maxDiagTime)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.maxDiagTime) = struct.unpack_from(">L", buffer, offset + 0)
+        (self.maxDiagTime,) = struct.unpack_from(">L", buffer, offset + 0)
 
 
 class DMPrepareToTest(rdma.binstruct.BinStruct):
@@ -5391,7 +5391,7 @@ class DMDiagCode(rdma.binstruct.BinStruct):
         struct.pack_into(">HH", buffer, offset + 0, self.diagCode, self.reserved_16)
 
     def unpack_from(self, buffer, offset: int=0):
-        (self.diagCode, self.reserved_16) = struct.unpack_from(">HH", buffer, offset + 0)
+        (self.diagCode, self.reserved_16,) = struct.unpack_from(">HH", buffer, offset + 0)
 
 
 class SNMPFormat(rdma.binstruct.BinFormat):
@@ -5448,8 +5448,8 @@ class SNMPFormat(rdma.binstruct.BinFormat):
     def unpack_from(self, buffer, offset: int=0):
         self.reserved_192 = bytearray(buffer[offset + 24:offset + 56])
         self.data = bytearray(buffer[offset + 64:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
-        (self.RAddress, self.payloadLength, self.segmentNumber, self.sourceLID) = struct.unpack_from(">LBBH", buffer, offset + 56)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
+        (self.RAddress, self.payloadLength, self.segmentNumber, self.sourceLID,) = struct.unpack_from(">LBBH", buffer, offset + 56)
 
 
 class SNMPCommunityInfo(rdma.binstruct.BinStruct):
@@ -5541,7 +5541,7 @@ class VendFormat(rdma.binstruct.BinFormat):
 
     def unpack_from(self, buffer, offset: int=0):
         self.data = bytearray(buffer[offset + 24:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier,) = struct.unpack_from(">BBBBHHQHHL", buffer, offset + 0)
 
 
 class VendOUIFormat(rdma.binstruct.BinFormat):
@@ -5624,7 +5624,7 @@ class VendOUIFormat(rdma.binstruct.BinFormat):
 
     def unpack_from(self, buffer, offset: int=0):
         self.data = bytearray(buffer[offset + 40:offset + 256])
-        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self._pack_1_32) = struct.unpack_from(">BBBBHHQHHLLLLL", buffer, offset + 0)
+        (self.baseVersion, self.mgmtClass, self.classVersion, self.method, self.status, self.classSpecific, self.transactionID, self.attributeID, self.reserved_144, self.attributeModifier, self._pack_0_32, self.data1, self.data2, self._pack_1_32,) = struct.unpack_from(">BBBBHHQHHLLLLL", buffer, offset + 0)
 
 MEMBER_FORMATS = {'PKey': 'hex', 'QKey': 'hex', 'transactionID': 'hex', 'TClass': 'hex', 'serviceID': 'hex', 'localCMQKey': 'hex', 'localQKey': 'hex', 'altTClass': 'hex', 'capabilityMask': 'hex', 'capabilityMask2': 'hex', 'redirectTC': 'hex', 'redirectPKey': 'hex', 'redirectQP': 'hex', 'redirectQKey': 'hex', 'trapPKey': 'hex', 'trapQP': 'hex', 'trapQKey': 'hex', 'MKey': 'hex', 'nodeString': 'str', 'deviceID': 'hex', 'revision': 'hex', 'vendorID': 'hex', 'GIDPrefix': 'gid_prefix', 'diagCode': 'hex', 'initType': 'hex', 'initTypeReply': 'hex', 'PKeyBlock': 'hex', 'SMKey': 'hex', 'servicePKey': 'hex', 'serviceName': 'str', 'QOSClass': 'hex', 'MLID': 'hex', 'counterSelect0': 'hex', 'counterSelect1': 'hex', 'counterSelect2': 'hex', 'counterSelect3': 'hex', 'counterSelect4': 'hex', 'counterSelect5': 'hex', 'counterSelect6': 'hex', 'counterSelect7': 'hex', 'counterSelect8': 'hex', 'counterSelect9': 'hex', 'counterSelect10': 'hex', 'counterSelect11': 'hex', 'counterSelect12': 'hex', 'counterSelect13': 'hex', 'counterSelect14': 'hex', 'counterSelect': 'hex', 'IDString': 'str', 'communityName': 'str'}
 CLASS_TO_STRUCT = {(7,258): CMFormat,

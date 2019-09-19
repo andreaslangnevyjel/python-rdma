@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 # Fairly simple status/inquery commands
 
+import codecs
 import copy
 import struct
-import codecs
 
 import rdma.IBA as IBA
 import rdma.IBA_describe as IBA_describe
 import rdma.binstruct
 import rdma.madtransactor
 import rdma.satransactor
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def cmd_ibv_devices(argv, o):
@@ -261,7 +261,7 @@ def cmd_query(argv, o):
           %prog PerformanceGet PMPortCounters -f portSelect=1
           %prog SubnAdmGet SAPathRecord -f SGID=fe80::0002:c903:0000:1491 -f DGID=fe80::0002:c903:0000:1492
           """
-    import libibtool.saquery
+    from . import saquery
 
     o.add_option("-a", "--attribute-id", action="store", dest="attribute_id",
                  default=0, type=int,
@@ -291,10 +291,10 @@ def cmd_query(argv, o):
                 n, v = cur_f.split("=")
             except ValueError:
                 raise CmdError("Field {!r} does not have exactly 1 equals.".format(cur_f))
-            libibtool.saquery.set_mad_attr(req, n, v)
+            saquery.set_mad_attr(req, n, v)
         ret = meth(req, lib.path, args.attribute_id)
         if isinstance(ret, list):
-            out = libibtool.saquery.Indentor(sys.stdout)
+            out = saquery.Indentor(sys.stdout)
             for num, cur_f in enumerate(ret):
                 print("Reply structure #{:d}".format(num))
                 cur_f.printer(out, **lib.format_args)
@@ -605,8 +605,8 @@ def cmd_decode_mad(argv, o):
 
        All spaces and newlines are removed from the input text, the
        result must be a single string of hex digits."""
-    import libibtool.vendstruct
-    libibtool.vendstruct.install_vend()
+    from . import vendstruct
+    vendstruct.install_vend()
     o.add_option(
         "-v",
         "--verbosity",

@@ -7,7 +7,7 @@ import inspect
 import rdma.IBA_describe as IBA_describe
 import rdma.path
 import rdma.sched
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def fsplit(s, c, count):

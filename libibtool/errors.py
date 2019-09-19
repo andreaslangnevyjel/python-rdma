@@ -4,8 +4,8 @@
 from functools import reduce
 
 import rdma.IBA_describe as IBA_describe
-from libibtool.libibopts import *
-from libibtool.perfquery import sum_result
+from .libibopts import *
+from .perfquery import sum_result
 
 
 class CheckError(CmdError):

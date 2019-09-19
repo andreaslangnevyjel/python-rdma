@@ -8,7 +8,7 @@ import sys
 import rdma
 import rdma.IBA as IBA
 import rdma.path
-from libibtool import *
+from .cmdline import CmdError
 
 
 def tmpl_target(s, default_end_port, require_dev, require_ep):

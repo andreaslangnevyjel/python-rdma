@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 
+import sys
+
 import rdma
-from libibtool.tools import *
+from libibtool.cmdline import cmd_help, MyOptParse, get_cmd_func, CmdError
 
 # Generate the global command map
 banner = """Command suite for IB management v{}""".format(rdma.__version__)

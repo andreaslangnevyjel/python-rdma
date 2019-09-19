@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import rdma.IBA_describe as IBA_describe
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def do_ni(umad, kind, path, attr):

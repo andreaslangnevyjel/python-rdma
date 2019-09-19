@@ -3,7 +3,7 @@
 import rdma.IBA_describe as IBA_describe
 import rdma.discovery
 import rdma.subnet
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def _fetch_mcast_link(sched, sbn, out_port, path, mlid, topo):

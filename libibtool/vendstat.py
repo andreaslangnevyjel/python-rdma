@@ -4,9 +4,8 @@
 import socket
 import time
 
-import libibtool.vend as vend
-import libibtool.vendstruct
-from libibtool.libibopts import *
+from . import vend, vendstruct
+from .libibopts import *
 
 
 # This is just an illustration how to make this work, and not a complete
@@ -14,7 +13,7 @@ from libibtool.libibopts import *
 def cmd_vendstat(argv, o):
     """Example how to use vendor MADs.
        Usage: %prog TARGET"""
-    libibtool.vendstruct.install_vend()
+    vendstruct.install_vend()
     LibIBOpts.setup(o)
     o.add_option(
         "-N",
@@ -27,7 +26,7 @@ def cmd_vendstat(argv, o):
         "--cpi",
         action="store_const",
         dest="kind",
-        const=libibtool.vendstruct.MlxClassPortInfo,
+        const=vendstruct.MlxClassPortInfo,
         help="Show the Mellanox vendor class port info.",
     )
     args, values = o.parse_args(argv, expected_values=1)
@@ -55,14 +54,14 @@ def tmpl_ofa_vend(v):
     elif v == "cpu":
         return vend.OFASysStatCPUInfo
     elif v == "cpi":
-        return libibtool.vendstruct.OFASysStatClassPortInfo
+        return vendstruct.OFASysStatClassPortInfo
     else:
         raise ValueError("Not one of ping, host, cpi or cpu")
 
 
 def handle_packet(umad, buf, path):
     fmt, req = umad.parse_request(buf, path)
-    if fmt.__class__ != libibtool.vendstruct.OFASysStatFormat:
+    if fmt.__class__ != vendstruct.OFASysStatFormat:
         raise rdma.MADError(
             req=fmt,
             req_buf=buf, path=path,
@@ -119,7 +118,7 @@ def cmd_ibsysstat(argv, o):
        Usage: %prog [TARGET ping|host|cpu|cpi]
 
        This program must be running in server mode on the target end port."""
-    libibtool.vendstruct.install_vend()
+    vendstruct.install_vend()
     LibIBOpts.setup(o)
     o.add_option(
         "-S",
@@ -137,13 +136,13 @@ def cmd_ibsysstat(argv, o):
         global cpi
         cpi = IBA.MADClassPortInfo()
         cpi.baseVersion = IBA.MAD_BASE_VERSION
-        cpi.classVersion = libibtool.vendstruct.OFASysStatFormat.MAD_CLASS_VERSION
+        cpi.classVersion = vendstruct.OFASysStatFormat.MAD_CLASS_VERSION
         cpi.respTimeValue = 16
         cpi.redirectQKey = cpi.trapQKey = IBA.IB_DEFAULT_QP1_QKEY
         if len(values) != 0:
             raise CmdError("Too many arguments.")
         with lib.get_umad_for_target(gmp=True) as umad:
-            agent_id = umad.register_server_fmt(libibtool.vendstruct.OFASysStatFormat)
+            agent_id = umad.register_server_fmt(vendstruct.OFASysStatFormat)
             while True:
                 buf, path = umad.recvfrom(None)
                 if path.umad_agent_id != agent_id:
@@ -170,7 +169,7 @@ def cmd_ibping(argv, o):
        Usage: %prog TARGET
 
        ibsysstat must be running in server mode on the target end port."""
-    libibtool.vendstruct.install_vend()
+    vendstruct.install_vend()
     LibIBOpts.setup(o)
     o.add_option(
         "-c",

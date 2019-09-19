@@ -5,7 +5,7 @@ import rdma.IBA_describe as IBA_describe
 import rdma.discovery
 import rdma.satransactor
 import rdma.subnet
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def display_mfdb(switch, path, show_all: bool):

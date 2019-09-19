@@ -7,7 +7,7 @@ import copy
 import rdma.discovery
 import rdma.madtransactor
 import rdma.subnet
-from libibtool.libibopts import *
+from .libibopts import *
 
 
 def cmd_init_all_ports(argv, o):

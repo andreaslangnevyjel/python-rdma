@@ -8,6 +8,14 @@ import sys
 from typing import List, Tuple
 
 
+__all__ = [
+    "CmdError",
+    "MyOptParse",
+    "get_cmd_func",
+    "cmd_help",
+]
+
+
 class CmdError(Exception):
     """Thrown for any command line or command operation failures."""
     pass
