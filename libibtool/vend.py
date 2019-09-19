@@ -3,7 +3,7 @@
 import struct
 
 import rdma.binstruct
-import vendstruct
+from . import vendstruct
 
 
 class MlxGeneralInfo(rdma.binstruct.BinStruct):
