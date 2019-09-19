@@ -4,7 +4,11 @@
 from functools import reduce
 
 import rdma.IBA_describe as IBA_describe
-from .libibopts import *
+import rdma.path
+from rdma import IBA
+from .cmdline import CmdError
+from .constants import libib_name_map_perfquery
+from .libibopts import LibIBOpts, tmpl_target, tmpl_int
 from .perfquery import sum_result
 
 
@@ -474,7 +478,7 @@ def print_header(ninf, pinf, desc, port_idx, failed, kind):
                 print("# Checking %s: nodeguid %s lid %s port %u" % (
                     IBA_describe.node_type(ninf.nodeType),
                     ninf.nodeGUID, pinf.LID, port_idx))
-            print("Node check lid %u:" % (pinf.LID), end=' ')
+            print("Node check lid {:d}:".format(pinf.LID), end=' ')
         if failed is not None:
             print((red("FAILED") if failed else
                    blue("WARNING") if warnings else

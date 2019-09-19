@@ -6,7 +6,9 @@ import time
 
 import rdma.IBA_describe as IBA_describe
 import rdma.subnet
-from .libibopts import *
+from rdma import IBA
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_node_guid, tmpl_target
 
 
 def as_node_name(node) -> str:

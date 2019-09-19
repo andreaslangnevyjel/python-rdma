@@ -1,11 +1,15 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
+import os
+import sys
 import time
 
 import rdma.path
 import rdma.tools
-from .libibopts import *
+from rdma import IBA
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_int, tmpl_target
 
 
 def sum_result(results):

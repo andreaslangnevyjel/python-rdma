@@ -7,7 +7,9 @@ import copy
 import rdma.discovery
 import rdma.madtransactor
 import rdma.subnet
-from .libibopts import *
+from rdma import IBA
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_target
 
 
 def cmd_init_all_ports(argv, o):

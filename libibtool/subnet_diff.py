@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 
+import pickle
+import sys
 from typing import Tuple
 
 import rdma.IBA_describe as IBA_describe
-from .libibopts import *
-
-import pickle
+from .cmdline import CmdError
+from .libibopts import LibIBOpts
 
 
 def load_cache(lib, fn, need):

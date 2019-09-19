@@ -1,11 +1,15 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
+import sys
+
 import rdma.IBA_describe as IBA_describe
 import rdma.discovery
 import rdma.satransactor
 import rdma.subnet
-from .libibopts import *
+from rdma import IBA
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_target, tmpl_int
 
 
 def display_mfdb(switch, path, show_all: bool):

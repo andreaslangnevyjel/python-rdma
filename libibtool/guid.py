@@ -1,7 +1,11 @@
 # Copyright 2015 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
-from .libibopts import *
+import sys
+
+from rdma import IBA
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_target, tmpl_int, tmpl_port_guid
 
 
 def set_guid(lid, guid, slot):

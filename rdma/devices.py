@@ -216,7 +216,7 @@ class EndPort(SysFSCache):
         supports the context manager protocol that should be closed once
         the SA is finished.
         """
-        for I in self._iterate_services_end_port(SYS_INFINIBAND_MAD, "issm\d+"):
+        for I in self._iterate_services_end_port(SYS_INFINIBAND_MAD, r"issm\d+"):
             return rdma.tools.SysFSDevice(self, I)
         else:
             raise rdma.RDMAError(

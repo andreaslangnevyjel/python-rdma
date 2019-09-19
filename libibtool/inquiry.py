@@ -4,14 +4,18 @@
 
 import codecs
 import copy
+import os
 import struct
+import sys
 
 import rdma.IBA as IBA
 import rdma.IBA_describe as IBA_describe
 import rdma.binstruct
 import rdma.madtransactor
 import rdma.satransactor
-from .libibopts import *
+from rdma import IBA
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_target, tmpl_int
 
 
 def cmd_ibv_devices(argv, o):
@@ -517,28 +521,28 @@ def cmd_ibportstate(argv, o):
     return lib.done()
 
 
-def decode_link(o, bytes):
+def decode_link(o, in_bytes):
     """Assume bytes starts with the LRH and parse accordingly. Returns bytes
        starting at the MAD header"""
-    lhdr = IBA.HdrLRH(bytes)
+    lhdr = IBA.HdrLRH(in_bytes)
     off = 8
     if o.verbosity >= 1:
         lhdr.printer(sys.stdout)
     if lhdr.LNH & 1 == 1:
-        ghdr = IBA.HdrGRH(bytes[off:])
+        ghdr = IBA.HdrGRH(in_bytes[off:])
         if o.verbosity >= 1:
             ghdr.printer(sys.stdout)
         off = off + 40
-    bth = IBA.HdrBTH(bytes[off:])
+    bth = IBA.HdrBTH(in_bytes[off:])
     if o.verbosity >= 1:
         bth.printer(sys.stdout)
     off = off + 12
     if bth.service == 3 and bth.function == 4:
-        deth = IBA.HdrDETH(bytes[off:])
+        deth = IBA.HdrDETH(in_bytes[off:])
         if o.verbosity >= 1:
             deth.printer(sys.stdout)
         off = off + 8
-    return bytes[off:]
+    return in_bytes[off:]
 
 
 class UMADHdr(rdma.binstruct.BinStruct):

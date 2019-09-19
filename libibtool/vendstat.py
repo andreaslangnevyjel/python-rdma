@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import socket
+import sys
 import time
 
+from rdma import IBA, MADError
 from . import vend, vendstruct
-from .libibopts import *
+from .cmdline import CmdError
+from .libibopts import LibIBOpts, tmpl_target
 
 
 # This is just an illustration how to make this work, and not a complete
@@ -62,7 +65,7 @@ def tmpl_ofa_vend(v):
 def handle_packet(umad, buf, path):
     fmt, req = umad.parse_request(buf, path)
     if fmt.__class__ != vendstruct.OFASysStatFormat:
-        raise rdma.MADError(
+        raise MADError(
             req=fmt,
             req_buf=buf, path=path,
             reply_status=IBA.MAD_STATUS_UNSUP_METHOD,
@@ -93,7 +96,7 @@ def handle_packet(umad, buf, path):
             cpi.trapQKey = req.trapQKey
             return umad.send_reply(fmt, cpi, path)
     else:
-        raise rdma.MADError(
+        raise MADError(
             req=fmt,
             req_buf=buf,
             path=path,
@@ -102,7 +105,7 @@ def handle_packet(umad, buf, path):
                 fmt.describe(),
             ),
         )
-    raise rdma.MADError(
+    raise MADError(
         req=fmt,
         req_buf=buf,
         path=path,
@@ -149,7 +152,7 @@ def cmd_ibsysstat(argv, o):
                     continue
                 try:
                     handle_packet(umad, buf, path)
-                except rdma.MADError as err:
+                except MADError as err:
                     err.dump_detailed(sys.stderr, "E:", level=1)
                     umad.send_error_exc(err)
         return lib.done()
@@ -203,7 +206,7 @@ def cmd_ibping(argv, o):
                 start = time.monotonic()
                 try:
                     vinf = umad.vend_get(vend.OFASysStatPing, path)
-                except rdma.MADError:
+                except MADError:
                     lost = lost + 1
                     count = count + 1
                     if not args.flood:

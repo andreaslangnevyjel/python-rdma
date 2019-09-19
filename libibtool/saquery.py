@@ -3,11 +3,15 @@
 
 import copy
 import inspect
+import sys
 
 import rdma.IBA_describe as IBA_describe
 import rdma.path
 import rdma.sched
-from .libibopts import *
+from rdma import IBA
+from .cmdline import CmdError
+from .constants import libib_name_map_smpquery
+from .libibopts import LibIBOpts
 
 
 def fsplit(s, c, count):
