@@ -13,7 +13,7 @@ from typing import Tuple, List, ByteString
 
 class Node(object):
     """Hold onto information about a single node in the network. A node is a
-    switch, \*CA, or router with multiple end ports. A node has a single
+    switch, *CA, or router with multiple end ports. A node has a single
     `nodeGUID` and there can not be duplicate nodeGUID's. The port information
     in the :attr:`ninf` stores a random port."""
     # __slots__ = ("ninf","desc","ports")

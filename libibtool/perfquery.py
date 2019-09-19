@@ -92,8 +92,10 @@ class Querier(object):
         ninf = self.umad.subn_adm_get(ninf)
         self.__dict__["ninf"] = ninf
         if self.path.DGID is None:
-            self.path.DGID = IBA.GID(prefix=IBA.GID_DEFAULT_PREFIX,
-                                     guid=ninf.nodeInfo.portGUID)
+            self.path.DGID = IBA.GID(
+                prefix=IBA.GID_DEFAULT_PREFIX,
+                guid=ninf.nodeInfo.portGUID,
+            )
         return ninf
 
     def setup(self, cnts, port, resetSelect=None):
@@ -321,7 +323,7 @@ def cmd_ibswportwatch(argv, o):
             sched = lib.get_sched(umad, lib.path)
 
             count = 0
-            start = rdma.tools.clock_monotonic()
+            start = time.monotonic()
             last = None
             last_time = None
             dtime = None
@@ -330,7 +332,7 @@ def cmd_ibswportwatch(argv, o):
                     sched.run(queue=q.fetch(sched, cnts))
                     res = sched.result
 
-                    now = rdma.tools.clock_monotonic()
+                    now = time.monotonic()
                     if last_time is not None:
                         dtime = now - last_time
                     last_time = now
@@ -349,7 +351,7 @@ def cmd_ibswportwatch(argv, o):
                         bout.flush()
                     count = count + 1
                     if count != args.count:
-                        now = rdma.tools.clock_monotonic()
+                        now = time.monotonic()
                         # Try and hit the target interval from the starting time,
                         # in an absolute sense..
                         to_sleep = (start + count * args.sleep) - now

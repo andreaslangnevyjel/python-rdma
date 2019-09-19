@@ -235,12 +235,12 @@ class EndPort(SysFSCache):
 
     @property
     def phys_state(self):
-        """The port physical state, one of `IBA.PHYS_PORT_STATE_\*`"""
+        """The port physical state, one of `IBA.PHYS_PORT_STATE_*`"""
         return self._cached_sysfs("phys_state", _conv_int_desc)
 
     @property
     def state(self):
-        """The port state, one of `IBA.PORT_STATE_\*`"""
+        """The port state, one of `IBA.PORT_STATE_*`"""
         return self._cached_sysfs("state", _conv_int_desc)
 
     @property

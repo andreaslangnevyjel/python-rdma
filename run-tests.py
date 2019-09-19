@@ -18,7 +18,9 @@ def test_all():
 module = __import__("tests")
 
 fns = [
-    os.path.splitext(entry)[0] for entry in fnmatch.filter(os.listdir(module.__path__[0]), "*.py")
+    os.path.splitext(entry)[0] for entry in fnmatch.filter(
+        os.listdir(module.__path__[0]), "*.py",
+    )
 ]
 fns.remove("__init__")
 

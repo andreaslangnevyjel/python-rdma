@@ -495,7 +495,7 @@ class ComponentMask(object):
         def __getattr__(self, name):
             res = getattr(self._obj, name)
             if isinstance(res, rdma.binstruct.BinStruct):
-                return _Proxy(self._parent, "%s.%s" % (self._name, name), res)
+                return _Proxy(self._parent, "{}.{}".format(self._name, name), res)
             if isinstance(res, bytearray) or isinstance(res, list):
                 # It is an array of some sort, just reading from those
                 # flips the bit because I am lazy.

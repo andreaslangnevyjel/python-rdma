@@ -1,15 +1,17 @@
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
 # -*- coding: utf-8 -*-
 
-import collections
 import codecs
+import collections
 import os
+import time
+from typing import Tuple, Union
+
+import rdma.ibverbs as ibv
 
 import rdma
 import rdma.devices
-import rdma.ibverbs as ibv
 import rdma.madtransactor
-from typing import Tuple, Union
 import rdma.vtools
 
 
@@ -95,7 +97,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
     def recvfrom(self, wakeat) -> Union[Tuple, None]:
         """
         Receive a MAD packet. If the value of
-        :func:`rdma.tools.clock_monotonic()` exceeds *wakeat* then :class:`None`
+        :func:`time.monotonic()` exceeds *wakeat* then :class:`None`
         is returned.
 
         :returns: tuple(buf,path)
@@ -129,7 +131,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
         if send_only:
             return None
         rmatch = self._get_reply_match_key(buf)
-        expire = path.mad_timeout + rdma.tools.clock_monotonic()
+        expire = path.mad_timeout + time.monotonic()
         retries = path.retries
         while True:
             ret = self.recvfrom(expire)
@@ -139,7 +141,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
                 retries = retries - 1
                 self._execute(buf, path, True)
 
-                expire = path.mad_timeout + rdma.tools.clock_monotonic()
+                expire = path.mad_timeout + time.monotonic()
                 continue
             elif rmatch == self._get_match_key(ret[0]):
                 return ret
@@ -175,9 +177,10 @@ class VMAD(rdma.madtransactor.MADTransactor):
         self._tid = (self._tid + 1) % (1 << 32)
         return self._tid
 
-    def __repr__(self):
-        return "<%s.%s object for %s at 0x%x>" % \
-               (self.__class__.__module__,
-                self.__class__.__name__,
-                self.end_port,
-                id(self))
+    def __repr__(self) -> str:
+        return "<{}.{} object for {} at 0x{:x}>".format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.end_port,
+            id(self),
+        )

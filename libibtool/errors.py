@@ -138,7 +138,7 @@ def get_max(v) -> int:
     return 1 << idx
 
 
-def link_configured(pinf):
+def link_configured(pinf) -> bool:
     """True if the port info is in a configured state such that speed and width
     can be considered valid."""
     return (

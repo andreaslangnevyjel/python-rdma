@@ -363,8 +363,7 @@ def cmd_ibfindnodesusing(argv, o):
             raise CmdError(
                 "Port {:d} is invalid, switch has {:d} ports".format(
                     args.port,
-                    switch,
-                    ninf.numPorts,
+                    switch.ninf.numPorts,
                 ),
             )
         print(switch.desc)

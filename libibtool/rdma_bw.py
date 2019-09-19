@@ -4,14 +4,15 @@
 import contextlib
 import pickle
 import socket
+import time
 from collections import namedtuple
 from mmap import mmap
 
 import rdma.ibverbs as ibv
+
 import rdma.path
 import rdma.vtools
 from libibtool.libibopts import *
-from rdma.tools import clock_monotonic
 
 infotype = namedtuple("infotype", "path addr rkey size iters")
 
@@ -84,7 +85,7 @@ class Endpoint(object):
         n = self.opt.iters
         depth = min(self.opt.tx_depth, n, self.qp.max_send_wr)
 
-        tpost = clock_monotonic()
+        tpost = time.monotonic()
         for i in range(depth):
             self.qp.post_send(swr)
 
@@ -97,13 +98,13 @@ class Endpoint(object):
             if posts < n:
                 self.qp.post_send(swr)
                 posts += 1
-                self.poller.wakeat = rdma.tools.clock_monotonic() + 1
+                self.poller.wakeat = time.monotonic() + 1
             if completions == n:
                 break
         else:
             raise rdma.RDMAError("CQ timed out")
 
-        tcomp = clock_monotonic()
+        tcomp = time.monotonic()
 
         rate = self.opt.size * self.opt.iters / 1e6 / (tcomp - tpost)
         print("{:.1f} MB/sec".format(rate))

@@ -82,7 +82,7 @@ class MyOptParse(optparse.OptionParser):
 default_module = __name__.rpartition(".")[0]
 
 
-def get_cmd_func(name, top_mod=None):
+def get_cmd_func(name: str, top_mod=None):
     if top_mod is None:
         top_mod = sys.modules["__main__"]
 

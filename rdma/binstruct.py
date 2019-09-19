@@ -5,7 +5,7 @@
 import abc
 import struct
 import codecs
-from typing import Tuple
+from typing import Tuple, Optional, ByteString, Union
 
 uint32_t = struct.Struct('>L')
 uint64_t = struct.Struct('>Q')
@@ -47,7 +47,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
 
     __slots__ = ()
 
-    def __init__(self, buf=None, offset: int=0):
+    def __init__(self, buf: Optional[Union["BinStruct", ByteString]]=None, offset: int=0):
         """*buf* is either an instance of :class:`BinStruct` or a :class:`bytes`
         representing the data to unpack into the instance. *offset* is the
         starting offset in *buf* for unpacking. If no arguments are given then
@@ -55,7 +55,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
         if buf is not None:
             if isinstance(buf, BinStruct):
                 buf = bytearray(buf.MAD_LENGTH)
-                s.pack_into(buf)
+                self.pack_into(buf)
             if isinstance(buf, bytearray):
                 self.unpack_from(bytes(buf), offset)
             else:
@@ -68,7 +68,7 @@ class BinStruct(object, metaclass=abc.ABCMeta):
         added to all printed offsets and *header* causes the display of the
         class type on the first line. *format* may be `dump` or `dotted`."""
         if header:
-            print("%s" % (self.__class__.__name__), file=f_obj)
+            print("{}".format(self.__class__.__name__), file=f_obj)
         import rdma.IBA_describe
         if format == "dotted":
             return rdma.IBA_describe.struct_dotted(f_obj, self, **kwargs)

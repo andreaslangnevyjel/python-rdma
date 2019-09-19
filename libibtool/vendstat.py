@@ -198,10 +198,10 @@ def cmd_ibping(argv, o):
         minrtt = 1 << 32
         maxrtt = 0
         totalrtt = 0
-        start_time = rdma.tools.clock_monotonic()
+        start_time = time.monotonic()
         try:
             while count != args.count:
-                start = rdma.tools.clock_monotonic()
+                start = time.monotonic()
                 try:
                     vinf = umad.vend_get(vend.OFASysStatPing, path)
                 except rdma.MADError:
@@ -211,7 +211,7 @@ def cmd_ibping(argv, o):
                         time.sleep(1)
                     continue
                 count = count + 1
-                rtt = rdma.tools.clock_monotonic() - start
+                rtt = time.monotonic() - start
                 minrtt = min(rtt, minrtt)
                 maxrtt = max(rtt, maxrtt)
                 totalrtt = totalrtt + rtt
@@ -228,7 +228,7 @@ def cmd_ibping(argv, o):
                 count,
                 count - lost,
                 lost * 100 / count,
-                (rdma.tools.clock_monotonic() - start_time) * 1000,
+                (time.monotonic() - start_time) * 1000,
             ),
         )
         print(

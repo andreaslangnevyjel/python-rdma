@@ -105,7 +105,7 @@ def trace_mcast(topo, port, dport):
     return lst
 
 
-def trace(umad, sched, sbn, sport, spath, dport, dpath, step_fn):
+def trace(umad: "UMAD", sched, sbn, sport, spath, dport, dpath, step_fn):
     cport = sport
     cpath = spath
     DLID = dpath.DLID
@@ -113,8 +113,11 @@ def trace(umad, sched, sbn, sport, spath, dport, dpath, step_fn):
     while cport != dport:
         # print cpath,DLID
         if isinstance(cport.parent, rdma.subnet.Switch):
-            inf = umad.subn_get(IBA.SMPLinearForwardingTable,
-                                cpath, DLID / 64)
+            inf = umad.subn_get(
+                IBA.SMPLinearForwardingTable,
+                cpath,
+                int(DLID / 64),
+            )
             port_id = inf.portBlock[DLID % 64]
             out_port = cport.parent.get_port(port_id)
         else:

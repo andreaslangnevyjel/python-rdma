@@ -7,6 +7,13 @@ import sys
 
 __version__ = "1.0"
 
+__all__ = [
+    "RDMAError",
+    "MADError",
+    "MADClassError",
+    "MADTimeoutError",
+]
+
 
 class RDMAError(Exception):
     """General exception class for RDMA related errors."""
@@ -101,21 +108,21 @@ class MADError(RDMAError):
             return
         if self.messages:
             first = True
-            for I in reversed(self.messages):
+            for msg in reversed(self.messages):
                 if first:
-                    print(prefix, I, file=f_obj)
+                    print(prefix, msg, file=f_obj)
                     first = False
                 else:
-                    print(prefix, "+%s" % (I), file=f_obj)
+                    print(prefix, "+{}".format(msg), file=f_obj)
         else:
             print(prefix, self.__str__(), file=f_obj)
         if level >= 1 and self.path is not None:
             print(prefix, "+MAD path was %r" % (self.path), file=f_obj)
         if level >= 2 and self.req is not None:
-            print(prefix, "+Request Packet %s" % (self.req.__class__.__name__), file=f_obj)
+            print(prefix, "+Request Packet {}".format(self.req.__class__.__name__), file=f_obj)
             self.req.printer(f_obj, header=False)
             if self.rep:
-                print(prefix, "+Reply Packet %s" % (self.rep.__class__.__name__), file=f_obj)
+                print(prefix, "+Reply Packet {}".format(self.rep.__class__.__name__), file=f_obj)
                 self.rep.printer(f_obj, header=False)
         if self.exc_info is not None:
             raise self.exc_info[0](self.exc_info[1]).with_traceback(self.exc_info[2])
@@ -272,7 +279,7 @@ def get_device(name: str=None):
     try:
         return devices[name]
     except KeyError:
-        raise RDMAError("RDMA device %r not found." % (name))
+        raise RDMAError("RDMA device {} not found.".format(str(name)))
 
 
 _cached_devices = None

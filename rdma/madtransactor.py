@@ -359,37 +359,37 @@ class MADTransactor(object):
         fmt.MKey = getattr(path, "MKey", 0)
         return self.do_mad(fmt, payload, path, attributeModifier, method)
 
-    def subn_get(self, payload, path, attributeModifier=0):
+    def subn_get(self, payload, path, attribute_modifier: int=0):
         return self._subn_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNGET,
         )
 
-    def subn_set(self, payload, path, attributeModifier=0):
+    def subn_set(self, payload, path, attribute_modifier: int=0):
         return self._subn_do(
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_SUBNSET,
         )
 
-    def PerformanceGet(self, payload, path, attributeModifier=0):
+    def PerformanceGet(self, payload, path, attribute_modifier: int=0):
         return self.do_mad(
             IBA.PMFormat(),
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_PERFORMANCEGET,
         )
 
-    def PerformanceSet(self, payload, path, attributeModifier=0):
+    def PerformanceSet(self, payload, path, attribute_modifier: int=0):
         return self.do_mad(
             IBA.PMFormat(),
             payload,
             path,
-            attributeModifier,
+            attribute_modifier,
             payload.MAD_PERFORMANCESET,
         )
 

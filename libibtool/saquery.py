@@ -177,7 +177,7 @@ def set_mad_attr(attr, name, v):
                 err,
             ),
         )
-    exec("attr.{} = {}".format(name))
+    exec("attr.{} = v".format(name))
 
 
 def tmpl_op(s):

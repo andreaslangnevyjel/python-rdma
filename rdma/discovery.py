@@ -479,11 +479,11 @@ def topo_surround_SMP(sched, sbn, node, get_desc: bool=True):
                 sched.queue(node.get_desc(sched, path))
         ninf = node.ninf
 
-        def do_port(sel, path):
+        def do_port(sel, p_path):
             aport = node.get_port(sel)
             if aport.pinf is None:
-                pinf = yield sched.subn_get(IBA.SMPPortInfo, path, sel)
-                sbn.get_port_pinf(pinf, port_select=sel, path=path)
+                pinf = yield sched.subn_get(IBA.SMPPortInfo, p_path, sel)
+                sbn.get_port_pinf(pinf, port_select=sel, path=p_path)
             else:
                 pinf = aport.pinf
             if pinf.portState != IBA.PORT_STATE_DOWN:
@@ -567,46 +567,46 @@ def load(sched, sbn, stuff):
 
     # Deal with a qualifying space after the thing eg 'all_NodeInfo 1'
     non_sa = set()
-    for I in stuff:
-        sp = I.split(' ')
-        if len(sp) > 1:
-            if sp[0] in sbn.loaded:
-                sbn.loaded.add(I)
+    for entry in stuff:
+        l_sp = entry.split(' ')
+        if len(l_sp) > 1:
+            if l_sp[0] in sbn.loaded:
+                sbn.loaded.add(entry)
             else:
-                non_sa.add(sp[0])
+                non_sa.add(l_sp[0])
 
     stuff.difference_update(sbn.loaded)
 
-    def fetch_SA(sched):
+    def fetch_sa(l_sched):
         if "all_SwitchInfo" in stuff:
-            yield subnet_swinf_SA(sched, sbn)
+            yield subnet_swinf_SA(l_sched, sbn)
             stuff.add("all_NodeInfo {:d}".format(IBA.NODE_SWITCH))
 
         if "all_NodeInfo" in stuff or "all_NodeDescription" in stuff:
-            yield subnet_ninf_SA(sched, sbn)
+            yield subnet_ninf_SA(l_sched, sbn)
         else:
             doing = set()
-            for I in stuff:
-                sp = I.split(' ')
-                if len(sp) > 1 and (sp[0] == "all_NodeInfo" or sp[0] == "all_NodeDescription"):
-                    ty = int(sp[1])
+            for l_entry in stuff:
+                l2_sp = l_entry.split(' ')
+                if len(l2_sp) > 1 and (l2_sp[0] == "all_NodeInfo" or l2_sp[0] == "all_NodeDescription"):
+                    ty = int(l2_sp[1])
                     if ty in doing:
                         continue
                     doing.add(ty)
-                    yield subnet_ninf_SA(sched, sbn, node_type=ty)
+                    yield subnet_ninf_SA(l_sched, sbn, node_type=ty)
 
-    def fetch_SA2(sched):
+    def fetch_sa2(l_sched):
         if "all_PortInfo" in stuff:
-            yield subnet_pinf_SA(sched, sbn)
+            yield subnet_pinf_SA(l_sched, sbn)
         else:
             if "all_LIDs" in stuff:
-                yield subnet_fill_LIDs_SA(sched, sbn)
+                yield subnet_fill_LIDs_SA(l_sched, sbn)
         if "all_topology" in stuff:
-            yield subnet_topology_SA(sched, sbn)
+            yield subnet_topology_SA(l_sched, sbn)
 
     if isinstance(sched, rdma.satransactor.SATransactor):
-        sched.run(mqueue=fetch_SA(sched))
-        sched.run(mqueue=fetch_SA2(sched))
+        sched.run(mqueue=fetch_sa(sched))
+        sched.run(mqueue=fetch_sa2(sched))
     else:
         if "all_SwitchInfo" in stuff:
             stuff.add("all_NodeInfo")
@@ -614,8 +614,10 @@ def load(sched, sbn, stuff):
         stuff.update(non_sa)
         stuff.difference_update(sbn.loaded)
 
-        if ("all_LIDs" in stuff or "all_NodeInfo" in stuff or
-            "all_NodeDescription" in stuff or "all_topology" in stuff):
+        if (
+            "all_LIDs" in stuff or "all_NodeInfo" in stuff or "all_NodeDescription" in stuff or
+            "all_topology" in stuff
+        ):
             sched.run(
                 queue=topo_SMP(
                     sched,

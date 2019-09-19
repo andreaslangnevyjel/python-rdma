@@ -472,7 +472,7 @@ class Struct(object):
                 ),
             )
             unpack.append(
-                "    {} = struct.unpack_from(\">{}\", buffer, offset + {:d})".format(
+                "    ({}) = struct.unpack_from(\">{}\", buffer, offset + {:d})".format(
                     ", ".join(J[1] for J in idx),
                     "".join(J[0] for J in idx),
                     int(off / 8),

@@ -4,6 +4,7 @@
 import codecs
 import copy
 import errno
+import time
 import fcntl
 import os
 import select
@@ -147,7 +148,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
         self._tid = int(codecs.encode(os.urandom(4), "hex"), 16)
         self.end_port = parent
 
-    def get_new_tid(self):
+    def get_new_tid(self) -> int:
         self._tid = (self._tid + 1) % (1 << 32)
         return self._tid
 
@@ -328,7 +329,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
     def recvfrom(self, wakeat) -> Union[Tuple, None]:
         """
         Receive a MAD packet. If the value of
-        :func:`rdma.tools.clock_monotonic()` exceeds *wakeat* then :class:`None`
+        :func:`time.monotonic()` exceeds *wakeat* then :class:`None`
         is returned.
 
         :returns: tuple(buf,path)
@@ -342,8 +343,9 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 # print(buf, type(buf), len(buf))
                 if err.errno == errno.ENOSPC:
                     # Hmm.. Must be RMPP.. Resize the buffer accordingly.
-                    rmpp_data2 = struct.unpack_from(">L", bytes(buf), 32)
-                    buf = bytearray(min(len(buf) * 2, rmpp_data2[0]))
+                    # rmpp_data2 = struct.unpack_from(">L", bytes(buf), 32)
+                    # comparision between tuple (rmpp_data2) and int is different between python2 and python3
+                    buf = bytearray(min([len(buf) * 2]))  # , rmpp_data2[0]))
                     continue
                 raise
 
@@ -354,7 +356,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                     if not self._poll.poll(-1):
                         return None
                 else:
-                    timeout = wakeat - rdma.tools.clock_monotonic()
+                    timeout = wakeat - time.monotonic()
                     if timeout <= 0 or not self._poll.poll(timeout * 1000):
                         return None
                 first = False
@@ -439,7 +441,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
             return None
 
         rmatch = self._get_reply_match_key(buf)
-        expire = path.mad_timeout + rdma.tools.clock_monotonic()
+        expire = path.mad_timeout + time.monotonic()
         retries = path.retries
         while True:
             ret = self.recvfrom(expire)
@@ -449,7 +451,7 @@ class UMAD(rdma.tools.SysFSDevice, rdma.madtransactor.MADTransactor):
                 retries = retries - 1
                 self._execute(buf, path, True)
 
-                expire = path.mad_timeout + rdma.tools.clock_monotonic()
+                expire = path.mad_timeout + time.monotonic()
                 continue
             elif rmatch == self._get_match_key(ret[0]):
                 return ret

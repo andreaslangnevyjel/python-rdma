@@ -260,10 +260,12 @@ Ca\t%u %s\t# "%s"''' % (ninf.nodeGUID, ninf.numPorts, as_node_name(node),
     elif isinstance(node, rdma.subnet.Switch):
         is_switch = True
         port = node.ports[0]
-        print('''switchguid=%s(%s)
-Switch\t%u %s\t# "%s" base port 0 lid %u lmc %u''' % \
-              (ninf.nodeGUID, port.portGUID, ninf.numPorts, as_node_name(node),
-               IBA_describe.dstr(node.desc), port.LID or 0, port.pinf.LMC))
+        print(
+            '''switchguid={}({}) Switch\t{:d} {}\t# "{}" base port 0 lid {:d} lmc {:d}'''.format(
+                ninf.nodeGUID, port.portGUID, ninf.numPorts, as_node_name(node),
+                IBA_describe.dstr(node.desc), port.LID or 0, port.pinf.LMC,
+            ),
+        )
     elif isinstance(node, rdma.subnet.Router):
         print('''rtguid=%s
 Rt\t%u %s\t# "%s"''' % (ninf.nodeGUID, ninf.numPorts, as_node_name(node),
@@ -400,15 +402,14 @@ def cmd_ibnetdiscover(argv, o):
     return lib.done()
 
 
-def better_possible(a, b, cur):
+def better_possible(a, b, cur) -> bool:
     best = a & b
     best = best & (~cur)
     return cur < best
 
 
 def print_switch(sbn, args, switch):
-    guid = (switch.ports[0].portGUID if args.port_guid else
-            switch.ninf.nodeGUID)
+    guid = switch.ports[0].portGUID if args.port_guid else switch.ninf.nodeGUID
     first = True
     port0 = switch.get_port(0)
     for port, idx in switch.iterports():

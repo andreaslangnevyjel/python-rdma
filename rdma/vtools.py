@@ -5,10 +5,10 @@ import collections
 import math
 import mmap
 import select
+import time
 from typing import Union
 
 import rdma.ibverbs as ibv
-import rdma.tools
 
 
 class BufferPool(object):
@@ -180,7 +180,7 @@ class CQPoller(object):
 
     #: `True` if iteration was stopped due to a timeout
     timedout = False
-    #: Value of :func:`rdma.tools.clock_monotonic` to stop iterating. This can
+    #: Value of :func:`time.monotonic` to stop iterating. This can
     #: be altered while iterating.
     wakeat = None
 
@@ -210,7 +210,7 @@ class CQPoller(object):
     def sleep(self, wakeat: float):
         """
         Go to sleep until the cq gets a completion. *wakeat* is the
-        value of :func:`rdma.tools.clock_monotonic` after which the function
+        value of :func:`time.monotonic` after which the function
         returns `None`. Returns `True` if the completion channel triggered.
 
         If no completion channel is in use this just returns `True`.
@@ -222,7 +222,7 @@ class CQPoller(object):
         """
         if self._poll is None:
             if wakeat is not None:
-                timeout = wakeat - rdma.tools.clock_monotonic()
+                timeout = wakeat - time.monotonic()
                 if timeout <= 0:
                     return None
             return True
@@ -230,7 +230,7 @@ class CQPoller(object):
             if wakeat is None:
                 ret = self._poll.poll(-1)
             else:
-                timeout = wakeat - rdma.tools.clock_monotonic()
+                timeout = wakeat - time.monotonic()
                 if timeout <= 0:
                     return None
                 ret = self._poll.poll(timeout * 1000)
@@ -248,13 +248,13 @@ class CQPoller(object):
         Generator that returns work completions from the CQ. If not `None`
         at most *count* wcs will be returned. *timeout* is the number of
         seconds this function can run for, and *wakeat* is the value of
-        :func:`rdma.tools.clock_monotonic` after which iteration stops.
+        :func:`time.monotonic` after which iteration stops.
 
         :rtype: :class:`rdma.ibverbs.wc`
         """
         self.timedout = False
         if timeout is not None:
-            self.wakeat = rdma.tools.clock_monotonic() + timeout
+            self.wakeat = time.monotonic() + timeout
         else:
             self.wakeat = wakeat
         if count is not None:

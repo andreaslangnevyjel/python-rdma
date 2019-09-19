@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import collections
-import ctypes
 import io
 import os
 import os.path
@@ -91,34 +90,6 @@ class SysFSDevice(object):
 
     def close(self):
         return self.dev.close()
-
-
-class IBTimeSpec(ctypes.Structure):
-    _fields_ = [
-        ("tv_sec", ctypes.c_long),
-        ("tv_nsec", ctypes.c_long),
-    ]
-
-
-clock_gettime = None
-
-
-def clock_monotonic() -> float:
-    """
-    Return the value of CLOCK_MONOTONIC as float seconds. Replace me if
-    Python ever gets this in the standard library. Only works on Linux.
-    """
-    global clock_gettime
-    if clock_gettime is None:
-        librt = ctypes.CDLL("librt.so.1", use_errno=True)
-        clock_gettime = librt.clock_gettime
-        clock_gettime.argtypes = [ctypes.c_int, ctypes.POINTER(IBTimeSpec)]
-
-    t = IBTimeSpec()
-    if clock_gettime(1, ctypes.byref(t)) != 0:
-        errno_ = ctypes.get_errno()
-        raise OSError(errno_, os.strerror(errno_))
-    return t.tv_sec + t.tv_nsec * 1e-9
 
 
 finfo = collections.namedtuple("finfo", "type mask")

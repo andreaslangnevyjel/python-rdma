@@ -5,6 +5,7 @@ import bisect
 import collections
 import inspect
 import sys
+import time
 
 import rdma
 import rdma.madtransactor
@@ -49,7 +50,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
     def is_async(self) -> bool:
         return True
 
-    def __init__(self, umad):
+    def __init__(self, umad: "UMAD"):
         """*umad* is a :class:`rdma.umad.UMAD` instance which will be used to
         issue the MADs."""
         rdma.madtransactor.MADTransactor.__init__(self)
@@ -62,14 +63,14 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
         self._replyqueue = collections.deque()
         self._ctx_waiters = collections.defaultdict(list)
 
-    def _send_mad(self, ctx, work):
+    def _send_mad(self, ctx: Context, work: Work):
         buf = work.buf
         path = work.path
         rep = self._umad._execute(buf, path, send_only=True)
         if rep:
             self._replyqueue.append(rep)
 
-        itm = (path.mad_timeout + rdma.tools.clock_monotonic(), ctx)
+        itm = (path.mad_timeout + time.monotonic(), ctx)
         ctx._work = work
         ctx._retries = path.retries
         bisect.insort(self._timeouts, itm)
@@ -78,7 +79,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
         assert (rmatch not in self._keys)
         self._keys[rmatch] = itm
 
-    def _finish_ctx(self, ctx):
+    def _finish_ctx(self, ctx: Context):
         """Called when ctx is done and won't be called any more. This triggers
         things yielding on the context."""
         ctx._done = True
@@ -99,7 +100,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
         for I in waits:
             self._mqueue.appendleft(I)
 
-    def _step(self, ctx):
+    def _step(self, ctx: Context):
         """Advance a context to its next yield statement. If result is None
         then this ctx is brand new. If ctx is not exhausted then it is put
         onto _mqueue for later"""
@@ -183,8 +184,8 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
 
         :returns: An opaque context reference."""
         if isinstance(work, tuple):
-            for I in work:
-                self.queue(I)
+            for entry in work:
+                self.queue(entry)
             return
         assert (inspect.isgenerator(work))
         ctx = Context(work, False)
@@ -217,7 +218,7 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
                 ret = self._umad.recvfrom(self._timeouts[0][0])
                 if ret is None:
                     # Purge timed out values
-                    now = rdma.tools.clock_monotonic()
+                    now = time.monotonic()
 
                     # During timeout processing we might cause new MAD
                     # sends so we have to iterate here carefully.
@@ -291,16 +292,16 @@ class MADSchedule(rdma.madtransactor.MADTransactor):
         rep = self._umad._execute(work.buf, work.path, send_only=True)
         if rep:
             self._replyqueue.append(rep)
-        res = (work.path.mad_timeout + rdma.tools.clock_monotonic(), ctx)
+        res = (work.path.mad_timeout + time.monotonic(), ctx)
         bisect.insort(self._timeouts, res)
         self._keys[ctx._rmatch] = res
 
     # Implement the MADTransactor interface. This is the asynchronous use model,
     # where the RPC functions return the work to do, not the result.
-    def do_mad(self, fmt, payload, path, attributeModifier, method, completer=None):
-        buf = self._prepare_mad(fmt, payload, attributeModifier, method, path)
+    def do_mad(self, fmt, payload, path, attribute_modifier, method, completer=None):
+        buf = self._prepare_mad(fmt, payload, attribute_modifier, method, path)
         newer = payload if isinstance(payload, type) else payload.__class__
         return self.Work(buf, fmt, path, newer, completer)
 
-    def get_new_tid(self):
+    def get_new_tid(self) -> int:
         return self._umad.get_new_tid()
