@@ -11,6 +11,12 @@ from typing import Union
 import rdma.ibverbs as ibv
 
 
+__all__ = [
+    "BufferPool",
+    "CQPoller",
+]
+
+
 class BufferPool(object):
     """
     Hold onto a block of fixed size buffers and provide some helpers for
@@ -69,10 +75,14 @@ class BufferPool(object):
             return
 
         wr = []
-        for I in range(count):
+        for _idx in range(count):
             buf_idx = self._buffers.pop()
-            wr.append(ibv.recv_wr(wr_id=buf_idx | self.RECV_FLAG,
-                                  sg_list=self.make_sge(buf_idx, self.size)))
+            wr.append(
+                ibv.recv_wr(
+                    wr_id=buf_idx | self.RECV_FLAG,
+                    sg_list=self.make_sge(buf_idx, self.size),
+                ),
+            )
         qp.post_recv(wr)
 
     def finish_wcs(self, qp, wcs):
@@ -118,7 +128,6 @@ class BufferPool(object):
         (eg for connected QPs)
         """
         if path is not None:
-            print("*", path)
             return ibv.send_wr(
                 wr_id=buf_idx,
                 sg_list=self.make_sge(buf_idx, buf_len),

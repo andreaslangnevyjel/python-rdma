@@ -175,7 +175,7 @@ class DemandList2(DemandList):
 
 class EndPort(SysFSCache):
     """A RDMA end port. An end port can issue RDMA operations, has a port GID,
-    LID, etc. For an IB switch this will be port 0, for a \*CA it will be port
+    LID, etc. For an IB switch this will be port 0, for a *CA it will be port
     1 or higher."""
     #: Port number
     port_id = None
@@ -186,7 +186,7 @@ class EndPort(SysFSCache):
 
     def __init__(self, parent, port_id):
         """*parent* is the owning :class:`RDMADevice` and port_id is the port
-        ID number, 0 for switches and > 1 for \*CAs"""
+        ID number, 0 for switches and > 1 for *CAs"""
         SysFSCache.__init__(self, parent._dir + "ports/{:d}/".format(port_id))
         self.parent = parent
         self.port_id = port_id
@@ -348,11 +348,12 @@ class EndPort(SysFSCache):
         )
 
     def __repr__(self) -> str:
-        return "<%s.%s object for %s at 0x%x>" % \
-               (self.__class__.__module__,
-                self.__class__.__name__,
-                self,
-                id(self))
+        return "<{}.{} object for {} at 0x{:x}>".format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self,
+            id(self),
+        )
 
 
 class RDMADevice(SysFSCache):
@@ -395,7 +396,9 @@ class RDMADevice(SysFSCache):
 
     @property
     def node_type(self):
-        """The node type, one of `IBA.NODE_\*`."""
+        """
+        The node type, one of `IBA.NODE_*`.
+        """
         return self._cached_sysfs("node_type", _conv_int_desc)
 
     @property

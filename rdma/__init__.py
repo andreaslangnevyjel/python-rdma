@@ -227,7 +227,7 @@ def get_end_port(name: str=None):
     import rdma.devices
     import rdma.IBA
     try:
-        gid = IBA.GID(name)
+        gid = rdma.IBA.GID(name)
     except ValueError:
         pass
     else:
@@ -235,7 +235,7 @@ def get_end_port(name: str=None):
 
     # Port GUID
     try:
-        guid = IBA.GUID(name)
+        guid = rdma.IBA.GUID(name)
     except ValueError:
         pass
     else:
@@ -269,7 +269,7 @@ def get_device(name: str=None):
     import rdma.devices
     import rdma.IBA
     try:
-        guid = IBA.GUID(name)
+        guid = rdma.IBA.GUID(name)
     except ValueError:
         pass
     else:

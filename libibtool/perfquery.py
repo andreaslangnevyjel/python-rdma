@@ -255,7 +255,6 @@ def cmd_perfquery(argv, o):
     LibIBOpts.setup(o)
     (args, values) = o.parse_args(argv)
     lib = LibIBOpts(o, args, values, 3, (tmpl_target, tmpl_int, tmpl_int))
-
     if len(values) == 0:
         values = (None, -1)
 

@@ -369,9 +369,9 @@ class LibIBOpts(object):
                     import sys
                     sat = sys.modules["rdma.satransactor"].SATransactor(umad)
                 path = rdma.path.get_mad_path(
-                    umad, 
+                    umad,
                     sat.get_path_lid(path),
-                    dqpn=1, 
+                    dqpn=1,
                     qkey=IBA.IB_DEFAULT_QP1_QKEY,
                 )
         else:

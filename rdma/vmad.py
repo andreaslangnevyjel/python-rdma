@@ -28,7 +28,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
     _ctx = None
     _allocated_ctx = False
 
-    def __init__(self, parent, path, depth=16):
+    def __init__(self, parent, path, depth: int=16):
         """*path* is used to set the PKey and QKey for all MADs sent through
         this interface."""
         rdma.madtransactor.MADTransactor.__init__(self)
@@ -69,7 +69,7 @@ class VMAD(rdma.madtransactor.MADTransactor):
         while not self._pool._buffers:
             self._cq_drain()
             if not self._pool._buffers:
-                self._cq_sleep(None)
+                self._cq.sleep(None)
 
         if path.qkey != self.qkey or path.pkey != self.pkey:
             raise rdma.RDMAError(
