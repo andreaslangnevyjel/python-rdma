@@ -217,7 +217,7 @@ class CQPoller(object):
     def __iter__(self):
         return self.iterwc(self)
 
-    def sleep(self, wakeat: float):
+    def sleep(self, wakeat: float=None):
         """
         Go to sleep until the cq gets a completion. *wakeat* is the
         value of :func:`time.monotonic` after which the function
@@ -239,6 +239,7 @@ class CQPoller(object):
         while True:
             if wakeat is None:
                 ret = self._poll.poll(-1)
+                print(ret)
             else:
                 timeout = wakeat - time.monotonic()
                 if timeout <= 0:

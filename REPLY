@@ -1,0 +1,66 @@
+Frame 8: 66 bytes on wire (528 bits), 66 bytes captured (528 bits) on interface 0
+    Interface id: 0
+    Encapsulation type: Extensible Record Format (98)
+    Arrival Time: Sep 21, 2019 20:01:05.560550268 CEST
+    [Time shift for this packet: 0.000000000 seconds]
+    Epoch Time: 1569088865.560550268 seconds
+    [Time delta from previous captured frame: 0.000102001 seconds]
+    [Time delta from previous displayed frame: 0.000315002 seconds]
+    [Time since reference or first frame: 0.008133062 seconds]
+    Frame Number: 8
+    Frame Length: 66 bytes (528 bits)
+    Capture Length: 66 bytes (528 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: erf:infiniband:data]
+Extensible Record Format
+    Timestamp: 0x5d8665618f8038ee
+    Record type: 0x15 (Type 21: INFINIBAND)
+        .001 0101 = Type: INFINIBAND (21)
+        0... .... = Extension header present: 0
+    Flags: 0x04 (Capture Interface: 0)
+        .... ..00 = Capture interface: 0
+        .... .1.. = Varying record length: 1
+        .... 0... = Truncated: 0
+        ...0 .... = RX error: 0
+        ..0. .... = DS error: 0
+        00.. .... = Reserved: 0x00
+    Record length: 82
+    Loss counter: 0
+    Wire length: 66
+InfiniBand
+    Local Route Header
+        0000 .... = Virtual Lane: 0x00
+        .... 0000 = Link Version: 0
+        0000 .... = Service Level: 0
+        .... 00.. = Reserved (2 bits): 0
+        .... ..10 = Link Next Header: 0x02
+        Destination Local ID: 1
+        0000 0... .... .... = Reserved (5 bits): 0
+        .... .000 0001 0000 = Packet Length: 16
+        Source Local ID: 121
+    Base Transport Header
+        Opcode: 100
+        0... .... = Solicited Event: False
+        .1.. .... = MigReq: True
+        ..00 .... = Pad Count: 0
+        .... 0000 = Header Version: 0
+        Partition Key: 65535
+        Reserved (8 bits): 0
+        Destination Queue Pair: 0x0008ac
+        0... .... = Acknowledge Request: False
+        .000 0000 = Reserved (7 bits): 0
+        Packet Sequence Number: 11225800
+    DETH - Datagram Extended Transport Header
+        Queue Key: 0
+        Reserved (8 bits): 0
+        Source Queue Pair: 0x000007d0
+    Invariant CRC: 0xa11918f6
+    Variant CRC: 0x0a05
+Data (32 bytes)
+
+0000  01 00 00 05 00 00 00 01 00 00 07 d0 00 00 00 de   ................
+0010  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+    Data: 0100000500000001000007d0000000de0000000000000000...
+    [Length: 32]
+

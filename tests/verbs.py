@@ -5,12 +5,13 @@
 import errno
 import mmap
 import sys
-from typing import Tuple
 import unittest
+from typing import Tuple
+
+import rdma.ibverbs as ibv
 
 import rdma
 import rdma.IBA as IBA
-import rdma.ibverbs as ibv
 import rdma.path
 import rdma.satransactor
 import rdma.vmad
@@ -21,7 +22,10 @@ class UmadSelfTest(unittest.TestCase):
     tid = 0
 
     def setUp(self):
-        self.end_port = rdma.get_end_port()
+        for dev in rdma.get_devices():
+            for ep in dev.end_ports:
+                if ep.state >= IBA.PORT_STATE_INIT:
+                    self.end_port = ep
         self.ctx = rdma.get_verbs(self.end_port)
 
     def tearDown(self):

@@ -53,6 +53,9 @@ def main():
     umad = rdma.get_umad(ep)
     print("umad for {} is {}".format(str(ep), str(umad)))
     path = get_gmp_path(tmpl_target(str(t_lid), ep, None, None), umad)
+    # local_path = get_gmp_path(tmpl_target(str(1), ep, None, None), umad)
+    # print(local_path)
+    print("{!r}".format(path))
     # sched = rdma.sched.MADSchedule(umad)
     # my_hs = HS(path, sched)
     qpn = 2000
@@ -88,36 +91,45 @@ def main():
         print("data ---")
         ctx = rdma.get_verbs(ep)
         with ctx.pd() as pd:
-            depth = 4
+            recv_pd = pd  # ctx.pd()
+            print(pd, recv_pd)
+            depth = 1
             size = 32 * 1024 * 1024  # * 1024 * 2
-            # cc = ctx.comp_channel()
-            cq = ctx.cq(2 * depth)
+            cc = ctx.comp_channel()
+            cq = ctx.cq(2 * depth, cc)
             # srq = pd.srq(depth)
             poller = rdma.vtools.CQPoller(cq)
             num_sge = 16
-            qp = pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1)
-            recv_qp = pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1)
+            srq = recv_pd.srq(depth)
+            qp = pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1, srq=srq)
+            recv_qp = recv_pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1, srq=srq)
             mem = mmap.mmap(-1, size)
             mr = pd.mr(
                 mem,
                 ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_REMOTE_WRITE,
             )
             recv_path = path.copy().reverse(for_reply=False)
+            # recv_path = local_path.copy().reverse(for_reply=False)
             print("data_key=", data_key)
             recv_path.dqpn = data_key
+            # recv_path.SL = 1
+            path.ServiceID = 0
+            recv_path.ServiceID = 1
+            # recv_path = path.copy()
+            # rdma.path.fill_path(recv_qp, recv_path, max_rd_atomic=0)
             # path.sqpn = qpn
             path.SL = 1
             path.dqpn = new_dqpn
             path.qkey = new_dqpn
+            recv_path.qkey = 0
+            recv_path.dqpn = data_key
+            # rdma.path.fill_path(recv_qp, recv_path, max_rd_atomic=0)
             # print("***", qp.qp_num, new_dqpn)
             # print("s/d/q:", path.sqpn, path.dqpn, path.qkey)
             # my_bp = vtools.BufferPool(pd, 2 * depth, 1024 * 1024)
             # my_bp.post_recvs(qp, min(qp.max_recv_wr, depth))
-            qp.establish(path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
-            print(dir(recv_path))
-            recv_qp.establish(path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
             print(qp, recv_qp)
-            print("*** recv_path", recv_path)
+            print("SL=", path.SL, recv_path.SL)
             block = size / num_sge + 1
             sg_list = []
             offset = 0
@@ -127,7 +139,16 @@ def main():
                 sg_list.append(mr.sge(block, offset))
                 offset += block
 
-            read_buffer = rdma.vtools.BufferPool(pd, 2 * depth, 256 + 40)
+            read_buffer = rdma.vtools.BufferPool(recv_pd, 2 * depth, 256 + 40)
+            read_buffer.post_recvs(srq, depth)
+            print("*** send_path {!r}".format(path.forward_path))
+            print("*** recv_path {!r}".format(recv_path.forward_path))
+            print(qp.qp_num, recv_qp.qp_num)
+            print("i/p", path.pkey_index, path.end_port.port_id)
+            print("i/p", recv_path.pkey_index, recv_path.end_port.port_id)
+            qp.establish(path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
+            recv_qp.establish(recv_path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE | ibv.IBV_ACCESS_REMOTE_READ)
+            # time.sleep(3600)
             swr = ibv.send_wr(
                 wr_id=0,
                 remote_addr=v_addr + 1000,
@@ -136,33 +157,34 @@ def main():
                 opcode=ibv.IBV_WR_RDMA_WRITE,
                 send_flags=ibv.IBV_SEND_SIGNALED,
             )
-            rr = []
-            for _idx in range(depth):
-                buf_idx = read_buffer.pop()
-                print("rb=", buf_idx)
-                rr.append(
-                    ibv.recv_wr(
-                        wr_id=buf_idx | read_buffer.RECV_FLAG,
-                        sg_list=mr.sge(buf_idx, 256 + 40),
-                    ),
-                )
-            recv_qp.post_recv(rr)
-            iters = 1  # 000000
+            # rr = []
+            # for _idx in range(depth):
+            #    buf_idx = read_buffer.pop()
+            #    r_wr = ibv.recv_wr(
+            #        wr_id=buf_idx | read_buffer.RECV_FLAG,
+            #        sg_list=mr.sge(buf_idx, 256 + 40),
+            #    )
+            #    print("rb=", buf_idx, r_wr)
+            #    rr.append(r_wr)
+            # recv_qp.post_recv(rr)
+            iters = 4  # 000000
 
             tpost = time.monotonic()
             for i in range(depth):
-                print("send", swr, dir(swr))
+                # print("send", swr, dir(swr))
                 qp.post_send(swr)
 
             completions = 0
             posts = depth
             last_out = time.monotonic()
-            print("*")
-            for wc in poller.iterwc(timeout=2.0):
-                print("**")
-                print(wc, cq.poll())
+            # print(dir(recv_qp))
+            print("\n*** poller ***\n")
+            for wc in poller.iterwc(count=10, timeout=3600.0):
+                # print(wc, cq.poll())
                 if wc.status != ibv.IBV_WC_SUCCESS:
                     raise ibv.WCError(wc, cq, obj=qp)
+                print("loop")
+                read_buffer.finish_wcs(srq, wc)
                 print(wc.opcode, ibv.IBV_WC_RECV, ibv.IBV_WC_RDMA_WRITE)
                 completions += 1
                 if posts < iters:
@@ -183,16 +205,13 @@ def main():
                         )
                     qp.post_send(swr)
                     posts += 1
+                    print("send")
                     poller.wakeat = time.monotonic() + 1
                 if completions == iters:
                     print("done")
                     break
-                print("loop")
             else:
                 raise rdma.RDMAError("CQ timed out")
-            # print(dir(recv_qp), recv_qp.state)
-            # print(read_buffer.finish_wcs(recv_qp, rr))
-            # print([x for x in poller.iterwc(timeout=2.0)])
             tcomp = time.monotonic()
 
             rate = size * iters / (tcomp - tpost)

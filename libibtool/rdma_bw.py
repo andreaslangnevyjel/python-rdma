@@ -31,15 +31,19 @@ class Endpoint(object):
         self.cq = self.ctx.cq(2 * opt.tx_depth, self.cc)
         self.poller = rdma.vtools.CQPoller(self.cq)
         self.pd = self.ctx.pd()
+        self.srq = self.pd.srq(opt.tx_depth)
         self.qp = self.pd.qp(
             ibv.IBV_QPT_RC,
             opt.tx_depth,
             self.cq,
             opt.tx_depth,
             self.cq,
-            max_send_sge=opt.num_sge,
-            max_recv_sge=1,
+            # max_send_sge=opt.num_sge,
+            # max_recv_sge=1,
+            srq=self.srq,
         )
+        self.pool = rdma.vtools.BufferPool(self.pd, 2 * opt.tx_depth, 256 + 40)
+        self.pool.post_recvs(self.srq, opt.tx_depth)
         self.mem = mmap(-1, opt.size)
         self.mr = self.pd.mr(
             self.mem,
@@ -56,11 +60,39 @@ class Endpoint(object):
         if self.ctx is not None:
             self.ctx.close()
 
-    def connect(self, peerinfo):
+    def connect(self, peerinfo, is_server_mode: bool):
         self.peerinfo = peerinfo
+        print(
+            "establish {} {!r}".format(
+                "server" if is_server_mode else "client",
+                self.path,
+            ),
+        )
         self.qp.establish(self.path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
 
+    def rdma_recv(self):
+        print("recvpath {!r}".format(self.path))
+        # sg_list = self.mr.sge()
+        send_pi = self.pool.pop()
+        self.pool.copy_to(b"xxxxx", send_pi)
+        self.qp.post_send(self.pool.make_send_wr(send_pi, 256, self.path))
+        # read_buffer.post_send(self.qp, depth)
+        # self.qp.post_send(read_buffer.make_send_wr(read_buffer.pop(), 256, self.path))
+        tpost = time.monotonic()
+
+        print("start", tpost)
+        # print(self.poller.sleep(wakeat=tpost + 1))
+        # print("s2")
+        for wc in self.poller.iterwc(count=2, timeout=4):
+            print(wc.status, wc.opcode, wc)
+            if wc.opcode == ibv.IBV_WC_RECV:
+                print(self.pool.copy_from(wc.wr_id, length=4))
+            self.pool.finish_wcs(self.srq, wc)
+        epost = time.monotonic()
+        print("done", epost)
+
     def rdma(self):
+
         if self.opt.num_sge > 1:
             block = self.opt.size / self.opt.num_sge + 1
             sg_list = []
@@ -81,7 +113,6 @@ class Endpoint(object):
             opcode=ibv.IBV_WR_RDMA_WRITE,
             send_flags=ibv.IBV_SEND_SIGNALED,
         )
-
         n = self.opt.iters
         depth = min(self.opt.tx_depth, n, self.qp.max_send_wr)
 
@@ -93,14 +124,24 @@ class Endpoint(object):
         posts = depth
         for wc in self.poller.iterwc(timeout=1):
             if wc.status != ibv.IBV_WC_SUCCESS:
+                print("Error")
                 raise ibv.WCError(wc, self.cq, obj=self.qp)
-            completions += 1
-            if posts < n:
-                self.qp.post_send(swr)
-                posts += 1
-                self.poller.wakeat = time.monotonic() + 1
+            # print(wc.opcode, ibv.IBV_WC_RECV, wc)
+            if wc.opcode == ibv.IBV_WC_RECV:
+                print(self.pool.copy_from(wc.wr_id, length=4))
+            else:
+                completions += 1
+                if posts < n:
+                    self.qp.post_send(swr)
+                    posts += 1
+                    self.poller.wakeat = time.monotonic() + 1
             if completions == n:
+                send_pi = self.pool.pop()
+                self.pool.copy_to(b"xxyxx", send_pi)
+                self.qp.post_send(self.pool.make_send_wr(send_pi, 256, self.path))
+            elif completions == n + 1:
                 break
+            self.pool.finish_wcs(self.srq, wc)
         else:
             raise rdma.RDMAError("CQ timed out")
 
@@ -146,6 +187,7 @@ def client_mode(hostname, opt, dev):
             end.path = peerinfo.path
             end.path.reverse(for_reply=False)
             end.path.set_end_port(end.ctx.node)
+            print(end.path)
 
             print(
                 "path to peer {!r}\nMR peer raddr={:x} peer rkey={:x}".format(
@@ -162,10 +204,13 @@ def client_mode(hostname, opt, dev):
                 ),
             )
 
-            end.connect(peerinfo)
+            end.connect(peerinfo, False)
             # Synchronize the transition to RTS
             sock.send(b"Ready")
+            print("ready")
             sock.recv(1024)
+            time.sleep(0.5)
+            print("go")
             end.rdma()
 
             sock.shutdown(socket.SHUT_WR)
@@ -206,9 +251,9 @@ def server_mode(opt, dev):
                 with rdma.get_gmp_mad(end.ctx.end_port, verbs=end.ctx) as umad:
                     end.path = peerinfo.path
                     end.path.end_port = end.ctx.end_port
-                    rdma.path.fill_path(end.qp, end.path)
-                    rdma.path.resolve_path(umad, end.path)
-
+                    rdma.path.fill_path(end.qp, end.path, max_rd_atomic=0)
+                    rdma.path.resolve_path(umad, end.path, reversible=True)
+                    print("p=", end.path)
                 s.send(
                     pickle.dumps(
                         infotype(
@@ -236,9 +281,10 @@ def server_mode(opt, dev):
                     ),
                 )
 
-                end.connect(peerinfo)
+                end.connect(peerinfo, True)
                 # Synchronize the transition to RTS
                 s.send(b"ready")
+                end.rdma_recv()
                 s.recv(1024)
                 if opt.bidirectional:
                     end.rdma()
