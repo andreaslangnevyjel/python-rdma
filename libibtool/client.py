@@ -53,7 +53,7 @@ def main():
     umad = rdma.get_umad(ep)
     print("umad for {} is {}".format(str(ep), str(umad)))
     path = get_gmp_path(tmpl_target(str(t_lid), ep, None, None), umad)
-    # local_path = get_gmp_path(tmpl_target(str(1), ep, None, None), umad)
+    local_path = get_gmp_path(tmpl_target(str(1), ep, None, None), umad)
     # print(local_path)
     print("{!r}".format(path))
     # sched = rdma.sched.MADSchedule(umad)
@@ -64,33 +64,13 @@ def main():
         path.qkey = 0
         my_vmad = VMAD(ep, path, depth=16)
         print("s/d/q:", path.sqpn, path.dqpn, path.qkey)
-        stat_msg = struct.pack(">xxxBLLLQLL", WCUCmdEnum.stat_req.value, ep.lid, qpn, path.qkey, 0, 0, 0)
-        # print(len(stat_msg), stat_msg)
-        # print(my_vmad._qp.qp_num)
-        my_vmad.sendto(stat_msg, path)
-        res = my_vmad.recvfrom(time.monotonic() + 1.0)
-        # print(len(res[0]))
-        print(struct.unpack(">xxxBLLLQLL", res[0][:32]))
 
-        data_key = qpn + 1
-        print("data key is {:d}".format(data_key))
-        stat_msg = struct.pack(">xxxBLLLQLL", WCUCmdEnum.data_req.value, ep.lid, qpn, data_key, 0, 0, 0)
-        # print(len(stat_msg), stat_msg)
-        # print(my_vmad._qp.qp_num)
-        print(my_vmad.sendto(stat_msg, path))
-        res = my_vmad.recvfrom(time.monotonic() + 1.0)
-        # print(len(res[0]))
-        data_res = struct.unpack(">xxxBLLLQLL", res[0][:32])
-        print(data_res)
-        new_dqpn = data_res[3]
-        v_addr = data_res[4]
-        rkey = data_res[5]
-        print("dqpn={:d}, v_addr={:x}, rkey={:d}".format(new_dqpn, v_addr, rkey))
         # return
 
         print("data ---")
         ctx = rdma.get_verbs(ep)
         with ctx.pd() as pd:
+
             recv_pd = pd  # ctx.pd()
             print(pd, recv_pd)
             depth = 1
@@ -102,34 +82,46 @@ def main():
             num_sge = 16
             srq = recv_pd.srq(depth)
             qp = pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1, srq=srq)
-            recv_qp = recv_pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1, srq=srq)
+            # recv_qp = recv_pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, max_send_sge=num_sge, max_recv_sge=1, srq=srq)
+            data_key = qp.qp_num  # recv_qp.qp_num
+            print(path.qkey, data_key)
+            stat_msg = struct.pack(">xxxBLLLQLL", WCUCmdEnum.stat_req.value, ep.lid, data_key, path.qkey, 0, 0, 0)
+            # print(len(stat_msg), stat_msg)
+            # print(my_vmad._qp.qp_num)
+            my_vmad.sendto(stat_msg, path)
+            res = my_vmad.recvfrom(time.monotonic() + 1.0)
+            # print(len(res[0]))
+            print(struct.unpack(">xxxBLLLQLL", res[0][:32]), data_key, path.qkey)
+            print("data key is {:d}".format(data_key))
+            stat_msg = struct.pack(">xxxBLLLQLL", WCUCmdEnum.data_req.value, ep.lid, data_key, data_key, 0, 0, 0)
+            # print(len(stat_msg), stat_msg)
+            # print(my_vmad._qp.qp_num)
+            print(my_vmad.sendto(stat_msg, path))
+            res = my_vmad.recvfrom(time.monotonic() + 1.0)
+            # print(len(res[0]))
+            data_res = struct.unpack(">xxxBLLLQLL", res[0][:32])
+            print(data_res)
+            new_dqpn = data_res[3]
+            v_addr = data_res[4]
+            rkey = data_res[5]
+            print("dqpn={:d}, v_addr={:x}, rkey={:d}".format(new_dqpn, v_addr, rkey))
+            # print(recv_qp.qp_num)
             mem = mmap.mmap(-1, size)
             mr = pd.mr(
                 mem,
                 ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_REMOTE_WRITE,
             )
-            recv_path = path.copy().reverse(for_reply=False)
-            # recv_path = local_path.copy().reverse(for_reply=False)
             print("data_key=", data_key)
-            recv_path.dqpn = data_key
-            # recv_path.SL = 1
             path.ServiceID = 0
-            recv_path.ServiceID = 1
-            # recv_path = path.copy()
-            # rdma.path.fill_path(recv_qp, recv_path, max_rd_atomic=0)
-            # path.sqpn = qpn
             path.SL = 1
             path.dqpn = new_dqpn
             path.qkey = new_dqpn
-            recv_path.qkey = 0
-            recv_path.dqpn = data_key
-            # rdma.path.fill_path(recv_qp, recv_path, max_rd_atomic=0)
-            # print("***", qp.qp_num, new_dqpn)
-            # print("s/d/q:", path.sqpn, path.dqpn, path.qkey)
-            # my_bp = vtools.BufferPool(pd, 2 * depth, 1024 * 1024)
-            # my_bp.post_recvs(qp, min(qp.max_recv_wr, depth))
-            print(qp, recv_qp)
-            print("SL=", path.SL, recv_path.SL)
+            print(
+                "sendQ = 0x{0:x} ({0:d}), recvQ = 0x{1:x} ({1:d})".format(
+                    qp.qp_num,
+                    data_key,
+                ),
+            )
             block = size / num_sge + 1
             sg_list = []
             offset = 0
@@ -141,13 +133,11 @@ def main():
 
             read_buffer = rdma.vtools.BufferPool(recv_pd, 2 * depth, 256 + 40)
             read_buffer.post_recvs(srq, depth)
-            print("*** send_path {!r}".format(path.forward_path))
-            print("*** recv_path {!r}".format(recv_path.forward_path))
-            print(qp.qp_num, recv_qp.qp_num)
-            print("i/p", path.pkey_index, path.end_port.port_id)
-            print("i/p", recv_path.pkey_index, recv_path.end_port.port_id)
+            # print(qp.qp_num, recv_qp.qp_num)
             qp.establish(path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
-            recv_qp.establish(recv_path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE | ibv.IBV_ACCESS_REMOTE_READ)
+            # rdma.path.fill_path(recv_qp, recv_path, max_rd_atomic=0)
+            print("*** send_path {!r}".format(path.forward_path))
+            # recv_qp.establish(recv_path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
             # time.sleep(3600)
             swr = ibv.send_wr(
                 wr_id=0,
@@ -157,16 +147,6 @@ def main():
                 opcode=ibv.IBV_WR_RDMA_WRITE,
                 send_flags=ibv.IBV_SEND_SIGNALED,
             )
-            # rr = []
-            # for _idx in range(depth):
-            #    buf_idx = read_buffer.pop()
-            #    r_wr = ibv.recv_wr(
-            #        wr_id=buf_idx | read_buffer.RECV_FLAG,
-            #        sg_list=mr.sge(buf_idx, 256 + 40),
-            #    )
-            #    print("rb=", buf_idx, r_wr)
-            #    rr.append(r_wr)
-            # recv_qp.post_recv(rr)
             iters = 4  # 000000
 
             tpost = time.monotonic()
@@ -186,27 +166,28 @@ def main():
                 print("loop")
                 read_buffer.finish_wcs(srq, wc)
                 print(wc.opcode, ibv.IBV_WC_RECV, ibv.IBV_WC_RDMA_WRITE)
-                completions += 1
-                if posts < iters:
-                    cur_time = time.monotonic()
-                    if abs(cur_time - last_out) > 1:
-                        last_out = cur_time
-                        rate = size * completions / (cur_time - tpost)
-                        print(
-                            "{:5.1f}% {}".format(
-                                100 * completions / iters,
-                                logging_tools.get_size_str(
-                                    rate * 8,
-                                    per_second=True,
-                                    unit="Bit",
-                                    long_format=True,
+                if wc.opcode == ibv.IBV_WC_RDMA_WRITE:
+                    completions += 1
+                    if posts < iters:
+                        cur_time = time.monotonic()
+                        if abs(cur_time - last_out) > 1:
+                            last_out = cur_time
+                            rate = size * completions / (cur_time - tpost)
+                            print(
+                                "{:5.1f}% {}".format(
+                                    100 * completions / iters,
+                                    logging_tools.get_size_str(
+                                        rate * 8,
+                                        per_second=True,
+                                        unit="Bit",
+                                        long_format=True,
+                                    ),
                                 ),
-                            ),
-                        )
-                    qp.post_send(swr)
-                    posts += 1
-                    print("send")
-                    poller.wakeat = time.monotonic() + 1
+                            )
+                        qp.post_send(swr)
+                        posts += 1
+                        print("send")
+                        # poller.wakeat = time.monotonic() + 1
                 if completions == iters:
                     print("done")
                     break

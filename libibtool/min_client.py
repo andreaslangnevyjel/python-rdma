@@ -96,8 +96,12 @@ class SimpleTest(object):
     def test_uc_loop(self):
         self._do_loop_test("UC")
 
+    def test_ud_loop(self):
+        self._do_loop_test("UD")
+
 
 if __name__ == "__main__":
     my_test = SimpleTest()
     my_test.test_rc_loop()
     my_test.test_uc_loop()
+    my_test.test_ud_loop()

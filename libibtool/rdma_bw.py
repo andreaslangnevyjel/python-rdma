@@ -33,7 +33,7 @@ class Endpoint(object):
         self.pd = self.ctx.pd()
         self.srq = self.pd.srq(opt.tx_depth)
         self.qp = self.pd.qp(
-            ibv.IBV_QPT_RC,
+            ibv.IBV_QPT_UC,
             opt.tx_depth,
             self.cq,
             opt.tx_depth,
@@ -62,12 +62,12 @@ class Endpoint(object):
 
     def connect(self, peerinfo, is_server_mode: bool):
         self.peerinfo = peerinfo
-        print(
-            "establish {} {!r}".format(
-                "server" if is_server_mode else "client",
-                self.path,
-            ),
-        )
+        # print(
+        #    "establish {} {!r}".format(
+        #        "server" if is_server_mode else "client",
+        #        self.path,
+        #    ),
+        # )
         self.qp.establish(self.path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
 
     def rdma_recv(self):
@@ -183,6 +183,7 @@ def client_mode(hostname, opt, dev):
             )
             buf = sock.recv(1024)
             peerinfo = pickle.loads(buf)
+            print("PE=", peerinfo, buf)
 
             end.path = peerinfo.path
             end.path.reverse(for_reply=False)

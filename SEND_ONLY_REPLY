@@ -1,0 +1,61 @@
+Frame 11365: 42 bytes on wire (336 bits), 42 bytes captured (336 bits) on interface 0
+    Interface id: 0
+    Encapsulation type: Extensible Record Format (98)
+    Arrival Time: Sep 21, 2019 20:39:40.254111935 CEST
+    [Time shift for this packet: 0.000000000 seconds]
+    Epoch Time: 1569091180.254111935 seconds
+    [Time delta from previous captured frame: 0.000005000 seconds]
+    [Time delta from previous displayed frame: 0.008030061 seconds]
+    [Time since reference or first frame: 0.379511275 seconds]
+    Frame Number: 11365
+    Frame Length: 42 bytes (336 bits)
+    Capture Length: 42 bytes (336 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: erf:infiniband:data]
+Extensible Record Format
+    Timestamp: 0x5d866e6c410d7ad2
+    Record type: 0x15 (Type 21: INFINIBAND)
+        .001 0101 = Type: INFINIBAND (21)
+        0... .... = Extension header present: 0
+    Flags: 0x04 (Capture Interface: 0)
+        .... ..00 = Capture interface: 0
+        .... .1.. = Varying record length: 1
+        .... 0... = Truncated: 0
+        ...0 .... = RX error: 0
+        ..0. .... = DS error: 0
+        00.. .... = Reserved: 0x00
+    Record length: 58
+    Loss counter: 0
+    Wire length: 42
+InfiniBand
+    Local Route Header
+        0001 .... = Virtual Lane: 0x01
+        .... 0000 = Link Version: 0
+        0001 .... = Service Level: 1
+        .... 00.. = Reserved (2 bits): 0
+        .... ..10 = Link Next Header: 0x02
+        Destination Local ID: 1
+        0000 0... .... .... = Reserved (5 bits): 0
+        .... .000 0000 1010 = Packet Length: 10
+        Source Local ID: 121
+    Base Transport Header
+        Opcode: 36
+        1... .... = Solicited Event: True
+        .0.. .... = MigReq: False
+        ..00 .... = Pad Count: 0
+        .... 0000 = Header Version: 0
+        Partition Key: 65535
+        Reserved (8 bits): 0
+        Destination Queue Pair: 0x0007d1
+        0... .... = Acknowledge Request: False
+        .000 0000 = Reserved (7 bits): 0
+        Packet Sequence Number: 3
+    Invariant CRC: 0xb8374bd5
+    Variant CRC: 0x1ac4
+Data (16 bytes)
+
+0000  01 00 00 00 00 01 00 00 e8 03 00 00 00 00 00 00   ................
+    Data: 0100000000010000e803000000000000
+    [Length: 16]
+

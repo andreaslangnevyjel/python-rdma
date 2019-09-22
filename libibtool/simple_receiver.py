@@ -56,7 +56,7 @@ def main():
     print("{!r}".format(path))
     # sched = rdma.sched.MADSchedule(umad)
     # my_hs = HS(path, sched)
-    qpn = 2541
+    qpn = 2000
     if True:
         # path.dqpn = qpn
         path.qkey = 40
@@ -64,6 +64,7 @@ def main():
         ctx = rdma.get_verbs(ep)
         with ctx.pd() as pd:
             depth = 8
+            size = 32 * 1024 * 1024  # * 1024 * 2
             cc = ctx.comp_channel()
             cq = ctx.cq(2 * depth, cc)
             poller = rdma.vtools.CQPoller(cq)
@@ -71,18 +72,20 @@ def main():
             qp = pd.qp(ibv.IBV_QPT_UC, depth, cq, depth, cq, srq=srq)
             print(qp.qp_num)
             # path.ServiceID = 0
+            # path = path.copy().reverse(for_reply=False)
+            path.dqpn = qpn
             #path.SL = 1
             # sequence number
-            path.sqpsn = 3
-            path.dqpsn = 300
+            path.sqpsn = 300
+            path.dqpsn = 3
             rdma.path.fill_path(qp, path, max_rd_atomic=0)
-            path.dqpn = 2545
-            # path.sqpn = 2539
+            path.sqpn = qpn + 1
+
             write_buffer = rdma.vtools.BufferPool(pd, 2 * depth, 256 + 40)
             write_buffer.post_recvs(srq, depth)
-            print("*** send_path {!r}".format(path.forward_path))
+            print("*** recv_path {!r}".format(path.forward_path))
             qp.establish(path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
-            print("* send")
+            # print("* send")
             send_pi = write_buffer.pop()
             write_buffer.copy_to(b"\x01", send_pi)
             qp.post_send(write_buffer.make_send_wr(send_pi, 16, path))
