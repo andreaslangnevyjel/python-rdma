@@ -42,14 +42,16 @@ class BufferPool(object):
     count = 0
 
     def __init__(self, pd, count: int, size: int):
+        # print("c / s", count, size)
         """A :class:`rdma.ibverbs.MR` is created in *pd* with *count* buffers of
         *size* bytes."""
         self.count = count
         self.size = size
+        # print("mmapsize is", count * size)
         self._mem = mmap.mmap(-1, count * size)
         self._mr = pd.mr(
             self._mem,
-            ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_LOCAL_WRITE,
+            ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_REMOTE_WRITE,
         )
         self._buffers = collections.deque(range(count), count)
         self.RECV_FLAG = 1 << (int(math.log(count, 2)) + 1)
@@ -77,6 +79,7 @@ class BufferPool(object):
         wr = []
         for _idx in range(count):
             buf_idx = self._buffers.pop()
+            # print("buf_idx / recv_flag", buf_idx, self.RECV_FLAG, type(buf_idx))
             wr.append(
                 ibv.recv_wr(
                     wr_id=buf_idx | self.RECV_FLAG,
@@ -149,6 +152,7 @@ class BufferPool(object):
         """
         Return a :class:`rdma.ibverbs.SGE` for *buf_idx*.
         """
+        # print("sge({:d}, {:d})".format(buf_len, buf_idx * self.size))
         return self._mr.sge(buf_len, buf_idx * self.size)
 
     def copy_from(self, buf_idx: int, offset: int=0, length=0xFFFFFFFF):
@@ -239,7 +243,7 @@ class CQPoller(object):
         while True:
             if wakeat is None:
                 ret = self._poll.poll(-1)
-                print(ret)
+                # print("ret=", ret)
             else:
                 timeout = wakeat - time.monotonic()
                 if timeout <= 0:

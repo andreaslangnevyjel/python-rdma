@@ -14,7 +14,7 @@ import rdma.path
 import rdma.vtools
 from .libibopts import LibIBOpts
 
-infotype = namedtuple("infotype", "path addr rkey size iters")
+infotype = namedtuple("infotype", "addr rkey size iters dqpn gid lid")
 
 
 class Endpoint(object):
@@ -44,11 +44,29 @@ class Endpoint(object):
         )
         self.pool = rdma.vtools.BufferPool(self.pd, 2 * opt.tx_depth, 256 + 40)
         self.pool.post_recvs(self.srq, opt.tx_depth)
-        self.mem = mmap(-1, opt.size)
+        # self.data_pool = rdma.vtools.BufferPool(self.pd, 2 * opt.tx_depth, opt.size)
+        # self.data_pool.post_recvs(self.srq, opt.tx_depth)
+        # opt.size = 256
+        # return
+        self.mem = mmap(-1, 1 * opt.size)
         self.mr = self.pd.mr(
             self.mem,
             ibv.IBV_ACCESS_LOCAL_WRITE | ibv.IBV_ACCESS_REMOTE_WRITE,
         )
+        return
+        print("*", opt.size)
+        pr_size = 256
+        import math
+        print(1 << (int(math.log(2, 2)) + 1))
+        self.srq.post_recv(
+            [
+                ibv.recv_wr(
+                    wr_id=1 | 4,
+                    sg_list=self.mr.sge(opt.size, opt.size),
+                )
+            ]
+        )
+        print("**")
 
     def __enter__(self):
         return self
@@ -68,28 +86,36 @@ class Endpoint(object):
         #        self.path,
         #    ),
         # )
+        print("E {!r}".format(self.path.forward_path))
         self.qp.establish(self.path.forward_path, ibv.IBV_ACCESS_REMOTE_WRITE)
 
     def rdma_recv(self):
         print("recvpath {!r}".format(self.path))
         # sg_list = self.mr.sge()
-        send_pi = self.pool.pop()
-        self.pool.copy_to(b"xxxxx", send_pi)
-        self.qp.post_send(self.pool.make_send_wr(send_pi, 256, self.path))
+        if False:
+            send_pi = self.pool.pop()
+            self.pool.copy_to(b"xxxxx", send_pi)
+            self.qp.post_send(self.pool.make_send_wr(send_pi, 256, self.path))
         # read_buffer.post_send(self.qp, depth)
         # self.qp.post_send(read_buffer.make_send_wr(read_buffer.pop(), 256, self.path))
         tpost = time.monotonic()
-
+        opt = self.opt
         print("start", tpost)
         # print(self.poller.sleep(wakeat=tpost + 1))
         # print("s2")
-        for wc in self.poller.iterwc(count=2, timeout=4):
-            print(wc.status, wc.opcode, wc)
-            if wc.opcode == ibv.IBV_WC_RECV:
-                print(self.pool.copy_from(wc.wr_id, length=4))
+        rcv_b = 0
+        for wc in self.poller.iterwc(count=200, timeout=400):
+            if wc.opcode & ibv.IBV_WC_RECV:
+                rcv_b += wc.byte_len
+                print("recv", wc.byte_len)
+                if wc.byte_len < 1000:
+                    # print(self.pool.copy_from(wc.wr_id, length=4))
+                    break
+            elif wc.opcode == ibv.IBV_WC_SEND:
+                print("SEND")
             self.pool.finish_wcs(self.srq, wc)
         epost = time.monotonic()
-        print("done", epost)
+        print("done", epost, "received", rcv_b)
 
     def rdma(self):
 
@@ -105,43 +131,51 @@ class Endpoint(object):
         else:
             sg_list = self.mr.sge()
 
+        # print(self.peerinfo.addr, self.mr.addr)
         swr = ibv.send_wr(
             wr_id=0,
             remote_addr=self.peerinfo.addr,
             rkey=self.peerinfo.rkey,
             sg_list=sg_list,
-            opcode=ibv.IBV_WR_RDMA_WRITE,
+            opcode=ibv.IBV_WR_RDMA_WRITE_WITH_IMM,
+            # opcode=ibv.IBV_WR_RDMA_WRITE,
             send_flags=ibv.IBV_SEND_SIGNALED,
         )
         n = self.opt.iters
         depth = min(self.opt.tx_depth, n, self.qp.max_send_wr)
 
         tpost = time.monotonic()
-        for i in range(depth):
+        posts = 0
+        for i in range(min(depth, n)):
+            posts += 1
+            # print("send", self.opt.size)
             self.qp.post_send(swr)
 
         completions = 0
-        posts = depth
-        for wc in self.poller.iterwc(timeout=1):
+        for wc in self.poller.iterwc():
             if wc.status != ibv.IBV_WC_SUCCESS:
                 print("Error")
                 raise ibv.WCError(wc, self.cq, obj=self.qp)
             # print(wc.opcode, ibv.IBV_WC_RECV, wc)
             if wc.opcode == ibv.IBV_WC_RECV:
-                print(self.pool.copy_from(wc.wr_id, length=4))
+                print("*", self.pool.copy_from(wc.wr_id, length=4))
             else:
                 completions += 1
                 if posts < n:
+                    # print("send", self.opt.size)
                     self.qp.post_send(swr)
                     posts += 1
-                    self.poller.wakeat = time.monotonic() + 1
+                    # self.poller.wakeat = time.monotonic() + 1
             if completions == n:
-                send_pi = self.pool.pop()
-                self.pool.copy_to(b"xxyxx", send_pi)
-                self.qp.post_send(self.pool.make_send_wr(send_pi, 256, self.path))
+                print("comp")
+                if False:
+                    send_pi = self.pool.pop()
+                    self.pool.copy_to(b"xxyxx", send_pi)
+                    self.qp.post_send(self.pool.make_send_wr(send_pi, 256, self.path))
+                break
             elif completions == n + 1:
                 break
-            self.pool.finish_wcs(self.srq, wc)
+            # self.pool.finish_wcs(self.srq, wc)
         else:
             raise rdma.RDMAError("CQ timed out")
 
@@ -166,29 +200,39 @@ def client_mode(hostname, opt, dev):
                 )
             sock.connect(ret[4])
 
-            path = rdma.path.IBPath(dev, SGID=end.ctx.end_port.default_gid)
-            rdma.path.fill_path(end.qp, path, max_rd_atomic=0)
-            path.reverse(for_reply=False)
-
             sock.send(
                 pickle.dumps(
                     infotype(
-                        path=path,
-                        addr=end.mr.addr,
-                        rkey=end.mr.rkey,
+                        addr=None,
+                        rkey=None,
                         size=opt.size,
                         iters=opt.iters,
+                        dqpn=end.qp.qp_num,
+                        gid=end.ctx.end_port.default_gid,
+                        lid=end.ctx.end_port.lid,
                     ),
                 ),
             )
-            buf = sock.recv(1024)
-            peerinfo = pickle.loads(buf)
-            print("PE=", peerinfo, buf)
+            peerinfo = pickle.loads(sock.recv(1024))
 
-            end.path = peerinfo.path
-            end.path.reverse(for_reply=False)
+            # create local copy of path
+            end.path = rdma.path.IBPath(
+                end_port=end.ctx.node,
+                dqpn=peerinfo.dqpn,
+                SGID=end.ctx.end_port.default_gid,
+                SLID=end.ctx.end_port.lid,
+                DLID=peerinfo.lid,
+            )
+            end.path.reverse()
+            end.path.reverse()
+            rdma.path.fill_path(end.qp, end.path, max_rd_atomic=0)
+            print("{!r}".format(end.path))
+            # print("{!r}".format(peerinfo.path))
+            # end.path = peerinfo.path
+            # end.path.reverse(for_reply=False)
             end.path.set_end_port(end.ctx.node)
-            print(end.path)
+            with rdma.get_gmp_mad(end.ctx.end_port, verbs=end.ctx) as umad:
+                rdma.path.resolve_path(umad, end.path, reversible=True)
 
             print(
                 "path to peer {!r}\nMR peer raddr={:x} peer rkey={:x}".format(
@@ -250,28 +294,33 @@ def server_mode(opt, dev):
 
             with Endpoint(opt, dev) as end:
                 with rdma.get_gmp_mad(end.ctx.end_port, verbs=end.ctx) as umad:
-                    end.path = peerinfo.path
+                    end.path = rdma.path.IBPath(
+                        end_port=end.ctx.end_port,
+                        dqpn=peerinfo.dqpn,
+                        DGID=peerinfo.gid,
+                        max_rd_atomic=0,
+                        MTU=5,
+                    )
                     end.path.end_port = end.ctx.end_port
                     rdma.path.fill_path(end.qp, end.path, max_rd_atomic=0)
                     rdma.path.resolve_path(umad, end.path, reversible=True)
-                    print("p=", end.path)
                 s.send(
                     pickle.dumps(
                         infotype(
-                            path=end.path,
                             addr=end.mr.addr,
                             rkey=end.mr.rkey,
                             size=None,
                             iters=None,
+                            dqpn=end.qp.qp_num,
+                            gid=end.ctx.end_port.default_gid,
+                            lid=end.ctx.end_port.lid,
                         ),
                     ),
                 )
 
                 print(
-                    "path to peer {!r}\nMR peer raddr={:x} peer rkey={:x}".format(
+                    "path to peer {!r}".format(
                         end.path.forward_path,
-                        peerinfo.addr,
-                        peerinfo.rkey,
                     ),
                 )
                 print(
