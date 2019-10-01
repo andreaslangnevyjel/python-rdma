@@ -105,6 +105,7 @@ class Endpoint(object):
         # print("s2")
         rcv_b = 0
         for wc in self.poller.iterwc(count=200, timeout=400):
+            self.pool.finish_wcs(self.srq, wc)
             if wc.opcode & ibv.IBV_WC_RECV:
                 rcv_b += wc.byte_len
                 print("recv", wc.byte_len)
@@ -113,7 +114,6 @@ class Endpoint(object):
                     break
             elif wc.opcode == ibv.IBV_WC_SEND:
                 print("SEND")
-            self.pool.finish_wcs(self.srq, wc)
         epost = time.monotonic()
         print("done", epost, "received", rcv_b)
 
@@ -159,6 +159,8 @@ class Endpoint(object):
             # print(wc.opcode, ibv.IBV_WC_RECV, wc)
             if wc.opcode == ibv.IBV_WC_RECV:
                 print("*", self.pool.copy_from(wc.wr_id, length=4))
+                print("recover", wc.wr_id, wc.qp_num)
+                self.pool.finish_wcs(self.srq, wc)
             else:
                 completions += 1
                 if posts < n:
@@ -175,7 +177,6 @@ class Endpoint(object):
                 break
             elif completions == n + 1:
                 break
-            # self.pool.finish_wcs(self.srq, wc)
         else:
             raise rdma.RDMAError("CQ timed out")
 

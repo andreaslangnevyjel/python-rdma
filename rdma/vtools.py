@@ -79,6 +79,7 @@ class BufferPool(object):
         wr = []
         for _idx in range(count):
             buf_idx = self._buffers.pop()
+            # print("RCV=", self.RECV_FLAG)
             # print("buf_idx / recv_flag", buf_idx, self.RECV_FLAG, type(buf_idx))
             wr.append(
                 ibv.recv_wr(
@@ -86,6 +87,7 @@ class BufferPool(object):
                     sg_list=self.make_sge(buf_idx, self.size),
                 ),
             )
+        # print("Post", [x.wr_id & ~self.RECV_FLAG for x in wr])
         qp.post_recv(wr)
 
     def finish_wcs(self, qp, wcs):
@@ -110,7 +112,9 @@ class BufferPool(object):
             # Note, we cannot rely on the opcode here to determine
             # RQ/SQ for the buffer, so it is encoded in the wr_id.
             if wc.wr_id != self.NO_WR_ID:
+                # print("append", wc.wr_id & self.BUF_ID_MASK, wc.wr_id)
                 self._buffers.append(wc.wr_id & self.BUF_ID_MASK)
+                # print("***", self._buffers)
                 if wc.wr_id & self.RECV_FLAG:
                     new_recvs = new_recvs + 1
 

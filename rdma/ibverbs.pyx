@@ -676,6 +676,11 @@ cdef class Context:
         :class:`select.poll` object *poll*."""
         poll.register(self._ctx.async_fd,select.POLLIN)
 
+    def unregister_poll(self,poll):
+        """Remove the async event FD associated with this object from
+        :class:`select.poll` object *poll*."""
+        poll.unregister(self._ctx.async_fd)
+
     def check_poll(self,pevent):
         """Return `True` if *pevent* indicates that :meth:`get_async_event`
         will return data."""
@@ -958,6 +963,11 @@ cdef class CompChannel:
         """Add the FD associated with this object to :class:`select.poll`
         object *poll*."""
         poll.register(self._chan.fd,select.POLLIN)
+
+    def unregister_poll(self,poll):
+        """remove the FD associated with this object from :class:`select.poll`
+        object *poll*."""
+        poll.unregister(self._chan.fd)
 
     def check_poll(self,pevent):
         """Returns a :class:`rdma.ibverbs.CQ` that got at least one completion
