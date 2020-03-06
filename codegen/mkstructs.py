@@ -1,4 +1,4 @@
-#!/usr/bin/python3-mwct
+#!/usr/bin/python3.8-mwct
 # -*- coding: utf-8 -*-
 
 # Copyright 2011 Obsidian Research Corp. GPLv2, see COPYING.
