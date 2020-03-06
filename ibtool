@@ -30,7 +30,7 @@ commands = {
     "ibstat": (".inquiry",),
     "ibstatus": (".inquiry",),
     "ibaddr": (".inquiry",),
-    "sminfo": (".inquiry",),
+    "sminfo": (".inquiry",), 
     "smpdump": (".inquiry",),
     "decode_mad": (".inquiry",),
     "ibportstate": (".inquiry",),
